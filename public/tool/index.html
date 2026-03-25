@@ -328,6 +328,32 @@
       font-size: 12px; color: var(--text2);
     }
     .scans-badge.show { display: block; }
+
+    /* ── Locked card overlay ── */
+    .card-locked { position: relative; overflow: hidden; }
+    .card-locked > *:not(.lock-overlay) {
+      filter: blur(5px);
+      user-select: none;
+      pointer-events: none;
+    }
+    .lock-overlay {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(11,12,18,0.55);
+      backdrop-filter: blur(2px);
+      z-index: 10; border-radius: var(--radius);
+      gap: 6px; padding: 24px;
+    }
+    .lock-icon { font-size: 26px; }
+    .lock-text { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.5; }
+    .unlock-btn {
+      margin-top: 6px;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 8px; font: 600 13px/1 -apple-system, sans-serif;
+      padding: 10px 20px; cursor: pointer; transition: opacity 0.2s;
+    }
+    .unlock-btn:hover { opacity: 0.85; background: var(--accent); }
   </style>
 </head>
 <body>
@@ -641,6 +667,37 @@
         kwEl.innerHTML += `<span class="pill missing">${kw}</span>`;
       });
     }
+
+    // Gate detailed sections if no token
+    const token = localStorage.getItem('ats_token');
+    if (!token) {
+      // Truncate critical issues to 2, add "more" hint
+      const ciItems = document.querySelectorAll('#criticalIssues li');
+      let hiddenCount = 0;
+      ciItems.forEach((li, i) => { if (i >= 2) { li.style.display = 'none'; hiddenCount++; } });
+      if (hiddenCount > 0) {
+        const more = document.createElement('li');
+        more.innerHTML = `<span class="dot dot-red"></span><span style="color:var(--text3);cursor:pointer;text-decoration:underline" onclick="showPaywall()">${hiddenCount} more issue${hiddenCount > 1 ? 's' : ''} — unlock to see all</span>`;
+        document.getElementById('criticalIssues').appendChild(more);
+      }
+      // Blur category breakdown, recommendations, and keywords cards
+      lockCard(document.getElementById('categoriesCard'));
+      lockCard(document.getElementById('recommendations').closest('.card'));
+      lockCard(document.getElementById('keywords').closest('.card'));
+    }
+  }
+
+  function lockCard(card) {
+    if (!card || card.classList.contains('card-locked')) return;
+    card.classList.add('card-locked');
+    const overlay = document.createElement('div');
+    overlay.className = 'lock-overlay';
+    overlay.innerHTML = `
+      <div class="lock-icon">🔒</div>
+      <div class="lock-text">Purchase a scan to unlock<br>the full analysis</div>
+      <button class="unlock-btn" onclick="showPaywall()">Unlock Full Report</button>
+    `;
+    card.appendChild(overlay);
   }
 
   async function getRewrite() {
