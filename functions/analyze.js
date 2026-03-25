@@ -85,7 +85,7 @@ export async function onRequestPost(context) {
         'anthropic-beta': 'pdfs-2024-09-25'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: includeRewrite ? 16000 : 8192,
         messages
       })

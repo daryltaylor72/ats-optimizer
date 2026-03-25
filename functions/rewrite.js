@@ -74,7 +74,7 @@ export async function onRequestPost(context) {
       'anthropic-version': '2023-06-01',
       'anthropic-beta': 'pdfs-2024-09-25',
     },
-    body: JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 16000, messages }),
+    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 16000, messages }),
   });
 
   if (!claudeRes.ok) {
