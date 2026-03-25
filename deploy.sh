@@ -14,6 +14,7 @@ echo "🚀 Pushing to GitHub..."
 git push origin main
 
 echo "☁️  Deploying to Cloudflare Pages..."
+rm -rf .wrangler/cache
 npx wrangler pages deploy public --project-name ats-optimizer --commit-dirty=true
 
 echo "✅ Done! Live at https://ats-optimizer.pages.dev"
