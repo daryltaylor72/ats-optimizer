@@ -3,585 +3,951 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ATS Resume Optimizer</title>
+  <title>ResumeATS — Stop Getting Rejected Before Anyone Reads Your Resume</title>
+  <meta name="description" content="AI-powered resume scanner that scores your resume against ATS systems, finds what's blocking you, and rewrites it to get through.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0b0f;
-      --surface: #111318;
-      --surface2: #181b22;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.14);
-      --text: #e8eaf0;
-      --text2: #9299b0;
-      --text3: #5a6080;
-      --accent: #6c63ff;
-      --accent2: rgba(108,99,255,0.15);
-      --green: #22c55e;
-      --green2: rgba(34,197,94,0.12);
-      --yellow: #f59e0b;
-      --yellow2: rgba(245,158,11,0.12);
-      --red: #ef4444;
-      --red2: rgba(239,68,68,0.12);
-      --radius: 12px;
+      --bg:          #0a0b0f;
+      --surface:     #111318;
+      --surface2:    #181b22;
+      --surface3:    #1d2130;
+      --border:      rgba(255,255,255,0.07);
+      --border2:     rgba(255,255,255,0.13);
+      --text:        #edeef5;
+      --text2:       #8892aa;
+      --text3:       #484f68;
+      --accent:      #6c63ff;
+      --accent-dim:  rgba(108,99,255,0.14);
+      --accent-glow: rgba(108,99,255,0.28);
+      --red:         #ef4444;
+      --red-dim:     rgba(239,68,68,0.13);
+      --amber:       #f59e0b;
+      --green:       #22c55e;
+      --green-dim:   rgba(34,197,94,0.13);
+      --serif:       'DM Serif Display', Georgia, serif;
+      --mono:        'JetBrains Mono', monospace;
+      --sans:        'Nunito Sans', system-ui, sans-serif;
+      --radius:      16px;
+      --radius-sm:   10px;
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: var(--sans);
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
       line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
     }
 
-    /* ── Header ── */
-    .header {
-      border-bottom: 1px solid var(--border);
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    /* Grid texture */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(108,99,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108,99,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
     }
-    .logo {
-      width: 36px; height: 36px;
+
+    /* Grain overlay */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 28px; position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(10,11,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background 0.3s;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-mark {
+      width: 32px; height: 32px;
       background: var(--accent);
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+      font-family: var(--mono); font-size: 14px; font-weight: 700; color: #fff;
     }
-    .header h1 { font-size: 18px; font-weight: 600; }
-    .header p { font-size: 13px; color: var(--text2); margin-top: 1px; }
-
-    /* ── Layout ── */
-    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
-
-    /* ── Upload Card ── */
-    .upload-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px;
-      margin-bottom: 32px;
+    .nav-logo-text {
+      font-family: var(--serif); font-size: 20px; color: var(--text);
     }
-    .upload-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
-
-    .drop-zone {
-      border: 2px dashed var(--border2);
-      border-radius: 10px;
-      padding: 48px 24px;
-      text-align: center;
-      cursor: pointer;
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .btn-ghost {
+      font-family: var(--sans); font-size: 13px; font-weight: 600;
+      color: var(--text2); background: transparent;
+      border: 1px solid var(--border2); border-radius: 8px;
+      padding: 8px 16px; cursor: pointer; text-decoration: none;
       transition: all 0.2s;
-      position: relative;
-      margin-bottom: 20px;
     }
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--accent);
-      background: var(--accent2);
-    }
-    .drop-zone input[type="file"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-    }
-    .drop-icon { font-size: 40px; margin-bottom: 12px; }
-    .drop-text { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
-    .drop-sub { font-size: 13px; color: var(--text2); }
-    .file-selected {
-      background: var(--green2);
-      border-color: var(--green);
-    }
-    .file-selected .drop-icon::after { content: '✓'; }
-
-    .jd-section { margin-top: 16px; }
-    .jd-section label {
-      display: block; font-size: 13px; font-weight: 500;
-      color: var(--text2); margin-bottom: 8px;
-    }
-    .jd-section span {
-      font-size: 11px; color: var(--text3);
-      background: var(--surface2); padding: 2px 6px;
-      border-radius: 4px; margin-left: 6px;
-    }
-    textarea {
-      width: 100%; background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text);
-      font: 13px/1.5 -apple-system, sans-serif;
-      padding: 12px; resize: vertical; min-height: 100px;
-      transition: border-color 0.2s;
-    }
-    textarea:focus { outline: none; border-color: var(--accent); }
-    textarea::placeholder { color: var(--text3); }
-
-    .analyze-btn {
-      margin-top: 20px;
-      display: flex; align-items: center; gap: 10px;
-    }
-    button {
-      background: var(--accent);
-      color: #fff;
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+    .btn-accent {
+      font-family: var(--sans); font-size: 13px; font-weight: 700;
+      color: #fff; background: var(--accent);
       border: none; border-radius: 8px;
-      font: 600 14px/1 -apple-system, sans-serif;
-      padding: 12px 28px;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
+      padding: 8px 18px; cursor: pointer; text-decoration: none;
+      transition: all 0.2s;
     }
-    button:hover { opacity: 0.9; }
-    button:active { transform: scale(0.98); }
-    button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-accent:hover { opacity: 0.88; transform: translateY(-1px); }
 
-    .mode-badge {
-      font-size: 12px; color: var(--text2);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px; padding: 6px 12px;
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 120px 0 80px;
+      position: relative; overflow: hidden;
     }
-
-    /* ── Loading ── */
-    .loading {
-      display: none; text-align: center; padding: 60px 20px;
+    .hero-glow {
+      position: absolute; top: 20%; left: 35%;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .loading.active { display: block; }
-    .spinner {
-      width: 48px; height: 48px;
-      border: 3px solid var(--border2);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 20px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading p { color: var(--text2); font-size: 14px; }
-    .loading .step { font-size: 13px; color: var(--text3); margin-top: 8px; }
-
-    /* ── Results ── */
-    #results { display: none; }
-    #results.active { display: block; }
-
-    /* Score hero */
-    .score-hero {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px;
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      margin-bottom: 24px;
-    }
-    .score-ring {
-      flex-shrink: 0;
-      position: relative; width: 120px; height: 120px;
-    }
-    .score-ring svg { transform: rotate(-90deg); }
-    .score-ring circle {
-      fill: none; stroke-width: 10;
-      stroke-linecap: round;
-    }
-    .score-ring .bg { stroke: var(--surface2); }
-    .score-ring .fg { transition: stroke-dashoffset 1s ease; }
-    .score-num {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
-    .score-num .num { font-size: 32px; font-weight: 700; line-height: 1; }
-    .score-num .grade { font-size: 13px; color: var(--text2); margin-top: 2px; }
-    .score-info h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
-    .score-info p { color: var(--text2); font-size: 14px; max-width: 540px; }
-
-    /* Download btn */
-    .download-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--green);
-      color: #000; font-weight: 700;
-      text-decoration: none;
-      border-radius: 8px; padding: 10px 20px;
-      font-size: 14px; margin-top: 16px;
-      transition: opacity 0.2s;
-    }
-    .download-btn:hover { opacity: 0.85; }
-
-    /* Grid */
-    .results-grid {
+    .hero-inner {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 24px;
+      grid-template-columns: 1fr 420px;
+      gap: 60px; align-items: center;
     }
-    @media (max-width: 700px) { .results-grid { grid-template-columns: 1fr; } }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase;
+      background: var(--accent-dim); border: 1px solid rgba(108,99,255,0.25);
+      border-radius: 99px; padding: 5px 12px; margin-bottom: 28px;
+    }
+    .hero-eyebrow::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
-    .card {
+    .hero-headline {
+      font-family: var(--serif); font-size: clamp(44px, 5.5vw, 72px);
+      line-height: 1.08; color: var(--text); margin-bottom: 24px;
+      letter-spacing: -0.5px;
+    }
+    .hero-headline em { font-style: italic; color: var(--accent); }
+    .hero-sub {
+      font-size: 17px; color: var(--text2); line-height: 1.7;
+      max-width: 480px; margin-bottom: 36px; font-weight: 400;
+    }
+    .hero-sub strong { color: var(--text); font-weight: 600; }
+    .hero-ctas { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .btn-hero {
+      font-family: var(--sans); font-size: 15px; font-weight: 700;
+      padding: 14px 28px; border-radius: 10px; cursor: pointer;
+      text-decoration: none; border: none; transition: all 0.2s;
+    }
+    .btn-hero-primary {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 8px 32px rgba(108,99,255,0.3);
+    }
+    .btn-hero-primary:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 12px 40px rgba(108,99,255,0.4); }
+    .btn-hero-secondary {
+      background: var(--surface); color: var(--text2);
+      border: 1px solid var(--border2);
+    }
+    .btn-hero-secondary:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+    .hero-note { font-size: 12px; color: var(--text3); margin-top: 16px; }
+
+    /* Score ring widget */
+    .score-widget {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 28px;
+      position: relative; overflow: hidden;
+    }
+    .score-widget::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .widget-label {
+      font-family: var(--mono); font-size: 10px; font-weight: 500;
+      color: var(--text3); letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 24px; display: flex; align-items: center; gap: 8px;
+    }
+    .widget-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .ring-container {
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 28px; gap: 24px;
+    }
+    .ring-wrap { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 12; }
+    .ring-fill {
+      fill: none; stroke-width: 12; stroke-linecap: round;
+      stroke-dasharray: 377;
+      stroke-dashoffset: 377;
+      transition: stroke-dashoffset 1.8s cubic-bezier(0.4, 0, 0.2, 1),
+                  stroke 1.8s ease;
+    }
+    .ring-info {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ring-score {
+      font-family: var(--mono); font-size: 36px; font-weight: 700;
+      line-height: 1; transition: color 1.8s ease;
+    }
+    .ring-label { font-size: 11px; color: var(--text3); margin-top: 4px; }
+    .ring-arrow {
+      font-size: 28px; color: var(--text3); opacity: 0;
+      transition: opacity 0.5s ease 1s;
+    }
+    .ring-arrow.visible { opacity: 1; }
+
+    /* Category rows */
+    .categories { display: flex; flex-direction: column; gap: 10px; }
+    .cat-row {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px;
+    }
+    .cat-name { color: var(--text2); font-weight: 500; flex: 1; }
+    .cat-grade {
+      font-family: var(--mono); font-size: 12px; font-weight: 700;
+      min-width: 28px; text-align: center;
+      transition: all 0.4s ease;
+    }
+    .grade-bad { color: var(--red); }
+    .grade-ok  { color: var(--amber); }
+    .grade-good{ color: var(--green); }
+    .cat-arrow { font-size: 10px; color: var(--text3); margin: 0 8px; }
+
+    .widget-badge {
+      margin-top: 20px; padding: 10px 14px;
+      background: var(--green-dim); border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 8px; font-size: 12px; color: var(--green);
+      font-weight: 600; text-align: center;
+      opacity: 0; transition: opacity 0.5s ease 2.2s;
+    }
+    .widget-badge.visible { opacity: 1; }
+
+    /* ── STATS ── */
+    .stats { padding: 80px 0; position: relative; z-index: 1; }
+    .stats-inner {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
+      border-radius: 20px; padding: 60px 48px;
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 32px;
     }
-    .card h3 {
-      font-size: 13px; font-weight: 600;
-      color: var(--text2); text-transform: uppercase;
-      letter-spacing: 0.5px; margin-bottom: 16px;
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-family: var(--serif); font-size: 64px; line-height: 1;
+      margin-bottom: 12px;
     }
-
-    /* Category bars */
-    .cat-item { margin-bottom: 16px; }
-    .cat-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .cat-name { font-size: 13px; font-weight: 500; }
-    .cat-score { font-size: 13px; font-weight: 600; }
-    .bar-track {
-      height: 6px; background: var(--surface2);
-      border-radius: 99px; overflow: hidden;
-    }
-    .bar-fill {
-      height: 100%; border-radius: 99px;
-      transition: width 1s ease;
+    .stat-num.red  { color: var(--red); }
+    .stat-num.amber { color: var(--amber); }
+    .stat-num.accent { color: var(--accent); }
+    .stat-label { font-size: 15px; color: var(--text2); line-height: 1.5; }
+    .stat-label strong { color: var(--text); font-weight: 600; }
+    .stat-divider {
+      width: 1px; background: var(--border);
+      align-self: stretch; margin: 0 -16px;
     }
 
-    /* Issues & Recommendations */
-    .issue-list { list-style: none; }
-    .issue-list li {
-      display: flex; align-items: flex-start; gap: 10px;
-      font-size: 13px; padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      line-height: 1.5;
+    /* ── SECTION HEADER ── */
+    .section-tag {
+      display: inline-block;
+      font-family: var(--mono); font-size: 10px; font-weight: 500;
+      color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+      background: var(--accent-dim); border: 1px solid rgba(108,99,255,0.2);
+      border-radius: 99px; padding: 4px 12px; margin-bottom: 20px;
     }
-    .issue-list li:last-child { border-bottom: none; }
-    .issue-list li .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      flex-shrink: 0; margin-top: 6px;
+    .section-headline {
+      font-family: var(--serif); font-size: clamp(32px, 4vw, 52px);
+      line-height: 1.12; margin-bottom: 16px;
     }
-    .dot-red { background: var(--red); }
-    .dot-yellow { background: var(--yellow); }
-    .dot-green { background: var(--green); }
-    .dot-accent { background: var(--accent); }
+    .section-headline em { font-style: italic; color: var(--accent); }
+    .section-sub { font-size: 16px; color: var(--text2); max-width: 520px; line-height: 1.7; }
 
-    /* Keywords */
-    .keyword-pills { display: flex; flex-wrap: wrap; gap: 8px; }
-    .pill {
-      font-size: 12px; font-weight: 500;
-      padding: 4px 10px; border-radius: 99px;
+    /* ── HOW IT WORKS ── */
+    .how { padding: 100px 0; position: relative; z-index: 1; }
+    .how-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 2px; margin-top: 60px;
+    }
+    .how-step {
+      background: var(--surface); padding: 36px 32px;
+      border: 1px solid var(--border); position: relative;
+    }
+    .how-step:first-child { border-radius: 16px 0 0 16px; }
+    .how-step:last-child  { border-radius: 0 16px 16px 0; }
+    .how-step::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .how-step:hover::before { opacity: 1; }
+    .how-num {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 2px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .how-num::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .how-icon {
+      font-size: 32px; margin-bottom: 16px; display: block;
+    }
+    .how-title {
+      font-family: var(--serif); font-size: 22px; margin-bottom: 10px;
+    }
+    .how-desc { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+    /* ── FEATURES ── */
+    .features { padding: 100px 0; position: relative; z-index: 1; }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 16px; margin-top: 60px;
+    }
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px;
+      transition: all 0.2s; cursor: default; position: relative; overflow: hidden;
+    }
+    .feature-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--accent-dim), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(108,99,255,0.3); transform: translateY(-2px); }
+    .feature-card:hover::after { opacity: 1; }
+    .feature-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: var(--surface2); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 16px; position: relative; z-index: 1;
+    }
+    .feature-title {
+      font-family: var(--serif); font-size: 19px; margin-bottom: 8px;
+      position: relative; z-index: 1;
+    }
+    .feature-desc { font-size: 13px; color: var(--text2); line-height: 1.6; position: relative; z-index: 1; }
+
+    /* ── PRICING ── */
+    .pricing { padding: 100px 0; position: relative; z-index: 1; }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 16px; margin-top: 60px; align-items: start;
+    }
+    .price-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px;
+    }
+    .price-card.featured {
+      background: linear-gradient(135deg, var(--surface3), var(--surface2));
+      border-color: var(--accent);
+      box-shadow: 0 0 40px rgba(108,99,255,0.15);
+      transform: scale(1.03);
+    }
+    .price-badge {
+      display: inline-block;
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase;
+      background: var(--accent-dim); border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 99px; padding: 3px 10px; margin-bottom: 20px;
+    }
+    .price-name {
+      font-family: var(--serif); font-size: 24px; margin-bottom: 8px;
+    }
+    .price-tagline { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
+    .price-amount {
+      display: flex; align-items: flex-end; gap: 4px; margin-bottom: 24px;
+    }
+    .price-dollar { font-size: 20px; color: var(--text2); margin-bottom: 8px; }
+    .price-num {
+      font-family: var(--serif); font-size: 56px; line-height: 1; color: var(--text);
+    }
+    .price-period { font-size: 14px; color: var(--text3); margin-bottom: 8px; }
+    .price-divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .price-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .price-features li { font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 10px; }
+    .price-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .price-cta {
+      display: block; text-align: center; text-decoration: none;
+      padding: 13px; border-radius: 10px;
+      font-weight: 700; font-size: 14px; transition: all 0.2s; cursor: pointer;
+    }
+    .price-cta-accent {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.3);
+    }
+    .price-cta-accent:hover { opacity: 0.9; transform: translateY(-1px); }
+    .price-cta-ghost {
+      background: transparent; color: var(--text2);
       border: 1px solid var(--border2);
-      color: var(--text2);
     }
-    .pill.missing {
-      background: var(--red2); border-color: var(--red);
-      color: var(--red);
-    }
+    .price-cta-ghost:hover { color: var(--text); border-color: var(--accent); }
 
-    /* Analyze again */
-    .again-btn {
-      background: var(--surface2); color: var(--text);
+    /* ── FAQ ── */
+    .faq { padding: 100px 0; position: relative; z-index: 1; }
+    .faq-inner { max-width: 720px; margin: 60px auto 0; }
+    .faq-item {
+      border-bottom: 1px solid var(--border); overflow: hidden;
+    }
+    .faq-q {
+      width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+      padding: 22px 0; display: flex; justify-content: space-between; align-items: center;
+      font: 600 15px/1.5 var(--sans); color: var(--text);
+    }
+    .faq-q:hover { color: var(--accent); }
+    .faq-icon {
+      font-size: 20px; color: var(--text3); transition: transform 0.3s, color 0.2s;
+      flex-shrink: 0; margin-left: 20px;
+    }
+    .faq-item.open .faq-icon { transform: rotate(45deg); color: var(--accent); }
+    .faq-a {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+    }
+    .faq-a p {
+      font-size: 14px; color: var(--text2); line-height: 1.8;
+      padding-bottom: 20px;
+    }
+    .faq-item.open .faq-a { max-height: 300px; }
+
+    /* ── FINAL CTA ── */
+    .cta-section {
+      padding: 100px 0 120px; position: relative; z-index: 1;
+      text-align: center;
+    }
+    .cta-glow {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(108,99,255,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-inner {
+      background: var(--surface);
       border: 1px solid var(--border2);
-      margin-top: 8px;
+      border-radius: 24px; padding: 72px 48px;
+      position: relative; overflow: hidden;
     }
+    .cta-inner::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .cta-inner::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(108,99,255,0.3), transparent);
+    }
+    .cta-headline {
+      font-family: var(--serif); font-size: clamp(32px,4vw,52px);
+      line-height: 1.12; margin-bottom: 20px;
+    }
+    .cta-headline em { font-style: italic; color: var(--accent); }
+    .cta-sub { font-size: 16px; color: var(--text2); margin-bottom: 36px; }
+    .cta-buttons { display: flex; justify-content: center; gap: 12px; }
 
-    .error-box {
-      background: var(--red2); border: 1px solid var(--red);
-      border-radius: var(--radius); padding: 20px 24px;
-      color: var(--red); display: none;
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 28px; position: relative; z-index: 1;
     }
-    .error-box.active { display: block; }
+    .footer-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-logo {
+      font-family: var(--serif); font-size: 18px; color: var(--text2);
+      text-decoration: none;
+    }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      font-size: 13px; color: var(--text3); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text2); }
+    .footer-copy { font-size: 12px; color: var(--text3); }
+
+    /* Reveal animation */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.in-view { opacity: 1; transform: none; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .score-widget { max-width: 420px; }
+      .stats-inner { grid-template-columns: 1fr; }
+      .stat-divider { display: none; }
+      .how-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+      .price-card.featured { transform: none; }
+    }
+    @media (max-width: 600px) {
+      .hero { padding: 100px 0 60px; }
+      .cta-inner { padding: 48px 24px; }
+      .cta-buttons { flex-direction: column; }
+    }
   </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">📄</div>
-  <div>
-    <h1>ATS Resume Optimizer</h1>
-    <p>Score, analyze, and optimize your resume for applicant tracking systems</p>
-  </div>
-</div>
-
-<div class="container">
-
-  <!-- Upload Form -->
-  <div class="upload-card" id="uploadCard">
-    <h2>Upload Your Resume</h2>
-
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".pdf,.doc,.docx" />
-      <div class="drop-icon" id="dropIcon">📎</div>
-      <div class="drop-text" id="dropText">Drop your resume here or click to browse</div>
-      <div class="drop-sub" id="dropSub">PDF or DOCX — up to 10MB</div>
+  <!-- NAV -->
+  <nav>
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-mark">R</div>
+      <span class="nav-logo-text">ResumeATS</span>
+    </a>
+    <div class="nav-links">
+      <a href="#pricing" class="btn-ghost">Pricing</a>
+      <a href="/tool" class="btn-ghost">Try Free</a>
+      <a href="#pricing" class="btn-accent">Get Started</a>
     </div>
+  </nav>
 
-    <div class="jd-section">
-      <label>
-        Job Description
-        <span>optional but recommended</span>
-      </label>
-      <textarea id="jdInput" placeholder="Paste the job description here to get keyword matching and targeted optimization..."></textarea>
-    </div>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="container">
+      <div class="hero-inner">
+        <div class="hero-content">
+          <div class="hero-eyebrow">AI-Powered Resume Analysis</div>
+          <h1 class="hero-headline">
+            Your resume is failing<br>
+            before anyone<br>
+            <em>reads it.</em>
+          </h1>
+          <p class="hero-sub">
+            <strong>75% of resumes are filtered by ATS software</strong> before a human ever sees them. Find exactly why yours is being rejected — and get an AI-rewritten version that gets through.
+          </p>
+          <div class="hero-ctas">
+            <a href="/tool" class="btn-hero btn-hero-primary">Scan My Resume Free →</a>
+            <a href="#how-it-works" class="btn-hero btn-hero-secondary">See How It Works</a>
+          </div>
+          <p class="hero-note">No account needed. Results in under 30 seconds.</p>
+        </div>
 
-    <div class="analyze-btn">
-      <button id="analyzeBtn" onclick="analyze()" disabled>Analyze Resume</button>
-      <span class="mode-badge" id="modeBadge">Generic ATS Scan</span>
-    </div>
-  </div>
+        <!-- Score Widget Demo -->
+        <div class="score-widget" id="scoreWidget">
+          <div class="widget-label">Resume Diagnostic</div>
 
-  <!-- Error -->
-  <div class="error-box" id="errorBox"></div>
+          <div class="ring-container">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 140 140" width="140" height="140">
+                <circle class="ring-bg" cx="70" cy="70" r="60" />
+                <circle class="ring-fill" id="ringFill" cx="70" cy="70" r="60"
+                  stroke="#ef4444" stroke-dashoffset="377" />
+              </svg>
+              <div class="ring-info">
+                <span class="ring-score grade-bad" id="ringScore">43</span>
+                <span class="ring-label">ATS Score</span>
+              </div>
+            </div>
+            <div class="ring-arrow" id="ringArrow">→</div>
+            <div class="ring-wrap">
+              <svg viewBox="0 0 140 140" width="140" height="140">
+                <circle class="ring-bg" cx="70" cy="70" r="60" />
+                <circle class="ring-fill" id="ringFill2" cx="70" cy="70" r="60"
+                  stroke="#22c55e" stroke-dashoffset="377" />
+              </svg>
+              <div class="ring-info">
+                <span class="ring-score" id="ringScore2" style="color:#22c55e">91</span>
+                <span class="ring-label">After Fix</span>
+              </div>
+            </div>
+          </div>
 
-  <!-- Loading -->
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <p>Analyzing your resume...</p>
-    <div class="step" id="loadingStep">Extracting text and evaluating ATS compatibility</div>
-  </div>
+          <div class="categories">
+            <div class="cat-row">
+              <span class="cat-name">Formatting</span>
+              <span class="cat-grade grade-bad" id="g1a">F</span>
+              <span class="cat-arrow">→</span>
+              <span class="cat-grade grade-good" id="g1b" style="opacity:0.3">A+</span>
+            </div>
+            <div class="cat-row">
+              <span class="cat-name">Keywords</span>
+              <span class="cat-grade grade-bad" id="g2a">D−</span>
+              <span class="cat-arrow">→</span>
+              <span class="cat-grade grade-good" id="g2b" style="opacity:0.3">B+</span>
+            </div>
+            <div class="cat-row">
+              <span class="cat-name">Section Structure</span>
+              <span class="cat-grade grade-ok" id="g3a">C</span>
+              <span class="cat-arrow">→</span>
+              <span class="cat-grade grade-good" id="g3b" style="opacity:0.3">A</span>
+            </div>
+            <div class="cat-row">
+              <span class="cat-name">Contact Info</span>
+              <span class="cat-grade grade-ok" id="g4a">B−</span>
+              <span class="cat-arrow">→</span>
+              <span class="cat-grade grade-good" id="g4b" style="opacity:0.3">A+</span>
+            </div>
+          </div>
 
-  <!-- Results -->
-  <div id="results">
-
-    <!-- Score Hero -->
-    <div class="score-hero">
-      <div class="score-ring">
-        <svg viewBox="0 0 120 120" width="120" height="120">
-          <circle class="bg" cx="60" cy="60" r="52" />
-          <circle class="fg" id="scoreArc" cx="60" cy="60" r="52"
-            stroke-dasharray="326.7" stroke-dashoffset="326.7" />
-        </svg>
-        <div class="score-num">
-          <span class="num" id="scoreNum">—</span>
-          <span class="grade" id="scoreGrade"></span>
+          <div class="widget-badge" id="widgetBadge">
+            ✓ Resume optimized — ready to submit
+          </div>
         </div>
       </div>
-      <div class="score-info">
-        <h2 id="scoreHeading">ATS Score</h2>
-        <p id="scoreSummary"></p>
-        <a class="download-btn" id="downloadBtn" href="#" download>
-          ⬇ Download Optimized Resume
-        </a>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="container">
+      <div class="stats-inner reveal">
+        <div class="stat-item">
+          <div class="stat-num red">75%</div>
+          <div class="stat-label">of resumes are <strong>rejected by ATS</strong> before a recruiter ever sees them</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num amber">7 sec</div>
+          <div class="stat-label">average time a recruiter spends on a resume <strong>if it gets through</strong></div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num accent">3×</div>
+          <div class="stat-label">more callbacks for resumes <strong>optimized for ATS</strong> vs. standard formatting</div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- Category Scores + Issues -->
-    <div class="results-grid">
-      <div class="card" id="categoriesCard">
-        <h3>Category Breakdown</h3>
-        <div id="categories"></div>
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how-it-works">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-tag">How It Works</span>
+        <h2 class="section-headline">From upload to <em>optimized</em><br>in three steps.</h2>
+        <p class="section-sub">No account. No waiting. Just upload and get a complete diagnosis in under 30 seconds.</p>
       </div>
-
-      <div class="card">
-        <h3>Critical Issues</h3>
-        <ul class="issue-list" id="criticalIssues"></ul>
+      <div class="how-grid reveal">
+        <div class="how-step">
+          <div class="how-num">01</div>
+          <span class="how-icon">📎</span>
+          <h3 class="how-title">Upload Your Resume</h3>
+          <p class="how-desc">Drop your PDF or DOCX. Optionally paste a job description to get a targeted keyword match and role-specific rewrite.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-num">02</div>
+          <span class="how-icon">🔬</span>
+          <h3 class="how-title">AI Scans & Scores</h3>
+          <p class="how-desc">Our AI analyzes your resume across 6 categories — formatting, keywords, structure, content quality, contact info, and length — against real ATS criteria.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-num">03</div>
+          <span class="how-icon">⬇</span>
+          <h3 class="how-title">Download the Fix</h3>
+          <p class="how-desc">Get your score, a detailed breakdown of every issue, and a fully rewritten ATS-optimized version ready to submit.</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="results-grid">
-      <div class="card">
-        <h3>Recommendations</h3>
-        <ul class="issue-list" id="recommendations"></ul>
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-tag">What You Get</span>
+        <h2 class="section-headline">Everything you need to<br><em>get past the bots.</em></h2>
       </div>
-
-      <div class="card" id="keywordsCard">
-        <h3>Missing Keywords</h3>
-        <div class="keyword-pills" id="keywords"></div>
+      <div class="features-grid reveal">
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3 class="feature-title">ATS Score</h3>
+          <p class="feature-desc">A 0–100 score that shows exactly where you stand against common ATS filters, with a letter grade and overall assessment.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <h3 class="feature-title">Category Breakdown</h3>
+          <p class="feature-desc">Scored across 6 dimensions — formatting, keywords, structure, content quality, contact info, and length — so you know exactly what to fix.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔑</div>
+          <h3 class="feature-title">Keyword Gap Analysis</h3>
+          <p class="feature-desc">See every important keyword your resume is missing. In job-match mode, compares directly against the job description.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚠️</div>
+          <h3 class="feature-title">Critical Issues</h3>
+          <p class="feature-desc">Flags the specific formatting and content problems — tables, columns, missing headers, buried contact info — that cause ATS to reject or misparse resumes.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3 class="feature-title">Job Match Mode</h3>
+          <p class="feature-desc">Paste any job description and get a targeted analysis — keyword alignment score, missing terms, and a rewrite optimized for that specific role.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✍️</div>
+          <h3 class="feature-title">AI Rewrite</h3>
+          <p class="feature-desc">Get a complete, AI-rewritten version of your resume — clean ATS-friendly formatting, improved phrasing, stronger action verbs, downloadable instantly.</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <button class="again-btn" onclick="reset()">← Analyze Another Resume</button>
-  </div>
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="reveal" style="text-align:center">
+        <span class="section-tag">Pricing</span>
+        <h2 class="section-headline">Simple, honest pricing.</h2>
+        <p class="section-sub" style="margin:0 auto">No subscriptions required. Pay only for what you use.</p>
+      </div>
+      <div class="pricing-grid reveal">
 
-</div>
+        <div class="price-card">
+          <div class="price-name">Single Scan</div>
+          <div class="price-tagline">Try it once, risk-free</div>
+          <div class="price-amount">
+            <span class="price-dollar">$</span>
+            <span class="price-num">5</span>
+          </div>
+          <div class="price-divider"></div>
+          <ul class="price-features">
+            <li>1 complete ATS analysis</li>
+            <li>Full score + category breakdown</li>
+            <li>Keyword gap report</li>
+            <li>AI-rewritten resume download</li>
+            <li>Job match mode included</li>
+          </ul>
+          <a href="#stripe-checkout" class="price-cta price-cta-ghost">Get One Scan</a>
+        </div>
 
-<script>
-  const fileInput = document.getElementById('fileInput');
-  const dropZone = document.getElementById('dropZone');
-  const dropIcon = document.getElementById('dropIcon');
-  const dropText = document.getElementById('dropText');
-  const dropSub = document.getElementById('dropSub');
-  const analyzeBtn = document.getElementById('analyzeBtn');
-  const modeBadge = document.getElementById('modeBadge');
-  const jdInput = document.getElementById('jdInput');
+        <div class="price-card featured">
+          <div class="price-badge">Most Popular</div>
+          <div class="price-name">Starter Pack</div>
+          <div class="price-tagline">For active job seekers</div>
+          <div class="price-amount">
+            <span class="price-dollar">$</span>
+            <span class="price-num">19</span>
+          </div>
+          <div class="price-divider"></div>
+          <ul class="price-features">
+            <li>5 complete ATS analyses</li>
+            <li>Full score + category breakdown</li>
+            <li>Keyword gap report</li>
+            <li>AI-rewritten resume download</li>
+            <li>Job match mode included</li>
+            <li>Use across multiple roles</li>
+          </ul>
+          <a href="#stripe-checkout" class="price-cta price-cta-accent">Get 5 Scans — $19</a>
+        </div>
 
-  let selectedFile = null;
+        <div class="price-card">
+          <div class="price-name">Pro</div>
+          <div class="price-tagline">Unlimited for 30 days</div>
+          <div class="price-amount">
+            <span class="price-dollar">$</span>
+            <span class="price-num">39</span>
+            <span class="price-period">/mo</span>
+          </div>
+          <div class="price-divider"></div>
+          <ul class="price-features">
+            <li>Unlimited ATS analyses</li>
+            <li>Full score + category breakdown</li>
+            <li>Keyword gap report</li>
+            <li>AI-rewritten resume download</li>
+            <li>Job match mode included</li>
+            <li>Priority processing</li>
+          </ul>
+          <a href="#stripe-checkout" class="price-cta price-cta-ghost">Go Unlimited</a>
+        </div>
 
-  // File selection
-  fileInput.addEventListener('change', e => {
-    if (e.target.files[0]) selectFile(e.target.files[0]);
-  });
+      </div>
+    </div>
+  </section>
 
-  dropZone.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropZone.classList.add('drag-over');
-  });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('drag-over');
-    if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
-  });
+  <!-- FAQ -->
+  <section class="faq">
+    <div class="container">
+      <div class="reveal" style="text-align:center">
+        <span class="section-tag">FAQ</span>
+        <h2 class="section-headline">Questions answered.</h2>
+      </div>
+      <div class="faq-inner reveal">
 
-  function selectFile(file) {
-    selectedFile = file;
-    dropZone.classList.add('file-selected');
-    dropIcon.textContent = '✅';
-    dropText.textContent = file.name;
-    dropSub.textContent = `${(file.size / 1024).toFixed(0)} KB — ready to analyze`;
-    analyzeBtn.disabled = false;
-  }
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            What exactly is an ATS, and why does it matter?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><p>An Applicant Tracking System (ATS) is software that companies use to screen resumes before a human ever sees them. It parses your resume, extracts information, and scores it against the job requirements. If your resume uses incompatible formatting, missing keywords, or non-standard headers, the ATS may score it low — and your application gets filtered out automatically. Most large companies and many mid-sized ones use ATS software.</p></div>
+        </div>
 
-  jdInput.addEventListener('input', () => {
-    modeBadge.textContent = jdInput.value.trim()
-      ? '🎯 Job-Match Mode'
-      : 'Generic ATS Scan';
-  });
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How is this different from just checking keywords?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><p>Most tools just count keyword matches. ResumeATS goes deeper — it analyzes formatting and parsability (tables, columns, and graphics that ATS systems choke on), section structure, contact info placement, content quality, action verb strength, and achievement quantification. Then it delivers a full rewrite, not just a list of words to add.</p></div>
+        </div>
 
-  const loadingSteps = [
-    'Extracting text from your resume...',
-    'Checking ATS compatibility and formatting...',
-    'Analyzing section structure and content...',
-    'Scoring keywords and skills...',
-    'Writing your optimized resume...',
-  ];
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            What file types do you support?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><p>We support PDF and DOCX files up to 10MB. PDF is recommended — it gives the most accurate parse and is the most common format. The AI-rewritten resume is delivered as a clean plain-text download that you can paste into any word processor or submit directly.</p></div>
+        </div>
 
-  async function analyze() {
-    if (!selectedFile) return;
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Will the AI change the facts on my resume?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><p>No. The rewrite preserves all your real experience, companies, dates, and achievements. It improves how they're written — stronger action verbs, cleaner formatting, better keyword integration — without inventing or embellishing anything. You should always review the rewrite before submitting.</p></div>
+        </div>
 
-    document.getElementById('uploadCard').style.display = 'none';
-    document.getElementById('errorBox').classList.remove('active');
-    document.getElementById('results').classList.remove('active');
-    document.getElementById('loading').classList.add('active');
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Is my resume data stored or shared?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><p>Your resume is processed in real time and not stored on our servers after analysis. We don't sell, share, or retain your personal data. The optimized version is generated on-demand and delivered directly to your browser.</p></div>
+        </div>
 
-    // Cycle through loading steps
-    let stepIdx = 0;
-    const stepEl = document.getElementById('loadingStep');
-    const stepInterval = setInterval(() => {
-      stepIdx = (stepIdx + 1) % loadingSteps.length;
-      stepEl.textContent = loadingSteps[stepIdx];
-    }, 2500);
+      </div>
+    </div>
+  </section>
 
-    try {
-      const fd = new FormData();
-      fd.append('resume', selectedFile);
-      fd.append('job_description', jdInput.value);
+  <!-- FINAL CTA -->
+  <section class="cta-section">
+    <div class="cta-glow"></div>
+    <div class="container">
+      <div class="cta-inner reveal">
+        <h2 class="cta-headline">Stop sending resumes<br>into the <em>void.</em></h2>
+        <p class="cta-sub">Find out why you're not hearing back — and fix it in minutes.</p>
+        <div class="cta-buttons">
+          <a href="/tool" class="btn-hero btn-hero-primary">Scan My Resume Free →</a>
+          <a href="#pricing" class="btn-hero btn-hero-secondary">See Pricing</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-      const res = await fetch('/analyze', { method: 'POST', body: fd });
-      const data = await res.json();
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="footer-logo">ResumeATS</a>
+      <div class="footer-links">
+        <a href="/tool">Try Free</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <span class="footer-copy">© 2026 ResumeATS. All rights reserved.</span>
+    </div>
+  </footer>
 
-      if (!res.ok) {
-        throw new Error(data.detail || 'Analysis failed');
+  <script>
+    // ── Score Ring Animation ──
+    const CIRC = 2 * Math.PI * 60; // ~377
+
+    function scoreToOffset(score) {
+      return CIRC - (score / 100) * CIRC;
+    }
+
+    function animateCounter(el, from, to, duration, colorFrom, colorTo) {
+      const start = performance.now();
+      function step(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        const val = Math.round(from + (to - from) * eased);
+        el.textContent = val;
+        if (t < 1) requestAnimationFrame(step);
       }
-
-      clearInterval(stepInterval);
-      renderResults(data);
-    } catch (err) {
-      clearInterval(stepInterval);
-      document.getElementById('loading').classList.remove('active');
-      document.getElementById('uploadCard').style.display = 'block';
-      const errorBox = document.getElementById('errorBox');
-      errorBox.textContent = `Error: ${err.message}`;
-      errorBox.classList.add('active');
-    }
-  }
-
-  function scoreColor(score) {
-    if (score >= 80) return '#22c55e';
-    if (score >= 60) return '#f59e0b';
-    return '#ef4444';
-  }
-
-  function renderResults(data) {
-    document.getElementById('loading').classList.remove('active');
-    document.getElementById('results').classList.add('active');
-
-    const score = data.score || 0;
-    const color = scoreColor(score);
-
-    // Animated ring
-    const arc = document.getElementById('scoreArc');
-    const circumference = 326.7;
-    arc.style.stroke = color;
-    setTimeout(() => {
-      arc.style.strokeDashoffset = circumference - (circumference * score / 100);
-    }, 100);
-
-    document.getElementById('scoreNum').textContent = score;
-    document.getElementById('scoreNum').style.color = color;
-    document.getElementById('scoreGrade').textContent = `Grade ${data.grade || ''}`;
-    document.getElementById('scoreHeading').textContent = `ATS Score: ${score}/100`;
-    document.getElementById('scoreSummary').textContent = data.summary || '';
-
-    // Download optimized resume as .txt
-    if (data.optimized_resume) {
-      const blob = new Blob([data.optimized_resume], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const btn = document.getElementById('downloadBtn');
-      btn.href = url;
-      btn.download = 'optimized_resume.txt';
-      btn.style.display = 'inline-flex';
+      requestAnimationFrame(step);
     }
 
-    // Categories
-    const catEl = document.getElementById('categories');
-    catEl.innerHTML = '';
-    (data.categories || []).forEach(cat => {
-      const c = scoreColor(cat.score);
-      catEl.innerHTML += `
-        <div class="cat-item">
-          <div class="cat-header">
-            <span class="cat-name">${cat.name}</span>
-            <span class="cat-score" style="color:${c}">${cat.score}</span>
-          </div>
-          <div class="bar-track">
-            <div class="bar-fill" style="width:0%;background:${c}" data-width="${cat.score}%"></div>
-          </div>
-        </div>`;
+    let heroAnimated = false;
+    function animateHero() {
+      if (heroAnimated) return;
+      heroAnimated = true;
+
+      const ring1 = document.getElementById('ringFill');
+      const ring2 = document.getElementById('ringFill2');
+      const score1 = document.getElementById('ringScore');
+      const arrow  = document.getElementById('ringArrow');
+      const badge  = document.getElementById('widgetBadge');
+      const afterGrades = ['g1b','g2b','g3b','g4b'];
+      const beforeGrades = ['g1a','g2a','g3a','g4a'];
+
+      // Animate "before" ring (43, red)
+      setTimeout(() => {
+        ring1.style.strokeDashoffset = scoreToOffset(43);
+        ring1.style.stroke = '#ef4444';
+      }, 300);
+
+      // Show arrow + animate "after" ring (91, green)
+      setTimeout(() => {
+        arrow.classList.add('visible');
+        ring2.style.strokeDashoffset = scoreToOffset(91);
+        ring2.style.stroke = '#22c55e';
+        ring2.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1)';
+      }, 700);
+
+      // Illuminate after grades
+      setTimeout(() => {
+        afterGrades.forEach((id, i) => {
+          setTimeout(() => {
+            document.getElementById(id).style.opacity = '1';
+          }, i * 120);
+        });
+      }, 1400);
+
+      // Show badge
+      setTimeout(() => badge.classList.add('visible'), 2200);
+    }
+
+    // Trigger hero animation after short delay on load
+    window.addEventListener('load', () => setTimeout(animateHero, 600));
+
+    // ── Scroll Reveal ──
+    const revealEls = document.querySelectorAll('.reveal');
+    const revealObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in-view');
+          revealObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => revealObs.observe(el));
+
+    // ── FAQ Accordion ──
+    function toggleFaq(btn) {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+
+    // ── Nav scroll effect ──
+    window.addEventListener('scroll', () => {
+      document.querySelector('nav').style.background =
+        window.scrollY > 40
+          ? 'rgba(10,11,15,0.97)'
+          : 'rgba(10,11,15,0.85)';
     });
-    // Animate bars
-    setTimeout(() => {
-      document.querySelectorAll('.bar-fill').forEach(b => {
-        b.style.width = b.dataset.width;
-      });
-    }, 150);
-
-    // Critical issues
-    const ciEl = document.getElementById('criticalIssues');
-    ciEl.innerHTML = '';
-    const issues = data.critical_issues || [];
-    if (issues.length === 0) {
-      ciEl.innerHTML = '<li><span class="dot dot-green"></span>No critical issues found</li>';
-    } else {
-      issues.forEach(issue => {
-        ciEl.innerHTML += `<li><span class="dot dot-red"></span>${issue}</li>`;
-      });
-    }
-
-    // Recommendations
-    const recEl = document.getElementById('recommendations');
-    recEl.innerHTML = '';
-    (data.recommendations || []).forEach(rec => {
-      recEl.innerHTML += `<li><span class="dot dot-accent"></span>${rec}</li>`;
-    });
-
-    // Keywords
-    const kwEl = document.getElementById('keywords');
-    kwEl.innerHTML = '';
-    const kws = data.keyword_gaps || [];
-    if (kws.length === 0) {
-      kwEl.innerHTML = '<span style="font-size:13px;color:var(--text2)">No major keyword gaps detected</span>';
-    } else {
-      kws.forEach(kw => {
-        kwEl.innerHTML += `<span class="pill missing">${kw}</span>`;
-      });
-    }
-  }
-
-  function reset() {
-    selectedFile = null;
-    fileInput.value = '';
-    dropZone.classList.remove('file-selected', 'drag-over');
-    dropIcon.textContent = '📎';
-    dropText.textContent = 'Drop your resume here or click to browse';
-    dropSub.textContent = 'PDF or DOCX — up to 10MB';
-    analyzeBtn.disabled = true;
-    jdInput.value = '';
-    modeBadge.textContent = 'Generic ATS Scan';
-    document.getElementById('uploadCard').style.display = 'block';
-    document.getElementById('results').classList.remove('active');
-    document.getElementById('errorBox').classList.remove('active');
-  }
-</script>
+  </script>
 </body>
 </html>

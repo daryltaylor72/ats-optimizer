@@ -23,6 +23,7 @@ export async function onRequestPost(context) {
 
   const resumeFile = formData.get('resume');
   const jobDescription = formData.get('job_description') || '';
+  const includeRewrite = formData.get('include_rewrite') === 'true';
 
   if (!resumeFile || typeof resumeFile === 'string') {
     return json({ detail: 'No resume file uploaded' }, 400);
@@ -49,7 +50,7 @@ export async function onRequestPost(context) {
           type: 'document',
           source: { type: 'base64', media_type: 'application/pdf', data: base64 }
         },
-        { type: 'text', text: buildPrompt(null, jobDescription) }
+        { type: 'text', text: buildPrompt(null, jobDescription, includeRewrite) }
       ]
     }];
   } else if (ext === 'docx' || ext === 'doc') {
@@ -66,7 +67,7 @@ export async function onRequestPost(context) {
     }
     messages = [{
       role: 'user',
-      content: buildPrompt(resumeText, jobDescription)
+      content: buildPrompt(resumeText, jobDescription, includeRewrite)
     }];
   } else {
     return json({ detail: 'Unsupported file type. Please upload PDF or DOCX.' }, 400);
@@ -84,8 +85,8 @@ export async function onRequestPost(context) {
         'anthropic-beta': 'pdfs-2024-09-25'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        model: 'claude-opus-4-6',
+        max_tokens: includeRewrite ? 16000 : 8192,
         messages
       })
     });
@@ -101,23 +102,33 @@ export async function onRequestPost(context) {
   const claudeData = await claudeResponse.json();
   const rawText = claudeData.content?.[0]?.text || '';
 
-  // Strip markdown code fences
-  const cleaned = rawText
-    .replace(/^```(?:json)?\n?/, '')
-    .replace(/\n?```$/, '')
+  // Extract JSON — strip markdown fences, then find the outermost { } block
+  let cleaned = rawText
+    .replace(/^```(?:json)?\s*/m, '')
+    .replace(/\s*```\s*$/m, '')
     .trim();
 
+  // If still not valid JSON, try to extract the first complete {...} object
   let result;
   try {
     result = JSON.parse(cleaned);
   } catch {
-    return json({ detail: 'Failed to parse AI response as JSON' }, 500);
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        result = JSON.parse(match[0]);
+      } catch {
+        return json({ detail: 'Failed to parse AI response as JSON', raw: cleaned.substring(0, 200) }, 500);
+      }
+    } else {
+      return json({ detail: 'Failed to parse AI response as JSON', raw: cleaned.substring(0, 200) }, 500);
+    }
   }
 
   return json(result, 200);
 }
 
-function buildPrompt(resumeText, jobDescription) {
+function buildPrompt(resumeText, jobDescription, includeRewrite) {
   const jdSection = jobDescription?.trim()
     ? `\n## Job Description to Match Against\n${jobDescription.trim()}\n`
     : '';
@@ -129,6 +140,14 @@ function buildPrompt(resumeText, jobDescription) {
   const jobMatchNote = jobDescription?.trim()
     ? ', and optimize for the job description'
     : '';
+
+  const rewriteField = includeRewrite
+    ? `  "optimized_resume": "<full rewritten resume, plain text, ATS-optimized>"`
+    : `  "optimized_resume": null`;
+
+  const rewriteInstruction = includeRewrite
+    ? `\nFor optimized_resume: rewrite the full resume in clean ATS-friendly plain text. Use standard section headers (CONTACT, SUMMARY, EXPERIENCE, EDUCATION, SKILLS). Keep all real experience but improve phrasing, add relevant keywords${jobMatchNote}. Format dates consistently. Use strong action verbs.`
+    : `\nSet optimized_resume to null.`;
 
   return `You are an expert ATS (Applicant Tracking System) resume optimizer. Analyze the resume${resumeText ? ' below' : ' in the attached document'} and provide a detailed ATS optimization report.
 ${jdSection}${resumeSection}
@@ -151,7 +170,7 @@ Respond with a JSON object following this exact schema:
   "critical_issues": ["<issue 1>", "<issue 2>"],
   "recommendations": ["<actionable recommendation 1>", "<rec 2>"],
   "keyword_gaps": ["<missing keyword>"],
-  "optimized_resume": "<full rewritten resume, plain text, ATS-optimized>"
+${rewriteField}
 }
 
 Categories to evaluate:
@@ -161,8 +180,7 @@ Categories to evaluate:
 4. Content Quality (action verbs, quantifiable achievements, bullet length)
 5. Keywords & Skills${jobDescription?.trim() ? ' (keyword match vs job description)' : ' (general industry keywords)'}
 6. Length & Density (appropriate length for experience level)
-
-For optimized_resume: rewrite the full resume in clean ATS-friendly plain text. Use standard section headers (CONTACT, SUMMARY, EXPERIENCE, EDUCATION, SKILLS). Keep all real experience but improve phrasing, add relevant keywords${jobMatchNote}. Format dates consistently. Use strong action verbs.
+${rewriteInstruction}
 
 Return ONLY the JSON object, no other text.`;
 }
