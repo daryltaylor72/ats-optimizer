@@ -792,14 +792,14 @@
   function updateScansDisplay(count) {
     const badge = document.getElementById('scansBadge');
     if (!badge) return;
-    const label = count === 9999 ? '∞ scans remaining' : `${count} scan${count === 1 ? '' : 's'} remaining`;
+    const label = count >= 9000 ? '∞ scans remaining' : `${count} scan${count === 1 ? '' : 's'} remaining`;
     badge.textContent = label;
     badge.classList.add('show');
   }
 
   window.addEventListener('DOMContentLoaded', () => {
     const scans = localStorage.getItem('ats_scans');
-    if (scans !== null) updateScansDisplay(parseInt(scans) === 9999 ? 9999 : parseInt(scans));
+    if (scans !== null) updateScansDisplay(parseInt(scans));
   });
 
   function reset() {
