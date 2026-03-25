@@ -7,8 +7,10 @@
 - **Hosting:** Cloudflare Pages (`ats-optimizer.pages.dev`)
 - **Repo:** `git@github.com:daryltaylor72/ats-optimizer.git`
 
-## Deploying
-After making any code changes, ALWAYS run the deploy script:
+## Deploying — CRITICAL RULE
+**NEVER just `git push`. You MUST run the deploy script or changes won't go live.**
+
+After making any code changes, ALWAYS run:
 
 ```bash
 cd /Users/daryltaylor/Projects/ats-optimizer-web
@@ -17,9 +19,11 @@ cd /Users/daryltaylor/Projects/ats-optimizer-web
 
 This will:
 1. Commit and push to GitHub
-2. Deploy to Cloudflare Pages
+2. Deploy directly to Cloudflare Pages via wrangler
 
 The live URL is **https://ats-optimizer.pages.dev** — changes go live in ~30 seconds.
+
+There is NO GitHub → Cloudflare auto-deploy. `git push` alone does nothing for the live site.
 
 ## Environment
 - `ANTHROPIC_API_KEY` is set as a Cloudflare Pages secret (already configured)
