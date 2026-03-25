@@ -281,6 +281,53 @@
       color: var(--red); display: none;
     }
     .error-box.active { display: block; }
+
+    /* ── Paywall Modal ── */
+    .paywall-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+      z-index: 200; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .paywall-overlay.active { display: flex; }
+    .paywall-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 20px; padding: 40px;
+      max-width: 420px; width: 100%;
+      text-align: center; position: relative;
+    }
+    .paywall-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .paywall-icon { font-size: 36px; margin-bottom: 16px; }
+    .paywall-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .paywall-card > p { font-size: 14px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+    .paywall-plans { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .paywall-plan {
+      border: 1px solid var(--border2); border-radius: 12px;
+      padding: 14px 18px; display: flex;
+      justify-content: space-between; align-items: center;
+      cursor: pointer; transition: all 0.15s;
+      text-decoration: none; color: var(--text);
+    }
+    .paywall-plan:hover { border-color: var(--accent); background: var(--accent2); }
+    .paywall-plan.featured { border-color: var(--accent); background: var(--accent2); }
+    .plan-name { font-weight: 600; font-size: 14px; text-align: left; }
+    .plan-detail { font-size: 12px; color: var(--text2); margin-top: 2px; text-align: left; }
+    .plan-price { font-size: 18px; font-weight: 700; color: var(--accent); }
+    .paywall-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; color: var(--text3);
+      font-size: 20px; cursor: pointer; padding: 4px; line-height: 1;
+      border-radius: 4px; transition: color 0.15s;
+    }
+    .paywall-close:hover { color: var(--text); background: none; }
+    .scans-badge {
+      display: none; margin-top: 10px;
+      font-size: 12px; color: var(--text2);
+    }
+    .scans-badge.show { display: block; }
   </style>
 </head>
 <body>
@@ -294,6 +341,40 @@
 </div>
 
 <div class="container">
+
+  <!-- Paywall Modal -->
+  <div class="paywall-overlay" id="paywallOverlay">
+    <div class="paywall-card">
+      <button class="paywall-close" onclick="closePaywall()">✕</button>
+      <div class="paywall-icon">🔒</div>
+      <h2>Unlock Your Optimized Resume</h2>
+      <p>Your ATS score is ready. Purchase a scan to download your AI-rewritten resume, optimized to get past screening systems.</p>
+      <div class="paywall-plans">
+        <a href="#" onclick="checkout('single');return false;" class="paywall-plan">
+          <div>
+            <div class="plan-name">Single Scan</div>
+            <div class="plan-detail">1 rewrite download</div>
+          </div>
+          <div class="plan-price">$5</div>
+        </a>
+        <a href="#" onclick="checkout('starter');return false;" class="paywall-plan featured">
+          <div>
+            <div class="plan-name">Starter Pack ⭐</div>
+            <div class="plan-detail">5 rewrite downloads — best value</div>
+          </div>
+          <div class="plan-price">$19</div>
+        </a>
+        <a href="#" onclick="checkout('pro');return false;" class="paywall-plan">
+          <div>
+            <div class="plan-name">Pro — Unlimited</div>
+            <div class="plan-detail">30 days, unlimited rewrites</div>
+          </div>
+          <div class="plan-price">$39/mo</div>
+        </a>
+      </div>
+      <p style="font-size:12px;color:var(--text3)">Secure payment via Stripe · No subscription required (except Pro)</p>
+    </div>
+  </div>
 
   <!-- Upload Form -->
   <div class="upload-card" id="uploadCard">
@@ -352,6 +433,7 @@
         <button class="download-btn" id="downloadBtn" onclick="getRewrite()">
           ⬇ Download Optimized Resume
         </button>
+        <div class="scans-badge" id="scansBadge"></div>
       </div>
     </div>
 
@@ -562,7 +644,10 @@
   }
 
   async function getRewrite() {
+    const token = localStorage.getItem('ats_token');
+    if (!token) { showPaywall(); return; }
     if (!selectedFile) return;
+
     const btn = document.getElementById('downloadBtn');
     btn.textContent = '⏳ Generating…';
     btn.disabled = true;
@@ -570,10 +655,27 @@
       const fd = new FormData();
       fd.append('resume', selectedFile);
       fd.append('job_description', jdInput.value);
-      fd.append('include_rewrite', 'true');
-      const res = await fetch('/analyze', { method: 'POST', body: fd });
+      fd.append('token', token);
+      const res = await fetch('/rewrite', { method: 'POST', body: fd });
       const data = await res.json();
+
+      if (res.status === 401 || res.status === 402) {
+        localStorage.removeItem('ats_token');
+        localStorage.removeItem('ats_plan');
+        localStorage.removeItem('ats_scans');
+        btn.textContent = '⬇ Download Optimized Resume';
+        btn.disabled = false;
+        showPaywall();
+        return;
+      }
+
       if (!res.ok || !data.optimized_resume) throw new Error(data.detail || 'Rewrite failed');
+
+      if (data.scans_remaining !== undefined) {
+        localStorage.setItem('ats_scans', data.scans_remaining);
+        updateScansDisplay(data.scans_remaining);
+      }
+
       const blob = new Blob([data.optimized_resume], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -586,6 +688,42 @@
       alert('Error: ' + err.message);
     }
   }
+
+  function showPaywall() {
+    document.getElementById('paywallOverlay').classList.add('active');
+  }
+
+  function closePaywall() {
+    document.getElementById('paywallOverlay').classList.remove('active');
+  }
+
+  async function checkout(plan) {
+    try {
+      const res = await fetch('/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || 'Checkout failed');
+      window.location.href = data.url;
+    } catch (err) {
+      alert('Something went wrong: ' + err.message);
+    }
+  }
+
+  function updateScansDisplay(count) {
+    const badge = document.getElementById('scansBadge');
+    if (!badge) return;
+    const label = count === 9999 ? '∞ scans remaining' : `${count} scan${count === 1 ? '' : 's'} remaining`;
+    badge.textContent = label;
+    badge.classList.add('show');
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const scans = localStorage.getItem('ats_scans');
+    if (scans !== null) updateScansDisplay(parseInt(scans) === 9999 ? 9999 : parseInt(scans));
+  });
 
   function reset() {
     selectedFile = null;

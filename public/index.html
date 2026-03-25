@@ -730,7 +730,7 @@
             <li>AI-rewritten resume download</li>
             <li>Job match mode included</li>
           </ul>
-          <a href="#stripe-checkout" class="price-cta price-cta-ghost">Get One Scan</a>
+          <a href="#" onclick="checkout('single');return false;" class="price-cta price-cta-ghost">Get One Scan</a>
         </div>
 
         <div class="price-card featured">
@@ -750,7 +750,7 @@
             <li>Job match mode included</li>
             <li>Use across multiple roles</li>
           </ul>
-          <a href="#stripe-checkout" class="price-cta price-cta-accent">Get 5 Scans — $19</a>
+          <a href="#" onclick="checkout('starter');return false;" class="price-cta price-cta-accent">Get 5 Scans — $19</a>
         </div>
 
         <div class="price-card">
@@ -770,7 +770,7 @@
             <li>Job match mode included</li>
             <li>Priority processing</li>
           </ul>
-          <a href="#stripe-checkout" class="price-cta price-cta-ghost">Go Unlimited</a>
+          <a href="#" onclick="checkout('pro');return false;" class="price-cta price-cta-ghost">Go Unlimited</a>
         </div>
 
       </div>
@@ -948,6 +948,22 @@
           ? 'rgba(10,11,15,0.97)'
           : 'rgba(10,11,15,0.85)';
     });
+
+    // ── Stripe Checkout ──
+    async function checkout(plan) {
+      try {
+        const res = await fetch('/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) throw new Error(data.error || 'Checkout failed');
+        window.location.href = data.url;
+      } catch (err) {
+        alert('Something went wrong: ' + err.message);
+      }
+    }
   </script>
 </body>
 </html>
