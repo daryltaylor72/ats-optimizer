@@ -43,6 +43,17 @@
       align-items: center;
       gap: 12px;
     }
+    .home-link {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 500; color: var(--text2);
+      text-decoration: none;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .home-link:hover { color: var(--text1); border-color: var(--text2); }
     .logo {
       width: 36px; height: 36px;
       background: var(--accent);
@@ -368,6 +379,7 @@
     <h1>ATS Resume Optimizer</h1>
     <p>Score, analyze, and optimize your resume for applicant tracking systems</p>
   </div>
+  <a href="/" class="home-link">← Home</a>
 </div>
 
 <div class="container">
