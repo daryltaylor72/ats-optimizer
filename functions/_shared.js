@@ -3,11 +3,13 @@
  * Underscore prefix prevents this file from being treated as a route by Cloudflare Pages.
  *
  * Exports:
- *  - PLAN_SCANS         : map of plan key → scan count
- *  - PLAN_LABELS        : map of plan key → { name, desc, price }
- *  - generateToken()    : cryptographically secure hex token
- *  - issueToken()       : creates + stores token in KV, returns tokenData
+ *  - PLAN_SCANS              : map of plan key → scan count
+ *  - PLAN_LABELS             : map of plan key → { name, desc, price }
+ *  - generateToken()         : cryptographically secure hex token
+ *  - issueToken()            : creates + stores token in KV, returns tokenData
  *  - verifyStripeSignature() : HMAC-SHA256 webhook signature check (Web Crypto API)
+ *  - acquireScanMutex()      : distributed KV lock before scan decrement
+ *  - releaseScanMutex()      : releases the KV lock after decrement
  */
 
 export const PLAN_SCANS = { single: 1, starter: 5, pro: 9999 };
@@ -132,6 +134,71 @@ export async function verifyStripeSignature(rawBody, signatureHeader, secret, to
   return matched
     ? { ok: true }
     : { ok: false, reason: 'signature_mismatch' };
+}
+
+/**
+ * Acquires a short-lived distributed mutex on a token's scan count.
+ *
+ * Problem: KV has no atomic compare-and-swap, so two simultaneous requests can
+ * both read scans_remaining > 0, both pass the check, and both decrement —
+ * consuming 2 scans for the price of 1.
+ *
+ * Solution (optimistic mutex):
+ *  1. Write a unique mutex ID to `mutex:${token}` with a short TTL.
+ *  2. Wait briefly for KV replication to settle.
+ *  3. Re-read the key — if it's still our ID, we own the lock.
+ *     If it's someone else's ID, we lost the race → return acquired:false → 429.
+ *
+ * This shrinks the race window from the full AI processing duration (~15s)
+ * down to the ~50ms KV settlement window.
+ *
+ * IMPORTANT: Always pair with releaseScanMutex() in a finally block.
+ *
+ * @param {KVNamespace} kv
+ * @param {string} token
+ * @param {number} [ttlSecs=60] - Lock TTL; must exceed max rewrite processing time.
+ * @returns {Promise<{acquired: boolean, mutexId: string|null}>}
+ */
+export async function acquireScanMutex(kv, token, ttlSecs = 60) {
+  const mutexKey = `mutex:${token}`;
+
+  // Fast-path: if a mutex already exists, bail immediately
+  const existing = await kv.get(mutexKey);
+  if (existing) {
+    return { acquired: false, mutexId: null };
+  }
+
+  // Write our claim
+  const mutexId = crypto.randomUUID();
+  await kv.put(mutexKey, mutexId, { expirationTtl: ttlSecs });
+
+  // Brief pause: lets any concurrent write that overlapped with ours propagate.
+  // KV is strongly consistent per-datacenter for reads-after-writes from the
+  // same Worker invocation, but we're racing a *different* invocation.
+  await new Promise(r => setTimeout(r, 50));
+
+  // Verify we still hold the lock
+  const current = await kv.get(mutexKey);
+  if (current !== mutexId) {
+    return { acquired: false, mutexId: null };
+  }
+
+  return { acquired: true, mutexId };
+}
+
+/**
+ * Releases the scan mutex for a token.
+ * Safe to call even if the mutex has already expired or was never held.
+ *
+ * @param {KVNamespace} kv
+ * @param {string} token
+ */
+export async function releaseScanMutex(kv, token) {
+  try {
+    await kv.delete(`mutex:${token}`);
+  } catch {
+    // Deletion failure is non-fatal — the TTL will clean it up within 60s
+  }
 }
 
 /**
