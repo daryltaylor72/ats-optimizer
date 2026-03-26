@@ -108,8 +108,8 @@
         <p class="sub">Payment confirmed. Your scans are ready to use.</p>
         <div class="token-box">
           <div class="token-label">${planNames[data.plan] || data.plan}</div>
-          <div class="scans-count">${data.scans_remaining === 9999 ? '∞' : data.scans_remaining}</div>
-          <div class="scans-label">scan${data.scans_remaining === 1 ? '' : 's'} available</div>
+          <div class="scans-count">${data.scans_remaining >= 9000 ? 'Unlimited' : data.scans_remaining}</div>
+          <div class="scans-label">${data.scans_remaining >= 9000 ? 'scans for 30 days' : `scan${data.scans_remaining === 1 ? '' : 's'} available`}</div>
         </div>
         <a href="/tool" class="cta">Start Analyzing →</a>
       `;

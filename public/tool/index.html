@@ -124,6 +124,26 @@
     textarea:focus { outline: none; border-color: var(--accent); }
     textarea::placeholder { color: var(--text3); }
 
+    .email-section { margin-top: 16px; }
+    .email-section label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: var(--text2); margin-bottom: 8px;
+    }
+    .email-section span {
+      font-size: 11px; color: var(--text3);
+      background: var(--surface2); padding: 2px 6px;
+      border-radius: 4px; margin-left: 6px;
+    }
+    .email-section input[type="email"] {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font: 13px/1.5 -apple-system, sans-serif;
+      padding: 12px; transition: border-color 0.2s;
+    }
+    .email-section input[type="email"]:focus { outline: none; border-color: var(--accent); }
+    .email-section input[type="email"]::placeholder { color: var(--text3); }
+
     .analyze-btn {
       margin-top: 20px;
       display: flex; align-items: center; gap: 10px;
@@ -369,6 +389,44 @@
       padding: 10px 20px; cursor: pointer; transition: opacity 0.2s;
     }
     .unlock-btn:hover { opacity: 0.85; background: var(--accent); }
+
+    /* Rewrite teaser */
+    .rewrite-teaser {
+      background: linear-gradient(135deg, rgba(108,99,255,0.08) 0%, rgba(108,99,255,0.04) 100%);
+      border: 1px solid rgba(108,99,255,0.25);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-top: 24px;
+    }
+    .rewrite-teaser-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .rewrite-teaser-badge {
+      background: var(--accent); color: #fff;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+      padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
+    }
+    .rewrite-teaser-title {
+      font-size: 14px; font-weight: 600; color: var(--text);
+    }
+    .rewrite-teaser-items {
+      list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;
+    }
+    .rewrite-teaser-items li {
+      font-size: 13px; color: var(--text2);
+      display: flex; align-items: flex-start; gap: 8px; line-height: 1.5;
+    }
+    .rewrite-teaser-items li::before {
+      content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    }
+    .rewrite-teaser-cta {
+      width: 100%; padding: 12px;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 8px; font: 600 14px/1 -apple-system, sans-serif;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .rewrite-teaser-cta:hover { opacity: 0.88; }
   </style>
 </head>
 <body>
@@ -409,12 +467,12 @@
         <a href="#" onclick="checkout('pro');return false;" class="paywall-plan">
           <div>
             <div class="plan-name">Pro — Unlimited</div>
-            <div class="plan-detail">30 days, unlimited rewrites</div>
+            <div class="plan-detail">Unlimited rewrites · Billed monthly · Cancel anytime</div>
           </div>
           <div class="plan-price">$39/mo</div>
         </a>
       </div>
-      <p style="font-size:12px;color:var(--text3)">Secure payment via Stripe · No subscription required (except Pro)</p>
+      <p style="font-size:12px;color:var(--text3)">Secure payment via Stripe · Pro plan billed monthly, cancel anytime</p>
     </div>
   </div>
 
@@ -437,10 +495,36 @@
       <textarea id="jdInput" placeholder="Paste the job description here to get keyword matching and targeted optimization..."></textarea>
     </div>
 
+    <div class="email-section">
+      <label>
+        Email Address
+        <span>required to continue</span>
+      </label>
+      <input type="email" id="emailInput" placeholder="Enter your email to unlock analysis" />
+      <p id="emailHint" style="font-size:12px;color:var(--text3);margin-top:6px;">We'll send your results here — no spam, ever.</p>
+    </div>
+
     <div class="analyze-btn">
       <button id="analyzeBtn" onclick="analyze()" disabled>Analyze Resume</button>
       <span class="mode-badge" id="modeBadge">Generic ATS Scan</span>
     </div>
+  </div>
+
+  <!-- Recovery Panel -->
+  <div style="text-align:center;margin-bottom:16px;">
+    <button onclick="showRecovery()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">Already purchased? Recover your scans</button>
+  </div>
+  <div id="recoveryPanel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="font-size:14px;font-weight:600;margin:0;">Recover Access</h3>
+      <button onclick="hideRecovery()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0;line-height:1;">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 16px;">Enter the email you used when you purchased and we'll send you a link to restore your scans.</p>
+    <div style="display:flex;gap:10px;">
+      <input type="email" id="recoveryEmail" placeholder="your@email.com" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font:13px/1.5 -apple-system,sans-serif;padding:10px 12px;" />
+      <button id="recoveryBtn" onclick="sendRecovery()" style="padding:10px 20px;white-space:nowrap;">Send Recovery Link</button>
+    </div>
+    <p id="recoveryMsg" style="font-size:12px;margin:10px 0 0;min-height:18px;"></p>
   </div>
 
   <!-- Error -->
@@ -476,6 +560,9 @@
           ⬇ Download Optimized Resume
         </button>
         <div class="scans-badge" id="scansBadge"></div>
+        <div id="cancelLink" style="display:none;margin-top:8px;">
+          <a href="mailto:support@deeptierlabs.com?subject=Cancel%20Pro%20Subscription" style="font-size:12px;color:var(--text3);text-decoration:none;">Cancel subscription</a>
+        </div>
       </div>
     </div>
 
@@ -518,8 +605,22 @@
   const analyzeBtn = document.getElementById('analyzeBtn');
   const modeBadge = document.getElementById('modeBadge');
   const jdInput = document.getElementById('jdInput');
+  const emailInput = document.getElementById('emailInput');
 
   let selectedFile = null;
+
+  // Restore saved email
+  const savedEmail = localStorage.getItem('ats_email');
+  if (savedEmail) emailInput.value = savedEmail;
+
+  function updateAnalyzeBtn() {
+    analyzeBtn.disabled = !selectedFile;
+  }
+
+  emailInput.addEventListener('input', () => {
+    localStorage.setItem('ats_email', emailInput.value.trim());
+    updateAnalyzeBtn();
+  });
 
   // File selection
   fileInput.addEventListener('change', e => {
@@ -543,7 +644,7 @@
     dropIcon.textContent = '✅';
     dropText.textContent = file.name;
     dropSub.textContent = `${(file.size / 1024).toFixed(0)} KB — ready to analyze`;
-    analyzeBtn.disabled = false;
+    updateAnalyzeBtn();
   }
 
   jdInput.addEventListener('input', () => {
@@ -563,6 +664,20 @@
   async function analyze() {
     if (!selectedFile) return;
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+      emailInput.style.borderColor = 'var(--red)';
+      emailInput.focus();
+      const hint = document.getElementById('emailHint');
+      hint.style.color = 'var(--red)';
+      hint.textContent = 'Please enter your email to continue.';
+      setTimeout(() => {
+        emailInput.style.borderColor = '';
+        hint.style.color = 'var(--text3)';
+        hint.textContent = "We'll send your results here — no spam, ever.";
+      }, 3000);
+      return;
+    }
+
     document.getElementById('uploadCard').style.display = 'none';
     document.getElementById('errorBox').classList.remove('active');
     document.getElementById('results').classList.remove('active');
@@ -580,6 +695,9 @@
       const fd = new FormData();
       fd.append('resume', selectedFile);
       fd.append('job_description', jdInput.value);
+      fd.append('email', emailInput.value.trim());
+      const storedToken = localStorage.getItem('ats_token');
+      if (storedToken) fd.append('token', storedToken);
 
       const res = await fetch('/analyze', { method: 'POST', body: fd });
       const data = await res.json();
@@ -702,7 +820,44 @@
       lockCard(document.getElementById('categoriesCard'));
       lockCard(document.getElementById('recommendations').closest('.card'));
       lockCard(document.getElementById('keywords').closest('.card'));
+
+      // Show rewrite teaser — specific fixes the AI would make
+      showRewriteTeaser(data);
     }
+  }
+
+  function showRewriteTeaser(data) {
+    // Build 3 specific teaser items from the analysis data
+    const fixes = [];
+    const kws = (data.keyword_gaps || []).slice(0, 3);
+    if (kws.length > 0) {
+      fixes.push(`Add missing keywords your target roles require: <strong>${kws.join(', ')}</strong>`);
+    }
+    const issues = (data.critical_issues || []).slice(0, 2);
+    issues.forEach(issue => {
+      const text = typeof issue === 'string' ? issue : (issue.issue || issue.description || '');
+      if (text) fixes.push(text.length > 80 ? text.slice(0, 80) + '…' : text);
+    });
+    if (fixes.length < 3) {
+      fixes.push('Reformat work history and summary section for ATS parsing compatibility');
+    }
+
+    const resultsEl = document.getElementById('results');
+    if (!resultsEl || document.getElementById('rewriteTeaser')) return;
+    const teaser = document.createElement('div');
+    teaser.id = 'rewriteTeaser';
+    teaser.className = 'rewrite-teaser';
+    teaser.innerHTML = `
+      <div class="rewrite-teaser-header">
+        <span class="rewrite-teaser-badge">AI Preview</span>
+        <span class="rewrite-teaser-title">Your optimized resume would fix these issues</span>
+      </div>
+      <ul class="rewrite-teaser-items">
+        ${fixes.map(f => `<li>${f}</li>`).join('')}
+      </ul>
+      <button class="rewrite-teaser-cta" onclick="showPaywall()">Get Your Optimized Resume — from $5 →</button>
+    `;
+    resultsEl.appendChild(teaser);
   }
 
   function lockCard(card) {
@@ -733,6 +888,7 @@
       fd.append('resume', selectedFile);
       fd.append('job_description', jdInput.value);
       fd.append('token', token);
+      fd.append('email', emailInput.value.trim() || localStorage.getItem('ats_email') || '');
       const res = await fetch('/rewrite', { method: 'POST', body: fd });
       const data = await res.json();
 
@@ -792,15 +948,64 @@
   function updateScansDisplay(count) {
     const badge = document.getElementById('scansBadge');
     if (!badge) return;
-    const label = count >= 9000 ? '∞ scans remaining' : `${count} scan${count === 1 ? '' : 's'} remaining`;
+    const label = count >= 9000 ? 'Unlimited scans remaining' : `${count} scan${count === 1 ? '' : 's'} remaining`;
     badge.textContent = label;
     badge.classList.add('show');
+    const cancelLink = document.getElementById('cancelLink');
+    if (cancelLink) cancelLink.style.display = count >= 9000 ? 'block' : 'none';
   }
 
   window.addEventListener('DOMContentLoaded', () => {
+    // Restore token from URL param (magic link from receipt/recovery email)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    if (urlToken) {
+      localStorage.setItem('ats_token', urlToken);
+      // Clean the token out of the URL without reloading
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     const scans = localStorage.getItem('ats_scans');
     if (scans !== null) updateScansDisplay(parseInt(scans));
+    updateAnalyzeBtn();
+
+    // Auto-open recovery panel if linked from "Restore Access"
+    if (window.location.hash === '#recover') {
+      window.history.replaceState({}, '', window.location.pathname);
+      showRecovery();
+    }
   });
+
+  // ── Access Recovery ──
+  function showRecovery() {
+    document.getElementById('recoveryPanel').style.display = 'block';
+    document.getElementById('recoveryEmail').focus();
+  }
+  function hideRecovery() {
+    document.getElementById('recoveryPanel').style.display = 'none';
+  }
+  async function sendRecovery() {
+    const email = document.getElementById('recoveryEmail').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('recoveryMsg').textContent = 'Please enter a valid email.';
+      document.getElementById('recoveryMsg').style.color = 'var(--red)';
+      return;
+    }
+    const btn = document.getElementById('recoveryBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const res = await fetch('/recover', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+      const data = await res.json().catch(() => ({}));
+      if (data._debug) console.error('Recovery error:', data._debug);
+      document.getElementById('recoveryMsg').textContent = 'Check your inbox — we sent a link to restore your scans.';
+      document.getElementById('recoveryMsg').style.color = 'var(--green)';
+      btn.textContent = 'Sent ✓';
+    } catch {
+      document.getElementById('recoveryMsg').textContent = 'Something went wrong. Please try again.';
+      document.getElementById('recoveryMsg').style.color = 'var(--red)';
+      btn.disabled = false; btn.textContent = 'Send Recovery Link';
+    }
+  }
 
   function reset() {
     selectedFile = null;
@@ -809,9 +1014,9 @@
     dropIcon.textContent = '📎';
     dropText.textContent = 'Drop your resume here or click to browse';
     dropSub.textContent = 'PDF or DOCX — up to 10MB';
-    analyzeBtn.disabled = true;
     jdInput.value = '';
     modeBadge.textContent = 'Generic ATS Scan';
+    updateAnalyzeBtn();
     document.getElementById('uploadCard').style.display = 'block';
     document.getElementById('results').classList.remove('active');
     document.getElementById('errorBox').classList.remove('active');

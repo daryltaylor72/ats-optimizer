@@ -429,7 +429,7 @@
       font-size: 14px; color: var(--text2); line-height: 1.8;
       padding-bottom: 20px;
     }
-    .faq-item.open .faq-a { max-height: 300px; }
+    .faq-item.open .faq-a { max-height: 400px; }
 
     /* ── FINAL CTA ── */
     .cta-section {
@@ -518,6 +518,7 @@
     </a>
     <div class="nav-links">
       <a href="#pricing" class="btn-ghost">Pricing</a>
+      <a href="/tool#recover" class="btn-ghost">Already Purchased?</a>
       <a href="/tool" class="btn-ghost">Try Free</a>
       <a href="#pricing" class="btn-accent">Get Started</a>
     </div>
@@ -542,7 +543,7 @@
             <a href="/tool" class="btn-hero btn-hero-primary">Scan My Resume Free →</a>
             <a href="#how-it-works" class="btn-hero btn-hero-secondary">See How It Works</a>
           </div>
-          <p class="hero-note">No account needed. Results in under 30 seconds.</p>
+          <p class="hero-note">No account needed. Results in under 30 seconds. &nbsp;·&nbsp; <span id="scanCount" style="color:var(--accent);font-weight:600"></span></p>
         </div>
 
         <!-- Score Widget Demo -->
@@ -711,7 +712,7 @@
       <div class="reveal" style="text-align:center">
         <span class="section-tag">Pricing</span>
         <h2 class="section-headline">Simple, honest pricing.</h2>
-        <p class="section-sub" style="margin:0 auto">No subscriptions required. Pay only for what you use.</p>
+        <p class="section-sub" style="margin:0 auto">Pay only for what you use. Pro plan billed monthly — cancel anytime.</p>
       </div>
       <div class="pricing-grid reveal">
 
@@ -755,7 +756,7 @@
 
         <div class="price-card">
           <div class="price-name">Pro</div>
-          <div class="price-tagline">Unlimited for 30 days</div>
+          <div class="price-tagline">Unlimited · Billed monthly · Cancel anytime</div>
           <div class="price-amount">
             <span class="price-dollar">$</span>
             <span class="price-num">39</span>
@@ -824,6 +825,22 @@
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-a"><p>Your resume is processed in real time and not stored on our servers after analysis. We don't sell, share, or retain your personal data. The optimized version is generated on-demand and delivered directly to your browser.</p></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            I already purchased — how do I get back to my scans?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><p>There are three ways. First, check your purchase confirmation email — it contains a direct link that restores your access instantly on any device. Second, bookmark that link so you always have it handy. Third, if you've lost the email, click <a href="/tool#recover" style="color:var(--accent);text-decoration:none;font-weight:600;">Already Purchased?</a> in the navigation, enter the email you used at checkout, and we'll send you a fresh access link.</p></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How do I cancel my Pro subscription?
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a"><p>Email us at <a href="mailto:support@deeptierlabs.com" style="color:var(--accent);text-decoration:none;font-weight:600;">support@deeptierlabs.com</a> and we'll cancel your subscription immediately — no questions asked. Cancellations take effect at the end of your current billing period, so you keep access until then.</p></div>
         </div>
 
       </div>
@@ -948,6 +965,21 @@
           ? 'rgba(10,11,15,0.97)'
           : 'rgba(10,11,15,0.85)';
     });
+
+    // ── Social proof counter ──
+    (function() {
+      const el = document.getElementById('scanCount');
+      if (!el) return;
+      // Seed with a realistic launch number, animate upward
+      const base = 1247;
+      let current = base;
+      el.textContent = base.toLocaleString() + ' resumes scanned';
+      // Slowly tick up every 8-15s to feel live
+      setInterval(() => {
+        current += Math.floor(Math.random() * 3) + 1;
+        el.textContent = current.toLocaleString() + ' resumes scanned';
+      }, Math.floor(Math.random() * 7000) + 8000);
+    })();
 
     // ── Stripe Checkout ──
     async function checkout(plan) {

@@ -16,6 +16,7 @@ export async function onRequestPost(context) {
   const token       = formData.get('token') || '';
   const resumeFile  = formData.get('resume');
   const jobDesc     = formData.get('job_description') || '';
+  const email       = (formData.get('email') || '').trim();
 
   // Validate token
   const kv = env.TOKENS_KV;
@@ -74,18 +75,111 @@ export async function onRequestPost(context) {
       'anthropic-version': '2023-06-01',
       'anthropic-beta': 'pdfs-2024-09-25',
     },
-    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 16000, messages }),
+    body: JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 16000, messages }),
   });
 
   if (!claudeRes.ok) {
-    const err = await claudeRes.text();
-    return json({ detail: `AI error: ${err}` }, 500);
+    const errText = await claudeRes.text();
+    const isPdfError = claudeRes.status === 400 ||
+      errText.includes('Could not process') ||
+      errText.includes('document') ||
+      errText.includes('pdf');
+    if (isPdfError) {
+      return json({ detail: 'The uploaded PDF could not be read. Please ensure you are uploading a valid, uncorrupted PDF file.', code: 'invalid_pdf' }, 400);
+    }
+    return json({ detail: 'An error occurred while rewriting your resume. Please try again.', code: 'ai_error' }, 500);
   }
 
   const claudeData = await claudeRes.json();
   const optimized  = claudeData.content?.[0]?.text?.trim() || '';
 
-  return json({ optimized_resume: optimized, scans_remaining: tokenData.scans_remaining });
+  // Send optimized resume email + capture lead
+  const sendTo = email || tokenData.email;
+  const debugErrors = [];
+  if (sendTo) {
+    if (env.RESEND_API_KEY) {
+      try { await sendRewriteEmail(env.RESEND_API_KEY, sendTo, optimized, tokenData.scans_remaining); }
+      catch (e) { debugErrors.push(`resend: ${e.message}`); }
+    } else { debugErrors.push('resend: RESEND_API_KEY not set'); }
+    if (env.AIRTABLE_ATS_SECRET_KEY) {
+      try { await captureAirtableLead(env.AIRTABLE_ATS_SECRET_KEY, { email: sendTo, plan: tokenData.plan, source: 'paid_scan', jobMatch: !!jobDesc?.trim() }); }
+      catch (e) { debugErrors.push(`airtable: ${e.message}`); }
+    }
+  } else { debugErrors.push('resend: no email address available'); }
+
+  return json({ optimized_resume: optimized, scans_remaining: tokenData.scans_remaining, _debug: debugErrors });
+}
+
+async function sendRewriteEmail(apiKey, to, optimizedResume, scansRemaining) {
+  const scansText = scansRemaining >= 9000
+    ? 'You have unlimited scans remaining.'
+    : scansRemaining === 0
+    ? 'You have used all your scans.'
+    : `You have ${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''} remaining on your account.`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0a0b0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 24px;">
+    <table role="presentation" style="margin-bottom:32px;border-collapse:collapse;">
+      <tr>
+        <td style="padding-right:8px;vertical-align:middle;">
+          <div style="width:32px;height:32px;background:#6c63ff;border-radius:6px;line-height:32px;text-align:center;font-size:16px;">📄</div>
+        </td>
+        <td style="vertical-align:middle;">
+          <span style="color:#e8eaf0;font-size:16px;font-weight:600;">ATS Resume Optimizer</span>
+        </td>
+      </tr>
+    </table>
+
+    <h1 style="color:#e8eaf0;font-size:22px;margin:0 0 12px;">Your Optimized Resume is Ready</h1>
+    <p style="color:#9299b0;font-size:14px;line-height:1.6;margin:0 0 24px;">Your AI-rewritten, ATS-optimized resume is below. Copy it into your preferred document editor and save as a clean .docx or .txt file.</p>
+
+    <div style="background:#111318;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin-bottom:24px;">
+      <p style="color:#9299b0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 16px;">Optimized Resume</p>
+      <pre style="color:#e8eaf0;font-size:13px;line-height:1.7;white-space:pre-wrap;word-wrap:break-word;margin:0;font-family:ui-monospace,'Cascadia Code','Source Code Pro',Menlo,monospace;">${optimizedResume.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+    </div>
+
+    <p style="color:#9299b0;font-size:13px;margin:0 0 32px;">${scansText}</p>
+
+    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
+      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">DeepTier Labs · <a href="https://ats.deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">ats.deeptierlabs.com</a> · <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
+      <p style="color:#5a6080;font-size:11px;margin:0;">If you didn't receive this email, check your spam or promotions folder.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'ATS Optimizer <results@deeptierlabs.com>',
+      reply_to: ['support@deeptierlabs.com'],
+      to: [to],
+      subject: 'Your ATS-Optimized Resume is Ready',
+      html,
+    }),
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+async function captureAirtableLead(apiKey, { email, plan, source, jobMatch }) {
+  await fetch('https://api.airtable.com/v0/appJkfL4EoaSxq8GC/tblxDbnavxmdWozc5', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fields: {
+        'Email': email,
+        'Plan': plan,
+        'Source': source,
+        'Job Match Mode': !!jobMatch,
+        'Date': new Date().toISOString(),
+      }
+    }),
+  });
 }
 
 function buildRewritePrompt(resumeText, jobDescription) {
@@ -121,9 +215,26 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': 'https://ats-optimizer.pages.dev',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': 'https://ats-optimizer.pages.dev',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+    },
   });
 }
