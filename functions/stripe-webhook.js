@@ -123,12 +123,21 @@ async function handleCheckoutCompleted(session, kv, env) {
   const customerEmail = session.customer_details?.email || session.customer_email || null;
   const tokenData = await issueToken(kv, planKey, sessionId, customerEmail);
 
-  // Send receipt email (best-effort — don't fail the webhook if email fails)
+  // Send receipt email to customer (best-effort)
   if (customerEmail && env.RESEND_API_KEY) {
     try {
       await sendReceiptEmail(env.RESEND_API_KEY, customerEmail, planKey, tokenData.scans_remaining, tokenData.token);
     } catch (e) {
       console.warn('[stripe-webhook] Receipt email failed:', e.message);
+    }
+  }
+
+  // Send internal sale notification to support@deeptierlabs.com (best-effort)
+  if (env.RESEND_API_KEY) {
+    try {
+      await sendInternalNotification(env.RESEND_API_KEY, planKey, customerEmail, sessionId, tokenData.token);
+    } catch (e) {
+      console.warn('[stripe-webhook] Internal notification failed:', e.message);
     }
   }
 
@@ -236,6 +245,69 @@ async function handleSubscriptionDeleted(subscription, kv) {
 // ────────────────────────────────────────────────────────────────────────────
 // Email
 // ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Internal sale notification — sent to support@deeptierlabs.com on every confirmed payment.
+ * Best-effort only; never blocks the webhook response.
+ */
+async function sendInternalNotification(apiKey, planKey, customerEmail, sessionId, token) {
+  const plan      = PLAN_LABELS[planKey] || { name: planKey, price: 'unknown' };
+  const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short' });
+  const tokenPreview = token ? `${token.slice(0, 8)}...` : 'n/a';
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:480px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e4e4e7;">
+    <div style="background:#6c63ff;padding:20px 24px;">
+      <p style="margin:0;color:#fff;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">ATS Optimizer</p>
+      <h1 style="margin:4px 0 0;color:#fff;font-size:20px;font-weight:700;">💰 New Sale</h1>
+    </div>
+    <div style="padding:24px;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr>
+          <td style="padding:8px 0;color:#71717a;width:40%;">Plan</td>
+          <td style="padding:8px 0;color:#18181b;font-weight:600;">${plan.name} — ${plan.price}</td>
+        </tr>
+        <tr style="border-top:1px solid #f4f4f5;">
+          <td style="padding:8px 0;color:#71717a;">Customer</td>
+          <td style="padding:8px 0;color:#18181b;">${customerEmail || '<em style="color:#a1a1aa;">anonymous</em>'}</td>
+        </tr>
+        <tr style="border-top:1px solid #f4f4f5;">
+          <td style="padding:8px 0;color:#71717a;">Token</td>
+          <td style="padding:8px 0;color:#18181b;font-family:monospace;">${tokenPreview}</td>
+        </tr>
+        <tr style="border-top:1px solid #f4f4f5;">
+          <td style="padding:8px 0;color:#71717a;">Session</td>
+          <td style="padding:8px 0;color:#18181b;font-family:monospace;font-size:12px;">${sessionId}</td>
+        </tr>
+        <tr style="border-top:1px solid #f4f4f5;">
+          <td style="padding:8px 0;color:#71717a;">Time (ET)</td>
+          <td style="padding:8px 0;color:#18181b;">${timestamp}</td>
+        </tr>
+      </table>
+    </div>
+    <div style="background:#f4f4f5;padding:12px 24px;text-align:center;">
+      <a href="https://dashboard.stripe.com/payments" style="color:#6c63ff;font-size:12px;text-decoration:none;">View in Stripe →</a>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from:    'ATS Optimizer <results@deeptierlabs.com>',
+      to:      ['support@deeptierlabs.com'],
+      subject: `💰 New sale: ${plan.name} — ${customerEmail || 'anonymous'}`,
+      html,
+    }),
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
 
 async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
   const plan      = PLAN_LABELS[planKey] || { name: planKey, desc: '', price: '' };
