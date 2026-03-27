@@ -390,6 +390,34 @@
     }
     .unlock-btn:hover { opacity: 0.85; background: var(--accent); }
 
+    /* ── Token Status Strip ── */
+    #tokenStatus {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    #tokenStatus.show { display: flex; }
+    #tokenStatus .ts-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    #tokenStatus .ts-dot.green  { background: var(--green); }
+    #tokenStatus .ts-dot.yellow { background: var(--yellow); }
+    #tokenStatus .ts-dot.red    { background: var(--red); }
+    #tokenStatus .ts-text { flex: 1; color: var(--text2); }
+    #tokenStatus .ts-text strong { color: var(--text); font-weight: 600; }
+    #tokenStatus .ts-link {
+      font-size: 12px; color: var(--accent); text-decoration: none; white-space: nowrap;
+    }
+    #tokenStatus .ts-link:hover { text-decoration: underline; }
+    #tokenStatus.loading .ts-dot { background: var(--text3); }
+    #tokenStatus.loading .ts-text { color: var(--text3); }
+
     /* Rewrite teaser */
     .rewrite-teaser {
       background: linear-gradient(135deg, rgba(108,99,255,0.08) 0%, rgba(108,99,255,0.04) 100%);
@@ -507,6 +535,13 @@
     <div class="analyze-btn">
       <button id="analyzeBtn" onclick="analyze()" disabled>Analyze Resume</button>
       <span class="mode-badge" id="modeBadge">Generic ATS Scan</span>
+    </div>
+
+    <!-- Live token status — populated by fetchTokenStatus() on load / after rewrite -->
+    <div id="tokenStatus">
+      <div class="ts-dot"></div>
+      <div class="ts-text" id="tsText"></div>
+      <a href="#" class="ts-link" id="tsLink" style="display:none"></a>
     </div>
   </div>
 
@@ -907,6 +942,8 @@
       if (data.scans_remaining !== undefined) {
         localStorage.setItem('ats_scans', data.scans_remaining);
         updateScansDisplay(data.scans_remaining);
+        // Refresh the strip with live server count (authoritative post-decrement)
+        fetchTokenStatus(token);
       }
 
       const blob = new Blob([data.optimized_resume], { type: 'text/plain' });
@@ -965,9 +1002,14 @@
       window.history.replaceState({}, '', window.location.pathname);
     }
 
-    const scans = localStorage.getItem('ats_scans');
-    if (scans !== null) updateScansDisplay(parseInt(scans));
     updateAnalyzeBtn();
+    // Fetch live token status from server — overrides any stale localStorage values
+    const storedToken = localStorage.getItem('ats_token');
+    if (storedToken) fetchTokenStatus(storedToken);
+    else {
+      const scans = localStorage.getItem('ats_scans');
+      if (scans !== null) updateScansDisplay(parseInt(scans));
+    }
 
     // Auto-open recovery panel if linked from "Restore Access"
     if (window.location.hash === '#recover') {
@@ -1004,6 +1046,76 @@
       document.getElementById('recoveryMsg').textContent = 'Something went wrong. Please try again.';
       document.getElementById('recoveryMsg').style.color = 'var(--red)';
       btn.disabled = false; btn.textContent = 'Send Recovery Link';
+    }
+  }
+
+  // ── Token Status Strip ──────────────────────────────────────────────────────
+  async function fetchTokenStatus(token) {
+    const strip  = document.getElementById('tokenStatus');
+    const dot    = strip.querySelector('.ts-dot');
+    const text   = document.getElementById('tsText');
+    const link   = document.getElementById('tsLink');
+
+    if (!token) { strip.classList.remove('show'); return; }
+
+    // Show a brief loading state
+    strip.className = 'show loading';
+    dot.className   = 'ts-dot';
+    text.innerHTML  = 'Checking token…';
+    link.style.display = 'none';
+
+    try {
+      const res  = await fetch(`/token-status?token=${encodeURIComponent(token)}`);
+      const data = await res.json();
+
+      strip.classList.remove('loading');
+
+      if (!res.ok) {
+        // Token not found or expired
+        dot.className  = 'ts-dot red';
+        text.innerHTML = '<strong>Token invalid or expired.</strong> Purchase a new plan to continue.';
+        link.textContent   = 'View plans →';
+        link.href          = '/';
+        link.style.display = 'inline';
+        localStorage.removeItem('ats_token');
+        localStorage.removeItem('ats_scans');
+        strip.classList.add('show');
+        return;
+      }
+
+      // Persist live values back to localStorage so getRewrite() stays in sync
+      localStorage.setItem('ats_scans', data.scans_remaining);
+
+      const expiresDate = new Date(data.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      if (data.scans_remaining === 0) {
+        // Exhausted
+        dot.className  = 'ts-dot red';
+        text.innerHTML = `<strong>${data.plan_label}</strong> · 0 scans remaining · expires ${expiresDate}`;
+        link.textContent   = 'Upgrade →';
+        link.href          = '/#pricing';
+        link.style.display = 'inline';
+      } else if (data.is_unlimited) {
+        // Pro plan
+        dot.className  = 'ts-dot green';
+        text.innerHTML = `<strong>${data.plan_label}</strong> · Unlimited scans · expires ${expiresDate}`;
+        link.style.display = 'none';
+      } else {
+        // Finite scans remaining
+        const scanWord = data.scans_remaining === 1 ? 'scan' : 'scans';
+        const dotClass = data.scans_remaining <= 1 ? 'yellow' : 'green';
+        dot.className  = `ts-dot ${dotClass}`;
+        text.innerHTML = `<strong>${data.plan_label}</strong> · ${data.scans_remaining} ${scanWord} remaining · expires ${expiresDate}`;
+        link.style.display = 'none';
+      }
+
+      strip.classList.add('show');
+      // Also refresh the results-section badge if visible
+      updateScansDisplay(data.scans_remaining);
+
+    } catch {
+      // Network error — degrade gracefully, don't block the user
+      strip.classList.remove('show');
     }
   }
 
