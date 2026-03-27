@@ -543,7 +543,7 @@
             <a href="/tool" class="btn-hero btn-hero-primary">Scan My Resume Free →</a>
             <a href="#how-it-works" class="btn-hero btn-hero-secondary">See How It Works</a>
           </div>
-          <p class="hero-note">No account needed. Results in under 30 seconds. &nbsp;·&nbsp; <span id="scanCount" style="color:var(--accent);font-weight:600"></span></p>
+          <p class="hero-note">No account needed. Results in under 30 seconds.</p>
         </div>
 
         <!-- Score Widget Demo -->
@@ -966,20 +966,6 @@
           : 'rgba(10,11,15,0.85)';
     });
 
-    // ── Social proof counter ──
-    (function() {
-      const el = document.getElementById('scanCount');
-      if (!el) return;
-      // Seed with a realistic launch number, animate upward
-      const base = 1247;
-      let current = base;
-      el.textContent = base.toLocaleString() + ' resumes scanned';
-      // Slowly tick up every 8-15s to feel live
-      setInterval(() => {
-        current += Math.floor(Math.random() * 3) + 1;
-        el.textContent = current.toLocaleString() + ' resumes scanned';
-      }, Math.floor(Math.random() * 7000) + 8000);
-    })();
 
     // ── Stripe Checkout ──
     async function checkout(plan) {
