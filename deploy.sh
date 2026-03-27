@@ -1,6 +1,7 @@
 #!/bin/bash
 # ATS Optimizer — deploy script
 # Usage: ./deploy.sh "commit message"
+# GitHub Actions handles the Cloudflare Pages deploy automatically on push.
 set -e
 
 MSG="${1:-Update}"
@@ -13,8 +14,6 @@ git commit -m "$MSG" || echo "Nothing to commit"
 echo "🚀 Pushing to GitHub..."
 git push origin main
 
-echo "☁️  Deploying to Cloudflare Pages..."
-rm -rf .wrangler/cache
-npx wrangler pages deploy public --project-name ats-optimizer --commit-dirty=true
-
-echo "✅ Done! Live at https://ats-optimizer.pages.dev"
+echo "⚡ Deploying via GitHub Actions — live in ~60s"
+echo "   Watch: https://github.com/daryltaylor72/ats-optimizer/actions"
+echo "   Live:  https://ats-optimizer.pages.dev"
