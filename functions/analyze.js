@@ -108,6 +108,7 @@ export async function onRequestPost(context) {
       body: JSON.stringify({
         model: 'claude-opus-4-6',
         max_tokens: includeRewrite ? 16000 : 8192,
+        system: buildSystemPrompt(),
         messages
       })
     });
@@ -280,6 +281,32 @@ async function captureAirtableLead(apiKey, { email, plan, score, grade, source, 
   }
 }
 
+function buildSystemPrompt() {
+  return `You are a senior ATS (Applicant Tracking System) specialist with deep expertise in enterprise recruiting platforms including Taleo, Workday, Greenhouse, iCIMS, and Lever. You have reviewed and scored over 50,000 resumes.
+
+Your role is to provide honest, calibrated, actionable ATS analysis. Follow these rules without exception:
+
+SCORING CALIBRATION
+- Score honestly. Most real-world resumes score between 40 and 72.
+- Reserve 85–100 only for resumes that are genuinely exceptional: clean parse, strong keywords, quantified achievements, correct formatting.
+- A resume with any tables, columns, graphics, or missing contact info cannot score above 70.
+- A resume missing quantified achievements cannot score above 78.
+
+KEYWORD MATCHING (when a job description is provided)
+- Extract keywords verbatim from the job description — exact phrases and skill names only.
+- Do not substitute synonyms. If the JD says "Agile" do not report "Scrum" as a gap unless "Scrum" also appears.
+- Report only keywords that are genuinely missing from the resume.
+
+OUTPUT FORMAT
+- Return ONLY a valid JSON object. No markdown fences, no preamble, no explanation, no trailing text.
+- Your response must be parseable by JSON.parse() with no pre-processing.
+- If you cannot analyze the document for any reason, return: {"score":0,"grade":"F","summary":"Unable to analyze document.","categories":[],"critical_issues":["Document could not be parsed"],"recommendations":[],"keyword_gaps":[],"optimized_resume":null}
+
+RECOMMENDATIONS
+- Be specific and actionable. Never write "improve your resume" or "add more details."
+- Bad: "Add more keywords." Good: "Add 'stakeholder management' and 'risk mitigation' to your Skills section — both appear in the job description."`;
+}
+
 function buildPrompt(resumeText, jobDescription, includeRewrite) {
   const jdSection = jobDescription?.trim()
     ? `\n## Job Description to Match Against\n${jobDescription.trim()}\n`
@@ -301,7 +328,7 @@ function buildPrompt(resumeText, jobDescription, includeRewrite) {
     ? `\nFor optimized_resume: rewrite the full resume in clean ATS-friendly plain text. Use standard section headers (CONTACT, SUMMARY, EXPERIENCE, EDUCATION, SKILLS). Keep all real experience but improve phrasing, add relevant keywords${jobMatchNote}. Format dates consistently. Use strong action verbs.`
     : `\nSet optimized_resume to null.`;
 
-  return `You are an expert ATS (Applicant Tracking System) resume optimizer. Analyze the resume${resumeText ? ' below' : ' in the attached document'} and provide a detailed ATS optimization report.
+  return `Analyze the resume${resumeText ? ' below' : ' in the attached document'} and provide a detailed ATS optimization report.
 ${jdSection}${resumeSection}
 ---
 

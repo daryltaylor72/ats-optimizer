@@ -102,7 +102,7 @@ export async function onRequestPost(context) {
       'anthropic-version': '2023-06-01',
       'anthropic-beta': 'pdfs-2024-09-25',
     },
-    body: JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 16000, messages }),
+    body: JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 16000, system: buildRewriteSystemPrompt(), messages }),
   });
 
   if (!claudeRes.ok) {
@@ -125,16 +125,36 @@ export async function onRequestPost(context) {
   const debugErrors = [];
   if (sendTo) {
     if (env.RESEND_API_KEY) {
-      try { await sendRewriteEmail(env.RESEND_API_KEY, sendTo, optimized, tokenData.scans_remaining); }
+      try { await withRetry(() => sendRewriteEmail(env.RESEND_API_KEY, sendTo, optimized, tokenData.scans_remaining)); }
       catch (e) { debugErrors.push(`resend: ${e.message}`); }
     } else { debugErrors.push('resend: RESEND_API_KEY not set'); }
     if (env.AIRTABLE_ATS_SECRET_KEY) {
-      try { await captureAirtableLead(env.AIRTABLE_ATS_SECRET_KEY, { email: sendTo, plan: tokenData.plan, source: 'paid_scan', jobMatch: !!jobDesc?.trim() }); }
+      try { await withRetry(() => captureAirtableLead(env.AIRTABLE_ATS_SECRET_KEY, { email: sendTo, plan: tokenData.plan, source: 'paid_scan', jobMatch: !!jobDesc?.trim() }, env)); }
       catch (e) { debugErrors.push(`airtable: ${e.message}`); }
     }
   } else { debugErrors.push('resend: no email address available'); }
 
   return json({ optimized_resume: optimized, scans_remaining: tokenData.scans_remaining, _debug: debugErrors });
+}
+
+/**
+ * Retries an async function up to `maxAttempts` times with exponential backoff.
+ * Only retries on transient failures (network errors or 5xx responses).
+ * Throws the last error if all attempts are exhausted.
+ */
+async function withRetry(fn, maxAttempts = 3, baseDelayMs = 300) {
+  let lastErr;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, baseDelayMs * attempt));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 async function sendRewriteEmail(apiKey, to, optimizedResume, scansRemaining) {
@@ -193,8 +213,10 @@ async function sendRewriteEmail(apiKey, to, optimizedResume, scansRemaining) {
   if (!r.ok) throw new Error(await r.text());
 }
 
-async function captureAirtableLead(apiKey, { email, plan, source, jobMatch }) {
-  await fetch('https://api.airtable.com/v0/appJkfL4EoaSxq8GC/tblxDbnavxmdWozc5', {
+async function captureAirtableLead(apiKey, { email, plan, source, jobMatch }, env) {
+  const baseId  = env.AIRTABLE_BASE_ID  || 'appJkfL4EoaSxq8GC';
+  const tableId = env.AIRTABLE_TABLE_ID || 'tblxDbnavxmdWozc5';
+  const res = await fetch(`https://api.airtable.com/v0/${baseId}/${tableId}`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -207,6 +229,37 @@ async function captureAirtableLead(apiKey, { email, plan, source, jobMatch }) {
       }
     }),
   });
+  if (!res.ok) throw new Error(`Airtable ${res.status}: ${await res.text()}`);
+}
+
+function buildRewriteSystemPrompt() {
+  return `You are a senior technical resume writer who specializes in ATS optimization. You have written and reviewed over 10,000 resumes for candidates at every level from entry-level to C-suite across tech, finance, healthcare, and government sectors.
+
+Your rewrites consistently help candidates pass ATS screening. Follow these rules without exception:
+
+ACCURACY — NON-NEGOTIABLE
+- Never fabricate, invent, or embellish. Do not add companies, titles, dates, degrees, certifications, metrics, or skills that are not in the original.
+- If the original says "managed a team" with no number, write "managed a cross-functional team" — do not write "managed a team of 12" unless 12 appears in the original.
+- Improve phrasing and structure only. The facts must remain 100% faithful to the source.
+
+OUTPUT FORMAT — NON-NEGOTIABLE
+- Output ONLY the rewritten resume as plain text. Nothing else.
+- Do not begin with "Here is your rewritten resume" or any other preamble.
+- Do not end with commentary, notes, or explanation.
+- Do not use markdown (no **, no #, no -, no *).
+- Your response must begin with the first line of the resume (typically the candidate's name) and end with the last line of the resume.
+
+ATS FORMATTING RULES
+- Use ALL CAPS section headers: CONTACT, SUMMARY, EXPERIENCE, EDUCATION, SKILLS, CERTIFICATIONS (include only sections present in the original)
+- No tables, columns, text boxes, headers/footers, or graphics — these break ATS parsers
+- No special characters in bullet points — use a plain hyphen (-) or omit bullet markers entirely
+- Dates must follow a consistent format throughout: "Month YYYY – Month YYYY" or "YYYY – YYYY"
+- Phone numbers: no parentheses — use dashes: 555-867-5309
+
+QUALITY STANDARDS
+- Open each bullet with a strong past-tense action verb (Led, Built, Drove, Reduced, Increased, Designed, Launched, Managed, Negotiated, Delivered)
+- Keep bullets to 1–2 lines; cut filler words
+- Tailor keyword density to the job description when one is provided, using exact phrases from the JD`;
 }
 
 function buildRewritePrompt(resumeText, jobDescription) {
@@ -215,7 +268,7 @@ function buildRewritePrompt(resumeText, jobDescription) {
   const resumeSection = resumeText ? `\n## Resume\n${resumeText}\n` : '';
   const jobNote = jobDescription?.trim() ? ', optimized for this specific role' : '';
 
-  return `You are an expert resume writer and ATS specialist. Rewrite the resume${resumeText ? ' below' : ' in the attached document'} into a clean, ATS-optimized version.
+  return `Rewrite the resume${resumeText ? ' below' : ' in the attached document'} into a clean, ATS-optimized version.
 ${jdSection}${resumeSection}
 ---
 
