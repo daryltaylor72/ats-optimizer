@@ -47,6 +47,26 @@
       --radius: 12px;
     }
 
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --surface: #f5f6fa;
+      --surface2: #ecedf3;
+      --surface3: #e2e4ed;
+      --border: rgba(0,0,0,0.08);
+      --border2: rgba(0,0,0,0.15);
+      --text: #1a1b2e;
+      --text2: #5a6080;
+      --text3: #8892aa;
+      --accent: #5b54e0;
+      --accent2: rgba(108,99,255,0.08);
+      --green: #16a34a;
+      --green2: rgba(22,163,74,0.08);
+      --yellow: #d97706;
+      --yellow2: rgba(245,158,11,0.08);
+      --red: #dc2626;
+      --red2: rgba(220,38,38,0.08);
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
@@ -475,6 +495,34 @@
       cursor: pointer; transition: opacity 0.2s;
     }
     .rewrite-teaser-cta:hover { opacity: 0.88; }
+
+    /* ── Theme Toggle ── */
+    .btn-ghost {
+      font-size: 13px; font-weight: 600;
+      color: var(--text2); background: transparent;
+      border: 1px solid var(--border2); border-radius: 8px;
+      padding: 8px 16px; cursor: pointer; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+    .theme-toggle { cursor: pointer; font-size: 16px; line-height: 1; border: 1px solid var(--border2); background: transparent; color: var(--text2); border-radius: 8px; padding: 7px 12px; }
+    .theme-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+    [data-theme="light"] .theme-toggle:hover { border-color: rgba(0,0,0,0.25); }
+    .theme-icon-light { display: none; }
+    [data-theme="light"] .theme-icon-dark { display: none; }
+    [data-theme="light"] .theme-icon-light { display: inline; }
+
+    /* ── Light Mode Overrides ── */
+    [data-theme="light"] .header { border-bottom-color: rgba(0,0,0,0.08); }
+    [data-theme="light"] .lock-overlay {
+      background: linear-gradient(
+        to bottom,
+        transparent 20%,
+        rgba(245,246,250,0.88) 48%,
+        rgba(245,246,250,0.97) 63%
+      );
+    }
+    [data-theme="light"] .paywall-overlay { background: rgba(0,0,0,0.4); }
   </style>
 </head>
 <body>
@@ -485,7 +533,11 @@
     <h1>ATS Resume Optimizer</h1>
     <p>Score, analyze, and optimize your resume for applicant tracking systems</p>
   </div>
-  <a href="/" class="home-link">← Home</a>
+  <button class="btn-ghost theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" style="margin-left:auto;margin-right:8px;">
+    <span class="theme-icon-dark">&#9790;</span>
+    <span class="theme-icon-light">&#9728;</span>
+  </button>
+  <a href="/" class="home-link" style="margin-left:0;">← Home</a>
 </div>
 
 <div class="container">
@@ -652,6 +704,18 @@
 </div>
 
 <script>
+  // Theme toggle
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  }
+  (function() {
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  })();
+
   const fileInput = document.getElementById('fileInput');
   const dropZone = document.getElementById('dropZone');
   const dropIcon = document.getElementById('dropIcon');

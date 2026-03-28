@@ -60,6 +60,26 @@
       --radius-sm:   10px;
     }
 
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --surface: #f5f6fa;
+      --surface2: #ecedf3;
+      --surface3: #e2e4ed;
+      --border: rgba(0,0,0,0.08);
+      --border2: rgba(0,0,0,0.15);
+      --text: #1a1b2e;
+      --text2: #5a6080;
+      --text3: #8892aa;
+      --accent: #5b54e0;
+      --accent-dim: rgba(108,99,255,0.08);
+      --accent-glow: rgba(108,99,255,0.12);
+      --red: #dc2626;
+      --red-dim: rgba(220,38,38,0.08);
+      --amber: #d97706;
+      --green: #16a34a;
+      --green-dim: rgba(22,163,74,0.08);
+    }
+
     html { scroll-behavior: smooth; }
 
     body {
@@ -512,6 +532,22 @@
     .footer-links a:hover { color: var(--text2); }
     .footer-copy { font-size: 12px; color: var(--text3); }
 
+    /* ── Theme Toggle ── */
+    .theme-toggle { cursor: pointer; font-size: 16px; line-height: 1; border: 1px solid var(--border2); background: transparent; color: var(--text2); border-radius: 8px; padding: 7px 12px; }
+    .theme-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+    [data-theme="light"] .theme-toggle:hover { border-color: rgba(0,0,0,0.25); }
+    .theme-icon-light { display: none; }
+    [data-theme="light"] .theme-icon-dark { display: none; }
+    [data-theme="light"] .theme-icon-light { display: inline; }
+
+    /* ── Light Mode Overrides ── */
+    [data-theme="light"] body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
+    [data-theme="light"] body::after { opacity: 0.02; }
+    [data-theme="light"] nav { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
+    [data-theme="light"] .hero-glow { opacity: 0.3; }
+    [data-theme="light"] .cta-glow { opacity: 0.3; }
+    [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.25); }
+
     /* Reveal animation */
     .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
     .reveal.in-view { opacity: 1; transform: none; }
@@ -660,6 +696,10 @@
       <span class="nav-logo-text">ResumeATS</span>
     </a>
     <div class="nav-links">
+      <button class="btn-ghost theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span class="theme-icon-dark">&#9790;</span>
+        <span class="theme-icon-light">&#9728;</span>
+      </button>
       <a href="/blog" class="btn-ghost">Blog</a>
       <a href="#pricing" class="btn-ghost">Pricing</a>
       <a href="/tool#recover" class="btn-ghost">Already Purchased?</a>
@@ -1021,6 +1061,18 @@
   </footer>
 
   <script>
+    // Theme toggle
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+    (function() {
+      const saved = localStorage.getItem('theme');
+      if (saved) document.documentElement.setAttribute('data-theme', saved);
+    })();
+
     // ── Score Ring Animation ──
     const CIRC = 2 * Math.PI * 60; // ~377
 
@@ -1105,10 +1157,11 @@
 
     // ── Nav scroll effect ──
     window.addEventListener('scroll', () => {
-      document.querySelector('nav').style.background =
-        window.scrollY > 40
-          ? 'rgba(10,11,15,0.97)'
-          : 'rgba(10,11,15,0.85)';
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const scrolled = window.scrollY > 40;
+      document.querySelector('nav').style.background = isLight
+        ? (scrolled ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.85)')
+        : (scrolled ? 'rgba(10,11,15,0.97)' : 'rgba(10,11,15,0.85)');
     });
 
 

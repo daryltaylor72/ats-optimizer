@@ -87,6 +87,29 @@
       --serif: 'DM Serif Display', Georgia, serif;
       --sans: 'Nunito Sans', system-ui, sans-serif;
     }
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --surface: #f5f6fa;
+      --surface2: #ecedf3;
+      --border: rgba(0,0,0,0.08);
+      --border2: rgba(0,0,0,0.15);
+      --text: #1a1b2e;
+      --text2: #5a6080;
+      --text3: #8892aa;
+      --accent: #5b54e0;
+      --accent-dim: rgba(108,99,255,0.08);
+    }
+    [data-theme="light"] body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
+    [data-theme="light"] nav:not(.toc) { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
+    [data-theme="light"] .btn-ghost { border-color: rgba(0,0,0,0.15); }
+    [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.25); }
+    .theme-toggle { cursor:pointer; font-size:16px; line-height:1; border:1px solid rgba(255,255,255,0.13); background:transparent; color:var(--text2); border-radius:8px; padding:7px 12px; }
+    .theme-toggle:hover { color:var(--text); }
+    [data-theme="light"] .theme-toggle { border-color: rgba(0,0,0,0.15); }
+    [data-theme="light"] .theme-toggle:hover { border-color:rgba(0,0,0,0.25); }
+    .theme-icon-light { display:none; }
+    [data-theme="light"] .theme-icon-dark { display:none; }
+    [data-theme="light"] .theme-icon-light { display:inline; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.7; margin: 0; }
@@ -149,6 +172,7 @@
 <nav>
   <a href="/" class="nav-logo"><div class="nav-logo-mark">R</div><span class="nav-logo-text">ResumeATS</span></a>
   <div class="nav-links">
+    <button class="btn-ghost theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="theme-icon-dark">&#9790;</span><span class="theme-icon-light">&#9728;</span></button>
     <a href="/blog" class="btn-ghost">Blog</a>
     <a href="/#pricing" class="btn-ghost">Pricing</a>
     <a href="/tool" class="btn-ghost">Try Free</a>
@@ -371,5 +395,9 @@
 
 <footer><p>&copy; 2026 DeepTier Labs. All rights reserved.</p></footer>
 
+<script>
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme');var n=c==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n)}
+(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();
+</script>
 </body>
 </html>
