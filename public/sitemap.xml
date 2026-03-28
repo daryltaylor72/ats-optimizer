@@ -66,6 +66,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://ats.deeptierlabs.com/blog/ats-resume-summary-examples/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://ats.deeptierlabs.com/ats-checker/software-engineer/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
