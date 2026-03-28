@@ -51,6 +51,21 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://ats.deeptierlabs.com/blog/how-to-tailor-resume-for-each-job/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ats.deeptierlabs.com/blog/ats-friendly-resume-template/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ats.deeptierlabs.com/blog/resume-skills-section-ats/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://ats.deeptierlabs.com/ats-checker/software-engineer/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
