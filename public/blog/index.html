@@ -151,6 +151,19 @@
 
     footer { border-top: 1px solid var(--border); padding: 32px 28px; text-align: center; color: var(--text2); font-size: 13px; }
 
+    /* Load More */
+    .articles .article-card:nth-child(n+7) { display: none; }
+    .articles.show-all .article-card:nth-child(n+7) { display: flex; }
+    .load-more-wrap { text-align: center; margin: -8px 0 40px; }
+    .load-more-btn {
+      font-family: var(--sans); font-size: 14px; font-weight: 600;
+      color: var(--accent); background: transparent;
+      border: 1px solid var(--accent); border-radius: 10px;
+      padding: 12px 32px; cursor: pointer; transition: 0.2s;
+    }
+    .load-more-btn:hover { background: var(--accent); color: #fff; }
+    .load-more-wrap.hidden { display: none; }
+
     @media (max-width: 600px) {
       .articles { grid-template-columns: 1fr; }
     }
@@ -260,6 +273,10 @@
 
     </section>
 
+    <div class="load-more-wrap" id="loadMoreWrap">
+      <button class="load-more-btn" onclick="loadMore()">Load More Articles</button>
+    </div>
+
     <section class="blog-cta">
       <h2>Ready to check <em>your</em> resume?</h2>
       <p>Get your ATS score, keyword gaps, and an AI-rewritten version — free, in under 30 seconds.</p>
@@ -275,6 +292,7 @@
 <script>
 function toggleTheme(){var c=document.documentElement.getAttribute('data-theme');var n=c==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n)}
 (function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();
+function loadMore(){document.querySelector('.articles').classList.add('show-all');document.getElementById('loadMoreWrap').classList.add('hidden')}
 </script>
 </body>
 </html>
