@@ -574,7 +574,7 @@
 
   // ── Submit button gating ──
   function updateSubmitBtn() {
-    submitBtn.disabled = !selectedFile;
+    submitBtn.disabled = !selectedFile || !tokenInput.value.trim();
   }
 
   emailInput.addEventListener('input', () => {
@@ -589,6 +589,7 @@
     } else {
       document.getElementById('tokenStatus').classList.remove('show');
     }
+    updateSubmitBtn();
   });
 
   // ── File drag & drop ──
@@ -868,13 +869,6 @@
   });
 
   // ── Word Download ─────────────────────────────────────────────────────────
-  let lastCoverLetterText = null;
-  let lastCandidateName   = null;
-
-  // Capture name + letter text when results render
-  const _origRenderResults = renderResults;
-  // Store after generate() writes to textarea
-  const _origGenerate = generate;
 
   async function downloadCoverLetterDocx() {
     const text = document.getElementById('coverLetterOutput').value.trim();
@@ -905,7 +899,8 @@
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
       s.src = 'https://unpkg.com/docx@8.5.0/build/index.js';
-      s.onload = resolve; s.onerror = reject;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Could not load the Word document library. Please check your internet connection and try again.'));
       document.head.appendChild(s);
     });
   }

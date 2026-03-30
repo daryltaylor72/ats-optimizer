@@ -8,6 +8,19 @@
 
 const CORS_ORIGIN = 'https://ats-optimizer.pages.dev';
 
+// Constant-time string comparison to prevent timing attacks on the admin secret
+function timingSafeEqual(a, b) {
+  if (a.length !== b.length) {
+    // Still compare to avoid length oracle; XOR dummy bytes
+    let dummy = 0;
+    for (let i = 0; i < b.length; i++) dummy |= (b.charCodeAt(i) ^ b.charCodeAt(i));
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < a.length; i++) result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return result === 0;
+}
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -46,7 +59,8 @@ export async function onRequestPost(context) {
   if (!adminSecret) {
     return json({ detail: 'Admin secret not configured.' }, 500);
   }
-  if (!authHeader.startsWith('Bearer ') || authHeader.slice(7) !== adminSecret) {
+  const provided = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!timingSafeEqual(provided, adminSecret)) {
     return json({ detail: 'Unauthorized.' }, 401);
   }
 

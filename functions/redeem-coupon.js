@@ -5,6 +5,8 @@
  * Returns: { token, scans_remaining, expires_at, message }
  */
 
+import { acquireScanMutex, releaseScanMutex } from './_shared.js';
+
 const CORS_ORIGIN = 'https://ats-optimizer.pages.dev';
 
 function json(data, status = 200) {
@@ -50,69 +52,76 @@ export async function onRequestPost(context) {
     return json({ detail: 'Coupon code is required.' }, 400);
   }
 
-  // 1. Normalize: trim + uppercase
   const code = rawCode.trim().toUpperCase();
 
-  // 2. Look up coupon in KV
-  const couponRaw = await kv.get(`coupon:${code}`);
-  if (!couponRaw) {
+  // Fast pre-check before acquiring mutex — avoids lock delay for clearly invalid codes
+  const preCouponRaw = await kv.get(`coupon:${code}`);
+  if (!preCouponRaw) {
     return json({ detail: 'Invalid or expired coupon code.' }, 404);
   }
 
-  let coupon;
-  try {
-    coupon = JSON.parse(couponRaw);
-  } catch {
-    return json({ detail: 'Coupon data is corrupted. Please contact support.' }, 500);
-  }
+  let preCheck;
+  try { preCheck = JSON.parse(preCouponRaw); }
+  catch { return json({ detail: 'Coupon data is corrupted. Please contact support.' }, 500); }
 
-  // 3. Check uses_remaining
-  if (coupon.uses_remaining <= 0) {
+  if (preCheck.uses_remaining <= 0) {
     return json({ detail: 'This coupon code has already been used.' }, 410);
   }
-
-  // 4. Check expiry (if set)
-  if (coupon.expires_at) {
-    const expiry = new Date(coupon.expires_at);
-    if (expiry < new Date()) {
-      return json({ detail: 'This coupon code has expired.' }, 410);
-    }
+  if (preCheck.expires_at && new Date(preCheck.expires_at) < new Date()) {
+    return json({ detail: 'This coupon code has expired.' }, 410);
   }
 
-  // 5. Decrement uses_remaining (acceptable race condition for promo codes)
-  const updatedCoupon = {
-    ...coupon,
-    uses_remaining: coupon.uses_remaining - 1,
-  };
-  await kv.put(`coupon:${code}`, JSON.stringify(updatedCoupon));
+  // Acquire mutex using the coupon code as the lock key to prevent double-redemption
+  const mutexKey = `coupon:${code}`;
+  const { acquired } = await acquireScanMutex(kv, mutexKey);
+  if (!acquired) {
+    return json({ detail: 'Another request is processing this code. Please try again in a moment.' }, 429);
+  }
 
-  // 6. Generate new token UUID
-  const tokenId = crypto.randomUUID();
+  let tokenId, expiresAt;
+  try {
+    // Re-read under lock — state may have changed
+    const lockedRaw = await kv.get(`coupon:${code}`);
+    if (!lockedRaw) return json({ detail: 'Invalid or expired coupon code.' }, 404);
 
-  // 7. Calculate expiry: 30 days from now
-  const ttlDays = 30;
-  const ttlSecs = ttlDays * 24 * 3600;
-  const expiresAt = new Date(Date.now() + ttlSecs * 1000).toISOString();
+    let coupon;
+    try { coupon = JSON.parse(lockedRaw); }
+    catch { return json({ detail: 'Coupon data is corrupted.' }, 500); }
 
-  const email = (body.email || '').trim();
+    if (coupon.uses_remaining <= 0) {
+      return json({ detail: 'This coupon code has already been used.' }, 410);
+    }
+    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+      return json({ detail: 'This coupon code has expired.' }, 410);
+    }
 
-  const tokenData = {
-    scans_remaining: 1,
-    expires_at: expiresAt,
-    plan: 'trial',
-    email: email,
-    created_at: new Date().toISOString(),
-    source: `coupon:${code}`,
-  };
+    // Decrement under lock
+    const updated = { ...coupon, uses_remaining: coupon.uses_remaining - 1 };
+    await kv.put(`coupon:${code}`, JSON.stringify(updated));
 
-  // 8. Store token in KV
-  await kv.put(`token:${tokenId}`, JSON.stringify(tokenData), { expirationTtl: ttlSecs });
+    // Generate and store token
+    tokenId = crypto.randomUUID();
+    const ttlSecs = 30 * 24 * 3600;
+    expiresAt = new Date(Date.now() + ttlSecs * 1000).toISOString();
+    const email = (body.email || '').trim();
 
-  // 9. Return success
+    const tokenData = {
+      scans_remaining: 1,
+      expires_at: expiresAt,
+      plan: 'trial',
+      email,
+      created_at: new Date().toISOString(),
+      source: `coupon:${code}`,
+    };
+    await kv.put(`token:${tokenId}`, JSON.stringify(tokenData), { expirationTtl: ttlSecs });
+  } finally {
+    await releaseScanMutex(kv, mutexKey);
+  }
+
   return json({
     token: tokenId,
     scans_remaining: 1,
     expires_at: expiresAt,
     message: 'Your free trial is ready!',
-  }, 200);
+  });
 }
