@@ -405,10 +405,10 @@
     <!-- Token -->
     <div class="field-section">
       <label>
-        Access Token
+        Access Key
         <span>required</span>
       </label>
-      <input type="text" id="tokenInput" placeholder="Paste your access token" autocomplete="off" />
+      <input type="text" id="tokenInput" placeholder="Paste your access key" autocomplete="off" />
     </div>
 
     <!-- Token Status -->
@@ -549,7 +549,7 @@
 
     statusEl.classList.add('show');
     dotEl.className = 'ts-dot';
-    textEl.innerHTML = 'Checking token...';
+    textEl.innerHTML = 'Checking key...';
     linkEl.style.display = 'none';
 
     try {
@@ -558,10 +558,10 @@
 
       if (!res.ok || data.code) {
         dotEl.classList.add('red');
-        textEl.innerHTML = data.detail || 'Invalid token.';
+        textEl.innerHTML = data.detail || 'Invalid access key.';
         linkEl.style.display = 'inline';
         linkEl.href = '/#pricing';
-        linkEl.textContent = 'Get a token →';
+        linkEl.textContent = 'Get a key →';
         return;
       }
 
