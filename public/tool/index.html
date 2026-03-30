@@ -458,6 +458,68 @@
     #tokenStatus.loading .ts-dot { background: var(--text3); }
     #tokenStatus.loading .ts-text { color: var(--text3); }
 
+    /* ── Coupon Section ── */
+    .coupon-section {
+      margin-top: 12px;
+    }
+    .coupon-toggle {
+      background: none; border: none; padding: 0;
+      font-size: 12px; color: var(--text3);
+      cursor: pointer; text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: color 0.15s;
+      font-weight: 400;
+    }
+    .coupon-toggle:hover { color: var(--text2); background: none; opacity: 1; transform: none; }
+    .coupon-body {
+      display: none;
+      margin-top: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .coupon-body.open { display: block; }
+    .coupon-row {
+      display: flex; gap: 8px;
+    }
+    .coupon-row input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text);
+      font: 13px/1 -apple-system, sans-serif;
+      padding: 9px 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: border-color 0.2s;
+    }
+    .coupon-row input[type="text"]:focus { outline: none; border-color: var(--accent); }
+    .coupon-row input[type="text"]::placeholder { color: var(--text3); text-transform: none; letter-spacing: 0; }
+    .coupon-redeem-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      font: 600 13px/1 -apple-system, sans-serif;
+      padding: 9px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .coupon-redeem-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; transform: none; }
+    .coupon-redeem-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .coupon-msg {
+      margin-top: 8px;
+      font-size: 12px;
+      min-height: 16px;
+      line-height: 1.4;
+    }
+    .coupon-msg.success { color: var(--green); }
+    .coupon-msg.error   { color: var(--red); }
+
     /* Rewrite teaser */
     .rewrite-teaser {
       background: linear-gradient(135deg, rgba(108,99,255,0.08) 0%, rgba(108,99,255,0.04) 100%);
@@ -615,6 +677,18 @@
       <div class="ts-text" id="tsText"></div>
       <a href="#" class="ts-link" id="tsLink" style="display:none"></a>
     </div>
+
+    <!-- Coupon / Promo Code -->
+    <div class="coupon-section">
+      <button class="coupon-toggle" onclick="toggleCoupon()" id="couponToggle">Have a promo code? Click to redeem</button>
+      <div class="coupon-body" id="couponBody">
+        <div class="coupon-row">
+          <input type="text" id="couponInput" placeholder="e.g. FREETRIAL" autocomplete="off" maxlength="30" />
+          <button class="coupon-redeem-btn" id="couponRedeemBtn" onclick="redeemCoupon()">Redeem</button>
+        </div>
+        <div class="coupon-msg" id="couponMsg"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Recovery Panel -->
@@ -664,8 +738,11 @@
         <h2 id="scoreHeading">ATS Score</h2>
         <p id="scoreSummary"></p>
         <button class="download-btn" id="downloadBtn" onclick="getRewrite()">
-          ⬇ Download Optimized Resume
+          ⬇ Download as Word (.docx)
         </button>
+        <div style="margin-top:8px;">
+          <button id="downloadTxtBtn" onclick="downloadPlainText()" style="display:none;background:none;border:none;padding:0;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;text-underline-offset:2px;">Download as plain text instead</button>
+        </div>
         <div class="scans-badge" id="scansBadge"></div>
         <div id="cancelLink" style="display:none;margin-top:8px;">
           <a href="mailto:support@deeptierlabs.com?subject=Cancel%20Pro%20Subscription" style="font-size:12px;color:var(--text3);text-decoration:none;">Cancel subscription</a>
@@ -1026,21 +1103,37 @@
       if (data.scans_remaining !== undefined) {
         localStorage.setItem('ats_scans', data.scans_remaining);
         updateScansDisplay(data.scans_remaining);
-        // Refresh the strip with live server count (authoritative post-decrement)
         fetchTokenStatus(token);
       }
 
-      const blob = new Blob([data.optimized_resume], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
+      // Store text for plain-text fallback, then download as Word
+      lastResumeText = data.optimized_resume;
+      document.getElementById('downloadTxtBtn').style.display = 'inline';
+
+      btn.textContent = '⏳ Building Word file…';
+      await loadDocxIfNeeded();
+      const doc = buildResumeDoc(lastResumeText);
+      const wordBlob = await window.docx.Packer.toBlob(doc);
+      const wordUrl = URL.createObjectURL(wordBlob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'optimized_resume.txt'; a.click();
-      URL.revokeObjectURL(url);
-      btn.textContent = '✅ Downloaded';
+      a.href = wordUrl; a.download = 'optimized_resume.docx'; a.click();
+      URL.revokeObjectURL(wordUrl);
+      btn.textContent = '✅ Downloaded as Word';
+      btn.disabled = false;
     } catch (err) {
-      btn.textContent = '⬇ Download Optimized Resume';
+      btn.textContent = '⬇ Download as Word (.docx)';
       btn.disabled = false;
       alert('Error: ' + err.message);
     }
+  }
+
+  function downloadPlainText() {
+    if (!lastResumeText) return;
+    const blob = new Blob([lastResumeText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'optimized_resume.txt'; a.click();
+    URL.revokeObjectURL(url);
   }
 
   function showPaywall() {
@@ -1216,6 +1309,186 @@
     document.getElementById('uploadCard').style.display = 'block';
     document.getElementById('results').classList.remove('active');
     document.getElementById('errorBox').classList.remove('active');
+  }
+
+  // ── Coupon Redemption ─────────────────────────────────────────────────────
+  function toggleCoupon() {
+    const body   = document.getElementById('couponBody');
+    const toggle = document.getElementById('couponToggle');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    toggle.textContent = isOpen
+      ? 'Have a promo code? Click to redeem'
+      : 'Hide promo code';
+    if (!isOpen) document.getElementById('couponInput').focus();
+  }
+
+  async function redeemCoupon() {
+    const input  = document.getElementById('couponInput');
+    const btn    = document.getElementById('couponRedeemBtn');
+    const msgEl  = document.getElementById('couponMsg');
+    const code   = input.value.trim().toUpperCase();
+
+    if (!code) {
+      msgEl.className = 'coupon-msg error';
+      msgEl.textContent = 'Please enter a coupon code.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Redeeming…';
+    msgEl.className = 'coupon-msg';
+    msgEl.textContent = '';
+
+    try {
+      const res  = await fetch('/redeem-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        msgEl.className = 'coupon-msg error';
+        msgEl.textContent = data.detail || 'Redemption failed. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Redeem';
+        return;
+      }
+
+      // Success — store token and refresh status
+      localStorage.setItem('ats_token', data.token);
+      fetchTokenStatus(data.token);
+
+      msgEl.className = 'coupon-msg success';
+      msgEl.textContent = data.message || 'Your free trial is ready!';
+      btn.textContent = 'Redeemed ✓';
+      input.value = '';
+
+      // Collapse the coupon section after a short delay
+      setTimeout(() => {
+        document.getElementById('couponBody').classList.remove('open');
+        document.getElementById('couponToggle').textContent = 'Have a promo code? Click to redeem';
+      }, 2500);
+
+    } catch {
+      msgEl.className = 'coupon-msg error';
+      msgEl.textContent = 'Network error. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Redeem';
+    }
+  }
+
+  // Allow Enter key in the coupon input
+  document.addEventListener('DOMContentLoaded', () => {
+    const couponInput = document.getElementById('couponInput');
+    if (couponInput) {
+      couponInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') redeemCoupon();
+      });
+    }
+  });
+
+  // ── Word Download ─────────────────────────────────────────────────────────
+  let lastResumeText = null;
+
+  function loadDocxIfNeeded() {
+    if (window.docx) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/docx@8.5.0/build/index.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Build a Template 2 (Caleb Foster) style .docx from plain-text resume
+  function buildResumeDoc(text) {
+    const GREEN = '215732';
+    const GRAY  = '555555';
+    const FONT  = 'Calibri';
+    const { Document, Paragraph, TextRun, AlignmentType, BorderStyle } = window.docx;
+
+    const lines = text.split('\n').map(l => l.trimEnd());
+    const children = [];
+
+    const isSectionHeader = l =>
+      l.length >= 2 && l.length <= 40 &&
+      /^[A-Z][A-Z\s&\/\-]+$/.test(l.trim()) &&
+      !/\d/.test(l);
+
+    const isContactLine = l =>
+      l.includes('@') || l.includes('|') ||
+      /\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/.test(l);
+
+    const isDateLine = l =>
+      /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b.{0,30}\b(20\d{2}|19\d{2}|Present|Current)\b/i.test(l) ||
+      /\b20\d{2}\s*[–—\-]\s*(20\d{2}|Present|Current)\b/i.test(l);
+
+    let i = 0;
+    while (i < lines.length && !lines[i].trim()) i++;
+
+    // Name — first non-empty line
+    if (i < lines.length) {
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 80 },
+        children: [new TextRun({
+          text: lines[i].trim().toUpperCase(),
+          bold: true, size: 52, color: GREEN, font: FONT,
+        })],
+      }));
+      i++;
+    }
+
+    // Contact line — next non-empty line if it looks like contact info
+    while (i < lines.length && !lines[i].trim()) i++;
+    if (i < lines.length && isContactLine(lines[i])) {
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 240 },
+        children: [new TextRun({ text: lines[i].trim(), size: 18, color: GRAY, font: FONT })],
+      }));
+      i++;
+    }
+
+    // Remaining lines
+    while (i < lines.length) {
+      const line = lines[i].trim();
+      if (!line) { i++; continue; }
+
+      if (isSectionHeader(line)) {
+        children.push(new Paragraph({
+          spacing: { before: 240, after: 80 },
+          border: { bottom: { color: GREEN, space: 1, size: 8, style: BorderStyle.SINGLE } },
+          children: [new TextRun({ text: line, bold: true, size: 22, color: GREEN, font: FONT })],
+        }));
+      } else if (/^[-•]\s/.test(line)) {
+        children.push(new Paragraph({
+          spacing: { after: 40 },
+          bullet: { level: 0 },
+          children: [new TextRun({ text: line.replace(/^[-•]\s*/, ''), size: 20, font: FONT })],
+        }));
+      } else if (isDateLine(line)) {
+        children.push(new Paragraph({
+          spacing: { after: 40 },
+          children: [new TextRun({ text: line, size: 20, italics: true, color: GRAY, font: FONT })],
+        }));
+      } else {
+        children.push(new Paragraph({
+          spacing: { after: 60 },
+          children: [new TextRun({ text: line, size: 20, font: FONT })],
+        }));
+      }
+      i++;
+    }
+
+    return new Document({
+      sections: [{
+        properties: { page: { margin: { top: 720, right: 720, bottom: 720, left: 720 } } },
+        children,
+      }],
+    });
   }
 </script>
 </body>

@@ -333,6 +333,68 @@
     }
     .again-btn:hover { border-color: var(--accent); opacity: 1; }
 
+    /* ── Coupon Section ── */
+    .coupon-section {
+      margin-top: 12px;
+    }
+    .coupon-toggle {
+      background: none; border: none; padding: 0;
+      font-size: 12px; color: var(--text3);
+      cursor: pointer; text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: color 0.15s;
+      font-weight: 400;
+    }
+    .coupon-toggle:hover { color: var(--text2); background: none; opacity: 1; transform: none; }
+    .coupon-body {
+      display: none;
+      margin-top: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .coupon-body.open { display: block; }
+    .coupon-row {
+      display: flex; gap: 8px;
+    }
+    .coupon-row input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text);
+      font: 13px/1 -apple-system, sans-serif;
+      padding: 9px 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: border-color 0.2s;
+    }
+    .coupon-row input[type="text"]:focus { outline: none; border-color: var(--accent); }
+    .coupon-row input[type="text"]::placeholder { color: var(--text3); text-transform: none; letter-spacing: 0; }
+    .coupon-redeem-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      font: 600 13px/1 -apple-system, sans-serif;
+      padding: 9px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .coupon-redeem-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; transform: none; }
+    .coupon-redeem-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .coupon-msg {
+      margin-top: 8px;
+      font-size: 12px;
+      min-height: 16px;
+      line-height: 1.4;
+    }
+    .coupon-msg.success { color: var(--green); }
+    .coupon-msg.error   { color: var(--red); }
+
     /* ── Responsive ── */
     @media (max-width: 600px) {
       .header { padding: 16px 20px; }
@@ -411,6 +473,18 @@
       </label>
       <input type="text" id="tokenInput" placeholder="Paste your access key" autocomplete="off" />
       <p class="token-hint">Need a key? <a href="/#pricing" style="color:var(--accent);text-decoration:none;">Get one here</a> — starting at $5.</p>
+    </div>
+
+    <!-- Coupon / Promo Code -->
+    <div class="coupon-section">
+      <button class="coupon-toggle" onclick="toggleCoupon()" id="couponToggle">Have a promo code? Click to redeem</button>
+      <div class="coupon-body" id="couponBody">
+        <div class="coupon-row">
+          <input type="text" id="couponInput" placeholder="e.g. FREETRIAL" autocomplete="off" maxlength="30" />
+          <button class="coupon-redeem-btn" id="couponRedeemBtn" onclick="redeemCoupon()">Redeem</button>
+        </div>
+        <div class="coupon-msg" id="couponMsg"></div>
+      </div>
     </div>
 
     <div class="submit-row">
@@ -733,6 +807,79 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+
+  // ── Coupon Redemption ─────────────────────────────────────────────────────
+  function toggleCoupon() {
+    const body   = document.getElementById('couponBody');
+    const toggle = document.getElementById('couponToggle');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    toggle.textContent = isOpen
+      ? 'Have a promo code? Click to redeem'
+      : 'Hide promo code';
+    if (!isOpen) document.getElementById('couponInput').focus();
+  }
+
+  async function redeemCoupon() {
+    const input  = document.getElementById('couponInput');
+    const btn    = document.getElementById('couponRedeemBtn');
+    const msgEl  = document.getElementById('couponMsg');
+    const code   = input.value.trim().toUpperCase();
+
+    if (!code) {
+      msgEl.className = 'coupon-msg error';
+      msgEl.textContent = 'Please enter a coupon code.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Redeeming…';
+    msgEl.className = 'coupon-msg';
+    msgEl.textContent = '';
+
+    try {
+      const res  = await fetch('/redeem-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        msgEl.className = 'coupon-msg error';
+        msgEl.textContent = data.detail || 'Redemption failed. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Redeem';
+        return;
+      }
+
+      // Success — store token, auto-fill token input, refresh submit button
+      localStorage.setItem('ats_token', data.token);
+      tokenInput.value = data.token;
+      updateSubmitBtn();
+
+      msgEl.className = 'coupon-msg success';
+      msgEl.textContent = data.message || 'Your free trial is ready!';
+      btn.textContent = 'Redeemed ✓';
+      input.value = '';
+
+      // Collapse the coupon section after a short delay
+      setTimeout(() => {
+        document.getElementById('couponBody').classList.remove('open');
+        document.getElementById('couponToggle').textContent = 'Have a promo code? Click to redeem';
+      }, 2500);
+
+    } catch {
+      msgEl.className = 'coupon-msg error';
+      msgEl.textContent = 'Network error. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Redeem';
+    }
+  }
+
+  document.getElementById('couponInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') redeemCoupon();
+  });
 </script>
 </body>
 </html>

@@ -332,6 +332,68 @@
     }
     #tokenStatus .ts-link:hover { text-decoration: underline; }
 
+    /* ── Coupon Section ── */
+    .coupon-section {
+      margin-top: 12px;
+    }
+    .coupon-toggle {
+      background: none; border: none; padding: 0;
+      font-size: 12px; color: var(--text3);
+      cursor: pointer; text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: color 0.15s;
+      font-weight: 400;
+    }
+    .coupon-toggle:hover { color: var(--text2); background: none; opacity: 1; transform: none; }
+    .coupon-body {
+      display: none;
+      margin-top: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .coupon-body.open { display: block; }
+    .coupon-row {
+      display: flex; gap: 8px;
+    }
+    .coupon-row input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text);
+      font: 13px/1 -apple-system, sans-serif;
+      padding: 9px 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: border-color 0.2s;
+    }
+    .coupon-row input[type="text"]:focus { outline: none; border-color: var(--accent); }
+    .coupon-row input[type="text"]::placeholder { color: var(--text3); text-transform: none; letter-spacing: 0; }
+    .coupon-redeem-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      font: 600 13px/1 -apple-system, sans-serif;
+      padding: 9px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .coupon-redeem-btn:hover { border-color: var(--accent); color: var(--accent); opacity: 1; transform: none; }
+    .coupon-redeem-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .coupon-msg {
+      margin-top: 8px;
+      font-size: 12px;
+      min-height: 16px;
+      line-height: 1.4;
+    }
+    .coupon-msg.success { color: var(--green); }
+    .coupon-msg.error   { color: var(--red); }
+
     /* ── Light Mode ── */
     [data-theme="light"] .header { border-bottom-color: rgba(0,0,0,0.08); }
   </style>
@@ -418,6 +480,18 @@
       <a href="#" class="ts-link" id="tsLink" style="display:none"></a>
     </div>
 
+    <!-- Coupon / Promo Code -->
+    <div class="coupon-section">
+      <button class="coupon-toggle" onclick="toggleCoupon()" id="couponToggle">Have a promo code? Click to redeem</button>
+      <div class="coupon-body" id="couponBody">
+        <div class="coupon-row">
+          <input type="text" id="couponInput" placeholder="e.g. FREETRIAL" autocomplete="off" maxlength="30" />
+          <button class="coupon-redeem-btn" id="couponRedeemBtn" onclick="redeemCoupon()">Redeem</button>
+        </div>
+        <div class="coupon-msg" id="couponMsg"></div>
+      </div>
+    </div>
+
     <!-- Submit -->
     <div class="submit-row">
       <button id="submitBtn" onclick="generate()" disabled>Generate Cover Letter</button>
@@ -450,6 +524,7 @@
 
       <div class="results-actions">
         <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+        <button class="copy-btn" id="downloadWordBtn" onclick="downloadCoverLetterDocx()" style="background:var(--accent);color:#fff;border:none;">⬇ Download as Word</button>
         <span class="scans-badge" id="scansRemainingBadge" style="display:none;"></span>
         <a href="/#pricing" class="more-scans-link" id="moreScansLink" style="display:none;">Get more scans →</a>
       </div>
@@ -717,6 +792,181 @@
     document.getElementById('uploadCard').style.display = 'block';
     document.getElementById('coverLetterOutput').value = '';
     updateSubmitBtn();
+  }
+
+  // ── Coupon Redemption ─────────────────────────────────────────────────────
+  function toggleCoupon() {
+    const body   = document.getElementById('couponBody');
+    const toggle = document.getElementById('couponToggle');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    toggle.textContent = isOpen
+      ? 'Have a promo code? Click to redeem'
+      : 'Hide promo code';
+    if (!isOpen) document.getElementById('couponInput').focus();
+  }
+
+  async function redeemCoupon() {
+    const input  = document.getElementById('couponInput');
+    const btn    = document.getElementById('couponRedeemBtn');
+    const msgEl  = document.getElementById('couponMsg');
+    const code   = input.value.trim().toUpperCase();
+
+    if (!code) {
+      msgEl.className = 'coupon-msg error';
+      msgEl.textContent = 'Please enter a coupon code.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Redeeming…';
+    msgEl.className = 'coupon-msg';
+    msgEl.textContent = '';
+
+    try {
+      const res  = await fetch('/redeem-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        msgEl.className = 'coupon-msg error';
+        msgEl.textContent = data.detail || 'Redemption failed. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Redeem';
+        return;
+      }
+
+      // Success — store token, auto-fill token input, refresh status
+      localStorage.setItem('ats_token', data.token);
+      tokenInput.value = data.token;
+      fetchTokenStatus(data.token);
+
+      msgEl.className = 'coupon-msg success';
+      msgEl.textContent = data.message || 'Your free trial is ready!';
+      btn.textContent = 'Redeemed ✓';
+      input.value = '';
+
+      // Collapse the coupon section after a short delay
+      setTimeout(() => {
+        document.getElementById('couponBody').classList.remove('open');
+        document.getElementById('couponToggle').textContent = 'Have a promo code? Click to redeem';
+      }, 2500);
+
+    } catch {
+      msgEl.className = 'coupon-msg error';
+      msgEl.textContent = 'Network error. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Redeem';
+    }
+  }
+
+  document.getElementById('couponInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') redeemCoupon();
+  });
+
+  // ── Word Download ─────────────────────────────────────────────────────────
+  let lastCoverLetterText = null;
+  let lastCandidateName   = null;
+
+  // Capture name + letter text when results render
+  const _origRenderResults = renderResults;
+  // Store after generate() writes to textarea
+  const _origGenerate = generate;
+
+  async function downloadCoverLetterDocx() {
+    const text = document.getElementById('coverLetterOutput').value.trim();
+    if (!text) return;
+    const btn = document.getElementById('downloadWordBtn');
+    btn.textContent = '⏳ Building…';
+    btn.disabled = true;
+    try {
+      await loadDocxIfNeeded();
+      const doc = buildCoverLetterDoc(text);
+      const blob = await window.docx.Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'cover_letter.docx'; a.click();
+      URL.revokeObjectURL(url);
+      btn.textContent = '✅ Downloaded';
+      setTimeout(() => { btn.textContent = '⬇ Download as Word'; btn.disabled = false; }, 3000);
+    } catch (err) {
+      btn.textContent = '⬇ Download as Word';
+      btn.disabled = false;
+      console.error(err);
+      alert('Error generating Word file: ' + err.message);
+    }
+  }
+
+  function loadDocxIfNeeded() {
+    if (window.docx) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/docx@8.5.0/build/index.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  function buildCoverLetterDoc(text) {
+    const GREEN = '215732';
+    const GRAY  = '555555';
+    const FONT  = 'Calibri';
+    const { Document, Paragraph, TextRun, AlignmentType, BorderStyle } = window.docx;
+
+    const paragraphs = [];
+    const lines = text.split('\n');
+
+    // Name from companyInput/roleInput context if available, else first line heuristic
+    const storedName = localStorage.getItem('ats_candidate_name') || '';
+
+    // Header: candidate name (large green)
+    if (storedName) {
+      paragraphs.push(new Paragraph({
+        alignment: AlignmentType.LEFT,
+        spacing: { after: 60 },
+        children: [new TextRun({ text: storedName.toUpperCase(), bold: true, size: 48, color: GREEN, font: FONT })],
+      }));
+    }
+
+    // Date
+    paragraphs.push(new Paragraph({
+      spacing: { after: 240 },
+      children: [new TextRun({ text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), size: 20, font: FONT, color: GRAY })],
+    }));
+
+    // Recipient block (company/role from inputs if available)
+    const company = companyInput.value.trim();
+    const role    = roleInput.value.trim();
+    if (company || role) {
+      if (role) paragraphs.push(new Paragraph({ spacing: { after: 0 }, children: [new TextRun({ text: 'Re: ' + role, size: 20, font: FONT, bold: true })] }));
+      if (company) paragraphs.push(new Paragraph({ spacing: { after: 240 }, children: [new TextRun({ text: company, size: 20, font: FONT })] }));
+    }
+
+    // Divider rule
+    paragraphs.push(new Paragraph({
+      spacing: { after: 240 },
+      border: { bottom: { color: GREEN, space: 1, size: 6, style: BorderStyle.SINGLE } },
+      children: [],
+    }));
+
+    // Letter body — each line becomes a paragraph
+    for (const line of lines) {
+      const l = line.trim();
+      paragraphs.push(new Paragraph({
+        spacing: { after: l === '' ? 120 : 60 },
+        children: l ? [new TextRun({ text: l, size: 22, font: FONT })] : [],
+      }));
+    }
+
+    return new Document({
+      sections: [{
+        properties: { page: { margin: { top: 1080, right: 1080, bottom: 1080, left: 1080 } } },
+        children: paragraphs,
+      }],
+    });
   }
 </script>
 </body>
