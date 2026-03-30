@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Cover Letter Generator — Write a Tailored Cover Letter | ResumeATS</title>
+  <meta name="description" content="Generate a personalized, achievement-focused cover letter in seconds. Upload your resume, paste the job description, and get a compelling letter ready to send.">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://ats.deeptierlabs.com/cover-letter">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ats.deeptierlabs.com/cover-letter">
+  <meta property="og:title" content="AI Cover Letter Generator | ResumeATS">
+  <meta property="og:description" content="Generate a personalized, achievement-focused cover letter in seconds. Upload your resume, paste the job description, and get a compelling letter ready to send.">
+  <meta property="og:site_name" content="ResumeATS">
+
+  <meta name="robots" content="index, follow">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0b0f;
+      --surface: #111318;
+      --surface2: #181b22;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.14);
+      --text: #e8eaf0;
+      --text2: #9299b0;
+      --text3: #5a6080;
+      --accent: #6c63ff;
+      --accent2: rgba(108,99,255,0.15);
+      --green: #22c55e;
+      --green2: rgba(34,197,94,0.12);
+      --yellow: #f59e0b;
+      --yellow2: rgba(245,158,11,0.12);
+      --red: #ef4444;
+      --red2: rgba(239,68,68,0.12);
+      --radius: 12px;
+    }
+
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --surface: #f5f6fa;
+      --surface2: #ecedf3;
+      --surface3: #e2e4ed;
+      --border: rgba(0,0,0,0.08);
+      --border2: rgba(0,0,0,0.15);
+      --text: #1a1b2e;
+      --text2: #5a6080;
+      --text3: #8892aa;
+      --accent: #5b54e0;
+      --accent2: rgba(108,99,255,0.08);
+      --green: #16a34a;
+      --green2: rgba(22,163,74,0.08);
+      --yellow: #d97706;
+      --yellow2: rgba(245,158,11,0.08);
+      --red: #dc2626;
+      --red2: rgba(220,38,38,0.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .home-link {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 500; color: var(--text2);
+      text-decoration: none;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .home-link:hover { color: var(--text); border-color: var(--text2); }
+    .logo {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header p { font-size: 13px; color: var(--text2); margin-top: 1px; }
+
+    /* ── Theme Toggle ── */
+    .btn-ghost {
+      font-size: 13px; font-weight: 600;
+      color: var(--text2); background: transparent;
+      border: 1px solid var(--border2); border-radius: 8px;
+      padding: 8px 16px; cursor: pointer; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+    .theme-toggle {
+      cursor: pointer; font-size: 16px; line-height: 1;
+      border: 1px solid var(--border2); background: transparent;
+      color: var(--text2); border-radius: 8px; padding: 7px 12px;
+    }
+    .theme-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+    [data-theme="light"] .theme-toggle:hover { border-color: rgba(0,0,0,0.25); }
+    .theme-icon-light { display: none; }
+    [data-theme="light"] .theme-icon-dark { display: none; }
+    [data-theme="light"] .theme-icon-light { display: inline; }
+
+    /* ── Layout ── */
+    .container { max-width: 800px; margin: 0 auto; padding: 40px 24px; }
+
+    /* ── Upload Card ── */
+    .upload-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .upload-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+
+    .drop-zone {
+      border: 2px dashed var(--border2);
+      border-radius: 10px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent2);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 40px; margin-bottom: 12px; }
+    .drop-text { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .drop-sub { font-size: 13px; color: var(--text2); }
+    .file-selected {
+      background: var(--green2);
+      border-color: var(--green);
+    }
+
+    /* ── Form fields ── */
+    .field-section { margin-top: 16px; }
+    .field-section label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: var(--text2); margin-bottom: 8px;
+    }
+    .field-section label span {
+      font-size: 11px; color: var(--text3);
+      background: var(--surface2); padding: 2px 6px;
+      border-radius: 4px; margin-left: 6px;
+    }
+    textarea {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font: 13px/1.5 -apple-system, sans-serif;
+      padding: 12px; resize: vertical; min-height: 100px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { outline: none; border-color: var(--accent); }
+    textarea::placeholder { color: var(--text3); }
+
+    input[type="text"],
+    input[type="email"] {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font: 13px/1.5 -apple-system, sans-serif;
+      padding: 12px; transition: border-color 0.2s;
+    }
+    input[type="text"]:focus,
+    input[type="email"]:focus { outline: none; border-color: var(--accent); }
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder { color: var(--text3); }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+
+    .submit-row {
+      margin-top: 24px;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none; border-radius: 8px;
+      font: 600 14px/1 -apple-system, sans-serif;
+      padding: 12px 28px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button:hover { opacity: 0.9; }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── Loading ── */
+    .loading {
+      display: none; text-align: center; padding: 60px 20px;
+    }
+    .loading.active { display: block; }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 3px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: var(--text2); font-size: 14px; }
+    .loading .step { font-size: 13px; color: var(--text3); margin-top: 8px; }
+
+    /* ── Error ── */
+    .error-box {
+      background: var(--red2); border: 1px solid var(--red);
+      border-radius: var(--radius); padding: 20px 24px;
+      color: var(--red); display: none;
+      margin-bottom: 24px;
+    }
+    .error-box.active { display: block; }
+
+    /* ── Results ── */
+    #results { display: none; }
+    #results.active { display: block; }
+
+    .results-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .results-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .results-header h2 { font-size: 16px; font-weight: 600; }
+
+    .cover-letter-output {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font: 14px/1.75 ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+      padding: 20px;
+      resize: vertical;
+      min-height: 400px;
+      transition: border-color 0.2s;
+    }
+    .cover-letter-output:focus { outline: none; border-color: var(--accent); }
+
+    .results-actions {
+      display: flex; align-items: center;
+      gap: 12px; margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .copy-btn {
+      background: var(--green);
+      color: #000;
+      font-weight: 700;
+    }
+    .copy-btn:hover { opacity: 0.85; background: var(--green); }
+
+    .scans-badge {
+      font-size: 12px; color: var(--text2);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 6px; padding: 6px 12px;
+    }
+
+    .more-scans-link {
+      font-size: 12px; color: var(--accent);
+      text-decoration: none; margin-left: auto;
+    }
+    .more-scans-link:hover { text-decoration: underline; }
+
+    .again-btn {
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    /* ── Token Status ── */
+    #tokenStatus {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    #tokenStatus.show { display: flex; }
+    #tokenStatus .ts-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    #tokenStatus .ts-dot.green  { background: var(--green); }
+    #tokenStatus .ts-dot.yellow { background: var(--yellow); }
+    #tokenStatus .ts-dot.red    { background: var(--red); }
+    #tokenStatus .ts-text { flex: 1; color: var(--text2); }
+    #tokenStatus .ts-text strong { color: var(--text); font-weight: 600; }
+    #tokenStatus .ts-link {
+      font-size: 12px; color: var(--accent); text-decoration: none; white-space: nowrap;
+    }
+    #tokenStatus .ts-link:hover { text-decoration: underline; }
+
+    /* ── Light Mode ── */
+    [data-theme="light"] .header { border-bottom-color: rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">✉️</div>
+  <div>
+    <h1>AI Cover Letter Generator</h1>
+    <p>Upload your resume and get a personalized, achievement-focused cover letter</p>
+  </div>
+  <button class="btn-ghost theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" style="margin-left:auto;margin-right:8px;">
+    <span class="theme-icon-dark">&#9790;</span>
+    <span class="theme-icon-light">&#9728;</span>
+  </button>
+  <a href="/" class="home-link" style="margin-left:0;">← Home</a>
+</div>
+
+<div class="container">
+
+  <!-- Upload / Input Form -->
+  <div class="upload-card" id="uploadCard">
+    <h2>Generate Your Cover Letter</h2>
+
+    <!-- Resume Upload -->
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".pdf,.doc,.docx" />
+      <div class="drop-icon" id="dropIcon">📎</div>
+      <div class="drop-text" id="dropText">Drop your resume here or click to browse</div>
+      <div class="drop-sub" id="dropSub">PDF or DOCX — up to 10MB</div>
+    </div>
+
+    <!-- Job Description -->
+    <div class="field-section">
+      <label>
+        Job Description
+        <span>optional — paste for a tailored letter</span>
+      </label>
+      <textarea id="jdInput" placeholder="Paste the job description here to get a letter tailored to this specific role..."></textarea>
+    </div>
+
+    <!-- Company + Role row -->
+    <div class="field-row">
+      <div class="field-section" style="margin-top:0;">
+        <label>
+          Company Name
+          <span>optional</span>
+        </label>
+        <input type="text" id="companyInput" placeholder="e.g. Acme Corp" />
+      </div>
+      <div class="field-section" style="margin-top:0;">
+        <label>
+          Role / Position Title
+          <span>optional</span>
+        </label>
+        <input type="text" id="roleInput" placeholder="e.g. Senior Product Manager" />
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="field-section">
+      <label>
+        Email Address
+        <span>required — we'll send your letter here</span>
+      </label>
+      <input type="email" id="emailInput" placeholder="your@email.com" />
+      <p id="emailHint" style="font-size:12px;color:var(--text3);margin-top:6px;">We'll email you a copy — no spam, ever.</p>
+    </div>
+
+    <!-- Token -->
+    <div class="field-section">
+      <label>
+        Access Token
+        <span>required</span>
+      </label>
+      <input type="text" id="tokenInput" placeholder="Paste your access token" autocomplete="off" />
+    </div>
+
+    <!-- Token Status -->
+    <div id="tokenStatus">
+      <div class="ts-dot" id="tsDot"></div>
+      <div class="ts-text" id="tsText"></div>
+      <a href="#" class="ts-link" id="tsLink" style="display:none"></a>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-row">
+      <button id="submitBtn" onclick="generate()" disabled>Generate Cover Letter</button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Writing your cover letter...</p>
+    <div class="step" id="loadingStep">Reading your resume and tailoring to the role</div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="results-card">
+      <div class="results-header">
+        <h2>Your Cover Letter</h2>
+        <div id="resultsBadge" class="scans-badge" style="display:none;"></div>
+      </div>
+
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">
+        Add your salutation (e.g. <em>Dear Hiring Manager,</em>) and signature before sending. The letter is editable below.
+      </p>
+
+      <textarea class="cover-letter-output" id="coverLetterOutput" spellcheck="false"></textarea>
+
+      <div class="results-actions">
+        <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+        <span class="scans-badge" id="scansRemainingBadge" style="display:none;"></span>
+        <a href="/#pricing" class="more-scans-link" id="moreScansLink" style="display:none;">Get more scans →</a>
+      </div>
+    </div>
+
+    <button class="again-btn" onclick="reset()">← Generate Another Letter</button>
+  </div>
+
+</div>
+
+<script>
+  // ── Theme ──
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  }
+  (function() {
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  })();
+
+  // ── DOM refs ──
+  const fileInput    = document.getElementById('fileInput');
+  const dropZone     = document.getElementById('dropZone');
+  const dropIcon     = document.getElementById('dropIcon');
+  const dropText     = document.getElementById('dropText');
+  const dropSub      = document.getElementById('dropSub');
+  const submitBtn    = document.getElementById('submitBtn');
+  const emailInput   = document.getElementById('emailInput');
+  const tokenInput   = document.getElementById('tokenInput');
+  const jdInput      = document.getElementById('jdInput');
+  const companyInput = document.getElementById('companyInput');
+  const roleInput    = document.getElementById('roleInput');
+
+  let selectedFile = null;
+
+  // ── Restore saved values ──
+  const savedEmail = localStorage.getItem('ats_email');
+  if (savedEmail) emailInput.value = savedEmail;
+  const savedToken = localStorage.getItem('ats_token');
+  if (savedToken) {
+    tokenInput.value = savedToken;
+    fetchTokenStatus(savedToken);
+  }
+
+  // ── Submit button gating ──
+  function updateSubmitBtn() {
+    submitBtn.disabled = !selectedFile;
+  }
+
+  emailInput.addEventListener('input', () => {
+    localStorage.setItem('ats_email', emailInput.value.trim());
+  });
+
+  tokenInput.addEventListener('input', () => {
+    const t = tokenInput.value.trim();
+    if (t) {
+      localStorage.setItem('ats_token', t);
+      fetchTokenStatus(t);
+    } else {
+      document.getElementById('tokenStatus').classList.remove('show');
+    }
+  });
+
+  // ── File drag & drop ──
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) selectFile(e.target.files[0]);
+  });
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
+  });
+
+  function selectFile(file) {
+    selectedFile = file;
+    dropZone.classList.add('file-selected');
+    dropIcon.textContent = '✅';
+    dropText.textContent = file.name;
+    dropSub.textContent = `${(file.size / 1024).toFixed(0)} KB — ready to generate`;
+    updateSubmitBtn();
+  }
+
+  // ── Token status ──
+  async function fetchTokenStatus(token) {
+    const statusEl = document.getElementById('tokenStatus');
+    const dotEl    = document.getElementById('tsDot');
+    const textEl   = document.getElementById('tsText');
+    const linkEl   = document.getElementById('tsLink');
+
+    statusEl.classList.add('show');
+    dotEl.className = 'ts-dot';
+    textEl.innerHTML = 'Checking token...';
+    linkEl.style.display = 'none';
+
+    try {
+      const res = await fetch(`/token-status?token=${encodeURIComponent(token)}`);
+      const data = await res.json();
+
+      if (!res.ok || data.code) {
+        dotEl.classList.add('red');
+        textEl.innerHTML = data.detail || 'Invalid token.';
+        linkEl.style.display = 'inline';
+        linkEl.href = '/#pricing';
+        linkEl.textContent = 'Get a token →';
+        return;
+      }
+
+      const scans = data.scans_remaining;
+      if (scans >= 9000) {
+        dotEl.classList.add('green');
+        textEl.innerHTML = '<strong>Unlimited scans</strong> — Pro plan active';
+      } else if (scans > 0) {
+        dotEl.classList.add('green');
+        textEl.innerHTML = `<strong>${scans} scan${scans !== 1 ? 's' : ''} remaining</strong>`;
+      } else {
+        dotEl.classList.add('red');
+        textEl.innerHTML = 'No scans remaining.';
+        linkEl.style.display = 'inline';
+        linkEl.href = '/#pricing';
+        linkEl.textContent = 'Get more scans →';
+      }
+    } catch {
+      dotEl.classList.add('yellow');
+      textEl.innerHTML = 'Could not verify token.';
+    }
+  }
+
+  // ── Loading steps ──
+  const loadingSteps = [
+    'Reading your resume...',
+    'Identifying your top achievements...',
+    'Matching to the role requirements...',
+    'Crafting compelling opening lines...',
+    'Polishing the letter...',
+  ];
+
+  // ── Generate ──
+  async function generate() {
+    if (!selectedFile) return;
+
+    const email = emailInput.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      emailInput.style.borderColor = 'var(--red)';
+      emailInput.focus();
+      const hint = document.getElementById('emailHint');
+      hint.style.color = 'var(--red)';
+      hint.textContent = 'Please enter a valid email address.';
+      setTimeout(() => {
+        emailInput.style.borderColor = '';
+        hint.style.color = 'var(--text3)';
+        hint.textContent = "We'll email you a copy — no spam, ever.";
+      }, 3000);
+      return;
+    }
+
+    const token = tokenInput.value.trim();
+    if (!token) {
+      tokenInput.style.borderColor = 'var(--red)';
+      tokenInput.focus();
+      setTimeout(() => { tokenInput.style.borderColor = ''; }, 3000);
+      return;
+    }
+
+    document.getElementById('uploadCard').style.display = 'none';
+    document.getElementById('errorBox').classList.remove('active');
+    document.getElementById('results').classList.remove('active');
+    document.getElementById('loading').classList.add('active');
+
+    let stepIdx = 0;
+    const stepEl = document.getElementById('loadingStep');
+    const stepInterval = setInterval(() => {
+      stepIdx = (stepIdx + 1) % loadingSteps.length;
+      stepEl.textContent = loadingSteps[stepIdx];
+    }, 2500);
+
+    try {
+      const fd = new FormData();
+      fd.append('resume', selectedFile);
+      fd.append('job_description', jdInput.value);
+      fd.append('email', email);
+      fd.append('token', token);
+      fd.append('company_name', companyInput.value.trim());
+      fd.append('role_title', roleInput.value.trim());
+
+      const res = await fetch('/cover-letter', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || 'Failed to generate cover letter');
+      }
+
+      clearInterval(stepInterval);
+      renderResults(data);
+    } catch (err) {
+      clearInterval(stepInterval);
+      document.getElementById('loading').classList.remove('active');
+      document.getElementById('uploadCard').style.display = 'block';
+      const errorBox = document.getElementById('errorBox');
+      errorBox.textContent = `Error: ${err.message}`;
+      errorBox.classList.add('active');
+    }
+  }
+
+  // ── Render ──
+  function renderResults(data) {
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('results').classList.add('active');
+
+    document.getElementById('coverLetterOutput').value = data.cover_letter || '';
+
+    const scans = data.scans_remaining;
+    const badgeEl = document.getElementById('scansRemainingBadge');
+    const moreEl  = document.getElementById('moreScansLink');
+
+    if (typeof scans === 'number') {
+      badgeEl.style.display = 'inline-block';
+      if (scans >= 9000) {
+        badgeEl.textContent = 'Unlimited scans';
+        moreEl.style.display = 'none';
+      } else if (scans === 0) {
+        badgeEl.textContent = '0 scans remaining';
+        moreEl.style.display = 'inline';
+      } else {
+        badgeEl.textContent = `${scans} scan${scans !== 1 ? 's' : ''} remaining`;
+        moreEl.style.display = scans <= 2 ? 'inline' : 'none';
+      }
+    }
+  }
+
+  // ── Copy ──
+  async function copyToClipboard() {
+    const text = document.getElementById('coverLetterOutput').value;
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = document.querySelector('.copy-btn');
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    } catch {
+      // Fallback for older browsers
+      const ta = document.getElementById('coverLetterOutput');
+      ta.select();
+      document.execCommand('copy');
+    }
+  }
+
+  // ── Reset ──
+  function reset() {
+    selectedFile = null;
+    dropZone.classList.remove('file-selected');
+    dropIcon.textContent = '📎';
+    dropText.textContent = 'Drop your resume here or click to browse';
+    dropSub.textContent = 'PDF or DOCX — up to 10MB';
+    fileInput.value = '';
+    document.getElementById('results').classList.remove('active');
+    document.getElementById('errorBox').classList.remove('active');
+    document.getElementById('uploadCard').style.display = 'block';
+    document.getElementById('coverLetterOutput').value = '';
+    updateSubmitBtn();
+  }
+</script>
+</body>
+</html>

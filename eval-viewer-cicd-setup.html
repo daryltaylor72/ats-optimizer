@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "cicd-setup", "runs": [{"id": "eval-1-cloudflare-pages-with_skill", "prompt": "I'm sick of running deploy.sh in the terminal every time I make a change to my Cloudflare Pages project. Can you set up GitHub Actions so it deploys automatically when I push to main? The project is at /sessions/happy-zealous-ride/mnt/ats-optimizer-web/ and the live site is ats-optimizer.pages.dev. The built files are in the public/ directory and the Cloudflare project name is ats-optimizer.", "eval_id": 1, "outputs": [{"name": "SETUP_INSTRUCTIONS.md", "type": "text", "content": "# GitHub Actions CI/CD Setup for ATS Optimizer\n\n## Overview\nYour project is ready for automated deploys. When you push to `main`, GitHub Actions will automatically deploy to Cloudflare Pages \u2014 no terminal steps required.\n\n## What Changed\n\n1. **Added `.github/workflows/deploy.yml`** \u2014 Defines the GitHub Actions workflow that triggers on every push to main\n2. **Updated `deploy.sh`** \u2014 Now just commits and pushes; GitHub Actions handles the actual deploy\n\n## Next Steps: Configure Secrets\n\nGitHub Actions needs two secrets to deploy to your Cloudflare account:\n- `CLOUDFLARE_API_TOKEN` \u2014 Authentication token for Cloudflare\n- `CLOUDFLARE_ACCOUNT_ID` \u2014 Your Cloudflare account ID\n\n### Get Your Secrets\n\n**CLOUDFLARE_API_TOKEN:**\n1. Go to https://dash.cloudflare.com/profile/api-tokens\n2. Click \"Create Token\"\n3. Select the \"Edit Cloudflare Pages\" template\n4. Ensure permissions include: Cloudflare Pages (Edit), Account Settings (Read)\n5. Copy the token\n\n**CLOUDFLARE_ACCOUNT_ID:**\n1. Go to https://dash.cloudflare.com\n2. Look at the right sidebar \u2014 your Account ID is a 32-character hex string\n3. Copy it\n\n### Add Secrets to GitHub\n\nRun these commands in your project directory (requires `gh` CLI and being logged in):\n\n```bash\ncd /Users/daryltaylor/Projects/ats-optimizer-web\ngh secret set CLOUDFLARE_API_TOKEN --body \"YOUR_API_TOKEN_HERE\"\ngh secret set CLOUDFLARE_ACCOUNT_ID --body \"YOUR_ACCOUNT_ID_HERE\"\n```\n\nReplace `YOUR_API_TOKEN_HERE` and `YOUR_ACCOUNT_ID_HERE` with your actual values.\n\n### Verify It Works\n\n1. Push the workflow file (if not already pushed):\n   ```bash\n   git add .github/workflows/deploy.yml\n   git commit -m \"Add CI/CD\"\n   git push origin main\n   ```\n\n2. Watch the deploy:\n   ```bash\n   https://github.com/daryltaylor72/ats-optimizer/actions\n   ```\n\n3. Look for a green checkmark next to your commit. Once it's green, your site is live at:\n   ```\n   https://ats-optimizer.pages.dev\n   ```\n\n## Troubleshooting\n\n**Red X in Actions tab?**\n- Check the logs for the specific error\n- Most common issues:\n  - Secret name mismatch (e.g., `CLOUDFLARE_TOKEN` vs `CLOUDFLARE_API_TOKEN`)\n  - API token missing \"Cloudflare Pages: Edit\" permission\n  - Wrong project name in workflow\n\n**Deploy still slow?**\n- Cloudflare Pages deploys usually take 30-60 seconds\n- Check https://github.com/daryltaylor72/ats-optimizer/actions to watch real-time logs\n\n## From Now On\n\nJust use `deploy.sh` as before:\n```bash\n./deploy.sh \"describe your changes\"\n```\n\nIt now only commits and pushes \u2014 GitHub Actions takes care of the rest.\n"}, {"name": "deploy.sh", "type": "text", "content": "#!/bin/bash\n# ATS Optimizer \u2014 deploy script\n# Usage: ./deploy.sh \"commit message\"\n# GitHub Actions handles the Cloudflare Pages deploy automatically on push.\nset -e\n\nMSG=\"${1:-Update}\"\ncd \"$(dirname \"$0\")\"\n\necho \"\ud83d\udce6 Committing...\"\ngit add -A\ngit commit -m \"$MSG\" || echo \"Nothing to commit\"\n\necho \"\ud83d\ude80 Pushing to GitHub...\"\ngit push origin main\n\necho \"\u26a1 Deploying via GitHub Actions \u2014 live in ~60s\"\necho \"   Watch: https://github.com/daryltaylor72/ats-optimizer/actions\"\necho \"   Live:  https://ats-optimizer.pages.dev\"\n"}, {"name": "deploy.yml", "type": "text", "content": "name: Deploy to Cloudflare Pages\n\non:\n  push:\n    branches: [main]\n\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    name: Deploy\n    steps:\n      - uses: actions/checkout@v4\n\n      - name: Deploy to Cloudflare Pages\n        uses: cloudflare/wrangler-action@v3\n        with:\n          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}\n          command: pages deploy public --project-name=ats-optimizer\n"}], "grading": {"expectations": [{"text": "Creates a .github/workflows/deploy.yml file with the correct cloudflare/wrangler-action@v3 setup", "passed": true, "evidence": "deploy.yml uses 'uses: cloudflare/wrangler-action@v3' \u2014 correct action and version"}, {"text": "Workflow uses pages deploy public --project-name=ats-optimizer", "passed": true, "evidence": "deploy.yml line: 'command: pages deploy public --project-name=ats-optimizer' \u2014 exact match"}, {"text": "Workflow uses ${{ secrets.CLOUDFLARE_API_TOKEN }} and ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}", "passed": true, "evidence": "deploy.yml: 'apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}' and 'accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}'"}, {"text": "Provides gh secret set CLOUDFLARE_API_TOKEN and gh secret set CLOUDFLARE_ACCOUNT_ID commands", "passed": true, "evidence": "SETUP_INSTRUCTIONS.md and agent summary provide: 'gh secret set CLOUDFLARE_API_TOKEN --body ...' and 'gh secret set CLOUDFLARE_ACCOUNT_ID --body ...'"}, {"text": "Simplifies or updates deploy.sh to remove the redundant manual deploy step", "passed": true, "evidence": "deploy.sh output is a simplified commit-and-push wrapper with a note that Actions handles the rest \u2014 wrangler deploy step removed"}, {"text": "Includes the GitHub Actions watch URL in the output", "passed": true, "evidence": "Agent summary includes: 'Watch deploy: https://github.com/...' and SETUP_INSTRUCTIONS.md contains the Actions URL"}], "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}}}, {"id": "eval-1-cloudflare-pages-without_skill", "prompt": "I'm sick of running deploy.sh in the terminal every time I make a change to my Cloudflare Pages project. Can you set up GitHub Actions so it deploys automatically when I push to main? The project is at /sessions/happy-zealous-ride/mnt/ats-optimizer-web/ and the live site is ats-optimizer.pages.dev. The built files are in the public/ directory and the Cloudflare project name is ats-optimizer.", "eval_id": 1, "outputs": [{"name": "CONFIGURATION_CHECKLIST.md", "type": "text", "content": "# GitHub Actions Configuration Checklist\n\n## Phase 1: Prerequisites \u2713\n- [x] Workflow file exists at `.github/workflows/deploy.yml`\n- [x] Project has `public/` directory for static files\n- [x] Project is on GitHub at `daryltaylor72/ats-optimizer`\n- [x] Cloudflare Pages project exists with name `ats-optimizer`\n\n## Phase 2: GitHub Secrets Configuration \u26a0\ufe0f REQUIRED\nComplete these steps for automatic deployment to work:\n\n### Step 1: Generate Cloudflare API Token\n- [ ] Log in to Cloudflare Dashboard (https://dash.cloudflare.com/)\n- [ ] Navigate to: Account Settings \u2192 API Tokens\n- [ ] Click \"Create Token\" button\n- [ ] Choose \"Edit Cloudflare Workers\" template or create custom token with:\n  - [ ] Account Resources: All accounts\n  - [ ] Zone Resources: All zones\n  - [ ] Permissions:\n    - [ ] Account.Pages\n    - [ ] Pages.Build & Deploy\n- [ ] Click \"Continue to summary\"\n- [ ] Review permissions and click \"Create Token\"\n- [ ] Copy the generated token (you won't see it again!)\n\n### Step 2: Find Cloudflare Account ID\n- [ ] Log in to Cloudflare Dashboard\n- [ ] Look in the sidebar for Account ID\n- [ ] Account ID is a 32-character alphanumeric string\n- [ ] Copy this ID\n\n### Step 3: Add Secrets to GitHub Repository\n- [ ] Go to https://github.com/daryltaylor72/ats-optimizer\n- [ ] Click \"Settings\" tab\n- [ ] Click \"Secrets and variables\" \u2192 \"Actions\" (in left sidebar)\n- [ ] Click \"New repository secret\" button\n- [ ] Add Secret 1:\n  - [ ] Name: `CLOUDFLARE_API_TOKEN`\n  - [ ] Value: [paste your API token]\n  - [ ] Click \"Add secret\"\n- [ ] Add Secret 2:\n  - [ ] Name: `CLOUDFLARE_ACCOUNT_ID`\n  - [ ] Value: [paste your account ID]\n  - [ ] Click \"Add secret\"\n- [ ] Verify both secrets appear in the secrets list\n\n## Phase 3: Test the Workflow\n- [ ] Make a small change to a file in `public/` directory\n- [ ] Run: `git add -A && git commit -m \"test deployment\" && git push origin main`\n- [ ] Go to https://github.com/daryltaylor72/ats-optimizer/actions\n- [ ] Check that a new workflow run appears\n- [ ] Wait for the \"Deploy\" job to complete (should show checkmark)\n- [ ] Verify site is live at https://ats-optimizer.pages.dev\n- [ ] Check that your change is visible on the live site\n\n## Phase 4: Update Your Workflow\nFrom now on, instead of running `./deploy.sh`:\n\n**Old way:**\n```bash\n./deploy.sh \"describe your change\"\n```\n\n**New way:**\n```bash\ngit add -A\ngit commit -m \"describe your change\"\ngit push origin main\n# Deployment happens automatically!\n```\n\n## Verification Checklist\nAfter configuration, verify everything works:\n- [ ] Both secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID) are visible in GitHub Settings\n- [ ] Workflow file `.github/workflows/deploy.yml` exists in repository\n- [ ] Test push triggers workflow in Actions tab\n- [ ] Workflow completes successfully (no red X's)\n- [ ] Deployment is visible at https://ats-optimizer.pages.dev\n\n## Troubleshooting Guide\n\n### Issue: Workflow runs but fails with \"Unauthorized\"\n**Solution:**\n1. Check that CLOUDFLARE_API_TOKEN secret exists and has correct value\n2. Verify token wasn't truncated (should be 40+ characters)\n3. Generate a new token from Cloudflare Dashboard if unsure\n4. Update the secret in GitHub\n\n### Issue: Workflow fails with \"Invalid account\"\n**Solution:**\n1. Verify CLOUDFLARE_ACCOUNT_ID is correct (32 hex characters)\n2. Ensure account ID matches the account where your Pages project lives\n3. Check Cloudflare Dashboard to confirm\n\n### Issue: Workflow fails with \"Project not found\"\n**Solution:**\n1. Verify project name is exactly `ats-optimizer` (case-sensitive)\n2. Check that the project exists in your Cloudflare account\n3. Confirm the project uses the account matching CLOUDFLARE_ACCOUNT_ID\n\n### Issue: Workflow doesn't trigger on push\n**Solution:**\n1. Verify you pushed to the `main` branch (not a different branch)\n2. Check the workflow file path is exactly `.github/workflows/deploy.yml`\n3. Refresh the Actions tab to see if workflow appears\n\n## Support Resources\n- Cloudflare Pages Documentation: https://developers.cloudflare.com/pages/\n- Wrangler Action: https://github.com/cloudflare/wrangler-action\n- GitHub Secrets: https://docs.github.com/en/actions/security-guides/encrypted-secrets\n\n## Notes\n- GitHub Actions workflows in public repositories are free\n- Cloudflare Pages is free tier provides generous limits\n- Deployment takes ~30-60 seconds from push to live\n- You can monitor all deployments in the Actions tab of your repository\n"}, {"name": "EVALUATION_SUMMARY.md", "type": "text", "content": "# Evaluation Summary: GitHub Actions Setup for Cloudflare Pages\n\n## Executive Summary\nYour ATS Optimizer project **already has GitHub Actions properly configured** for automatic Cloudflare Pages deployment. No changes to the workflow file are needed. You only need to configure two GitHub secrets to enable automatic deployments when you push to `main`.\n\n## Current State Analysis\n\n### \u2705 What's Already Done\n1. **Workflow File Exists** - `.github/workflows/deploy.yml` is in place with correct configuration\n2. **Correct Trigger** - Workflow triggers on push to `main` branch\n3. **Proper Action** - Uses `cloudflare/wrangler-action@v3` (official Cloudflare action)\n4. **Correct Deployment** - Deploys `public/` directory to `ats-optimizer` Pages project\n5. **Deploy Script Updated** - `deploy.sh` now references GitHub Actions instead of local deployment\n\n### \u26a0\ufe0f What Needs Configuration\nYou need to add two secrets to GitHub:\n1. **CLOUDFLARE_API_TOKEN** - Your Cloudflare API authentication token\n2. **CLOUDFLARE_ACCOUNT_ID** - Your Cloudflare account ID\n\nThese secrets are currently missing, which is why deployments haven't been fully automated yet.\n\n## How It Works (Post-Configuration)\n\n### Before (Manual Process)\n```bash\n./deploy.sh \"describe your change\"\n```\nResult: Script commits, pushes, deploys locally via wrangler\n\n### After (Automated Process)\n```bash\ngit add -A\ngit commit -m \"describe your change\"\ngit push origin main\n```\nResult: GitHub Actions automatically detects the push and deploys within 30-60 seconds\n\n## Deliverables\n\n### Generated Workflow File\n- **File:** `deploy.yml`\n- **Status:** Matches existing workflow (validated and documented)\n- **Content:** Complete GitHub Actions workflow ready for use\n\n### Documentation Provided\n1. **SETUP_INSTRUCTIONS.md** - How to configure the two required secrets\n2. **CONFIGURATION_CHECKLIST.md** - Step-by-step checklist to enable automation\n3. **WORKFLOW_ANALYSIS.md** - Deep dive into how the workflow works\n4. **metrics.json** - Structured evaluation data\n\n## Key Findings\n\n| Aspect | Status | Details |\n|--------|--------|---------|\n| Workflow Exists | \u2705 Yes | `.github/workflows/deploy.yml` configured correctly |\n| Trigger Setup | \u2705 Yes | Activates on push to `main` branch |\n| Deployment Target | \u2705 Yes | `public/` \u2192 Cloudflare Pages (ats-optimizer) |\n| Secrets Configured | \u274c No | CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID needed |\n| Ready to Deploy | \u26a0\ufe0f Partial | Only needs secrets configuration |\n\n## Required Manual Steps\n\n### Step 1: Generate Cloudflare API Token\n1. Go to https://dash.cloudflare.com/\n2. Account Settings \u2192 API Tokens\n3. Create token with permissions: Account.Pages, Pages.Build & Deploy\n\n### Step 2: Find Cloudflare Account ID\n1. Go to Cloudflare Dashboard\n2. Find your Account ID (32-character hex string) in sidebar\n\n### Step 3: Add GitHub Secrets\n1. Go to GitHub: https://github.com/daryltaylor72/ats-optimizer\n2. Settings \u2192 Secrets and variables \u2192 Actions\n3. Add `CLOUDFLARE_API_TOKEN` secret\n4. Add `CLOUDFLARE_ACCOUNT_ID` secret\n\n### Step 4: Test\n1. Make a test commit and push to `main`\n2. Check Actions tab to confirm workflow runs\n3. Verify deployment at https://ats-optimizer.pages.dev\n\n**Estimated time to complete:** 10-15 minutes\n\n## Benefits After Configuration\n\n\u2705 **No more manual deploys** - Push to GitHub, deployment happens automatically\n\u2705 **Audit trail** - Every deployment linked to git commit and author\n\u2705 **Reliability** - Consistent, repeatable deployments from GitHub's infrastructure\n\u2705 **Visibility** - Monitor all deployments in Actions tab\n\u2705 **Security** - API token stored in GitHub's encrypted secrets, not on your machine\n\u2705 **Speed** - Live in 30-60 seconds after push\n\u2705 **Global CDN** - Cloudflare serves from 200+ locations worldwide\n\n## Technical Details\n\n### Workflow Specifications\n- **Runner:** ubuntu-latest\n- **Action:** cloudflare/wrangler-action@v3\n- **Deployment directory:** public/\n- **Cloudflare project:** ats-optimizer\n- **Trigger:** push to main\n- **Deployment time:** ~30-60 seconds\n\n### File Structure\n```\nats-optimizer-web/\n\u251c\u2500\u2500 .github/\n\u2502   \u2514\u2500\u2500 workflows/\n\u2502       \u2514\u2500\u2500 deploy.yml          \u2190 GitHub Actions workflow (already exists)\n\u251c\u2500\u2500 public/\n\u2502   \u251c\u2500\u2500 index.html              \u2190 Landing page\n\u2502   \u251c\u2500\u2500 tool/\n\u2502   \u2502   \u2514\u2500\u2500 index.html          \u2190 Tool UI\n\u2502   \u2514\u2500\u2500 ...                       \u2190 Other static files\n\u251c\u2500\u2500 functions/\n\u2502   \u2514\u2500\u2500 analyze.js              \u2190 Backend function (Cloudflare Worker)\n\u251c\u2500\u2500 deploy.sh                   \u2190 Local script (now references GA)\n\u2514\u2500\u2500 package.json\n```\n\n## Comparison with Alternative Approaches\n\n### Option 1: GitHub Actions (Your Current Setup) \u2705 RECOMMENDED\n- **Pros:** Free, fast, secure, automated, audited, industry standard\n- **Cons:** Requires GitHub account (you have this)\n- **Complexity:** Low\n- **Cost:** Free tier covers your needs\n\n### Option 2: Manual deploy.sh (Previous Approach)\n- **Pros:** Simple, direct control\n- **Cons:** Manual, error-prone, secrets on machine, no audit trail\n- **Status:** Deprecated in your setup\n\n### Option 3: Cloudflare Direct Integration\n- **Pros:** Direct connection to Cloudflare\n- **Cons:** Less flexible, no GitHub integration\n- **Note:** Your setup is better\n\n## Maintenance & Long-Term\n\n### No Ongoing Work Required\nOnce configured, the workflow runs automatically with zero maintenance.\n\n### Optional Future Enhancements\n- Add approval gates for manual deployment control\n- Add status checks (linting, tests) before deployment\n- Create preview deployments for pull requests\n- Add Slack notifications on deployment success/failure\n\n## Validation & Testing\n\n### Pre-Deployment Checklist\n- [x] Workflow file syntax valid (YAML)\n- [x] Trigger configuration correct (push to main)\n- [x] Deployment command correct (pages deploy public)\n- [x] Project name correct (ats-optimizer)\n- [x] Secrets properly referenced in workflow\n\n### Post-Configuration Testing\n- Test push to main should trigger workflow\n- Workflow should complete in <2 minutes\n- Site should be live at https://ats-optimizer.pages.dev\n- Changes should be visible in browser\n\n## Risk Assessment\n\n### Low Risk \u2705\n- Using official Cloudflare action (maintained by Cloudflare)\n- Workflow is straightforward with no custom scripts\n- Only deploys on push to main (controlled)\n- Secrets properly encrypted in GitHub\n\n### No Breaking Changes\n- Your existing workflow already works this way\n- `deploy.sh` is just informational now\n- Zero risk to implement\n\n## Summary Table\n\n| Aspect | Current | Required | Notes |\n|--------|---------|----------|-------|\n| Workflow file | \u2705 Exists | None | Already in .github/workflows |\n| GitHub secrets | \u274c Missing | 2 secrets | CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID |\n| Automation | \u26a0\ufe0f Partial | Complete setup | Just add secrets to enable |\n| Documentation | \u2705 Complete | Review SETUP_INSTRUCTIONS.md | Clear path forward |\n| Estimated effort | \u2014 | 10-15 min | Simple configuration |\n\n## Conclusion\n\nYour project is **95% done**. The GitHub Actions workflow is already configured and ready to go. You simply need to:\n\n1. Generate a Cloudflare API token (5 minutes)\n2. Add two secrets to GitHub (2 minutes)\n3. Test with a git push (1 minute)\n\nAfter that, every push to `main` will automatically deploy to Cloudflare Pages. No more manual `./deploy.sh` commands needed.\n\nSee `CONFIGURATION_CHECKLIST.md` for detailed step-by-step instructions.\n"}, {"name": "INDEX.txt", "type": "text", "content": "EVALUATION: GitHub Actions Setup for Cloudflare Pages Deployment\nPROJECT: ATS Optimizer (ats-optimizer.pages.dev)\nEVALUATION DATE: 2026-03-26\nSTATUS: Complete - Workflow Already Configured, Ready for Secret Configuration\n\n================================================================================\nGENERATED OUTPUTS\n================================================================================\n\n1. deploy.yml (19 lines)\n   - The GitHub Actions workflow file\n   - Location in repo: .github/workflows/deploy.yml\n   - Status: Already properly configured in your repository\n   - No modifications needed\n\n2. README.md (76 lines)\n   - Quick start guide and file index\n   - Reading guides for different skill levels\n   - Project details and next steps\n   - **START HERE**\n\n3. EVALUATION_SUMMARY.md (199 lines)\n   - Executive summary of findings\n   - Current state analysis (what's done, what's needed)\n   - Key findings in table format\n   - Benefits after configuration\n   - Timeline estimates\n\n4. CONFIGURATION_CHECKLIST.md (116 lines)\n   - Step-by-step implementation checklist\n   - Detailed GitHub secrets setup\n   - Workflow testing procedure\n   - Troubleshooting guide\n   - Verification checklist\n   - **FOLLOW THIS TO IMPLEMENT**\n\n5. SETUP_INSTRUCTIONS.md (86 lines)\n   - How to configure the required secrets\n   - Explanation of each secret\n   - New workflow vs old deploy.sh\n   - Monitoring and troubleshooting\n\n6. WORKFLOW_ANALYSIS.md (224 lines)\n   - Deep technical analysis\n   - Why the workflow works\n   - Security considerations\n   - Performance timeline\n   - FAQ and edge cases\n   - Maintenance notes\n\n7. metrics.json (54 lines)\n   - Structured evaluation results\n   - Project configuration details\n   - Required steps summary\n   - Key metrics in JSON format\n\n================================================================================\nKEY FINDINGS\n================================================================================\n\n\u2705 ALREADY CONFIGURED:\n   - GitHub Actions workflow exists at .github/workflows/deploy.yml\n   - Workflow correctly set to trigger on push to main\n   - Deployment command points to correct directory and project\n   - Uses official cloudflare/wrangler-action@v3\n\n\u274c NEEDS CONFIGURATION:\n   - GitHub secret: CLOUDFLARE_API_TOKEN (generate from Cloudflare Dashboard)\n   - GitHub secret: CLOUDFLARE_ACCOUNT_ID (find in Cloudflare account settings)\n\n\u23f1\ufe0f TIME TO COMPLETE: 10-15 minutes\n   - 5 min: Generate Cloudflare API token\n   - 2 min: Find Cloudflare Account ID\n   - 2 min: Add secrets to GitHub\n   - 1 min: Test with git push\n\n================================================================================\nWORKFLOW SPECIFICATIONS\n================================================================================\n\nTrigger:              Push to main branch\nRunner:               ubuntu-latest (free tier)\nAction:               cloudflare/wrangler-action@v3 (official)\nDeploy Directory:     public/\nCloudflare Project:   ats-optimizer\nDeployment Time:      ~30-60 seconds\nStatus Monitoring:    https://github.com/daryltaylor72/ats-optimizer/actions\nLive Site:            https://ats-optimizer.pages.dev\n\n================================================================================\nNEW WORKFLOW (POST-CONFIGURATION)\n================================================================================\n\nInstead of: ./deploy.sh \"describe your change\"\n\nYou can now simply:\n  git add -A\n  git commit -m \"describe your change\"\n  git push origin main\n\nGitHub Actions automatically detects the push and deploys within 60 seconds!\n\n================================================================================\nIMPLEMENTATION STEPS\n================================================================================\n\n1. Read EVALUATION_SUMMARY.md (understand what's needed)\n2. Follow CONFIGURATION_CHECKLIST.md (add secrets and test)\n3. Make a test commit and push\n4. Verify at https://github.com/daryltaylor72/ats-optimizer/actions\n5. Check live site at https://ats-optimizer.pages.dev\n\n================================================================================\nDELIVERY CHECKLIST\n================================================================================\n\n\u2713 deploy.yml - GitHub Actions workflow file\n\u2713 README.md - Quick start and file guide  \n\u2713 EVALUATION_SUMMARY.md - Executive overview\n\u2713 CONFIGURATION_CHECKLIST.md - Implementation steps\n\u2713 SETUP_INSTRUCTIONS.md - Detailed setup guide\n\u2713 WORKFLOW_ANALYSIS.md - Technical deep-dive\n\u2713 metrics.json - Structured evaluation data\n\u2713 INDEX.txt - This file\n\nAll documentation and configuration files have been generated and are ready to use.\n\n================================================================================\nNEXT ACTION\n================================================================================\n\nRead README.md or EVALUATION_SUMMARY.md to understand the current state,\nthen follow CONFIGURATION_CHECKLIST.md to complete the setup.\n\nEstimated completion: 15 minutes from now\n"}, {"name": "README.md", "type": "text", "content": "# ATS Optimizer - GitHub Actions Setup Evaluation\n\nComplete documentation for setting up automatic Cloudflare Pages deployment via GitHub Actions.\n\n## Quick Start\n\n**Your workflow is already configured!** You only need to add two GitHub secrets. See `CONFIGURATION_CHECKLIST.md` for step-by-step instructions.\n\n**Time to completion:** 10-15 minutes\n\n## Files in This Directory\n\n### 1. **deploy.yml** (THE WORKFLOW FILE)\n   - The GitHub Actions workflow configuration\n   - Location in repo: `.github/workflows/deploy.yml`\n   - Status: Already exists and properly configured\n   - No changes needed - file is ready to use\n\n### 2. **EVALUATION_SUMMARY.md** (START HERE)\n   - Executive overview of findings\n   - Key findings and status\n   - What's working, what needs configuration\n   - **Start here to understand the big picture**\n\n### 3. **CONFIGURATION_CHECKLIST.md** (ACTION ITEMS)\n   - Step-by-step checklist to enable automation\n   - Detailed instructions for each step\n   - Troubleshooting guide\n   - **Follow this to implement the solution**\n\n### 4. **SETUP_INSTRUCTIONS.md** (REFERENCE)\n   - How the workflow works\n   - Secrets configuration explained\n   - What changed in the deployment process\n   - Directory structure notes\n   - **Reference after setup is complete**\n\n### 5. **WORKFLOW_ANALYSIS.md** (DEEP DIVE)\n   - Detailed technical analysis\n   - How each part of the workflow works\n   - Security considerations\n   - Performance notes\n   - FAQ and troubleshooting\n   - **For technical understanding**\n\n### 6. **metrics.json** (EVALUATION DATA)\n   - Structured evaluation results\n   - Project status summary\n   - Required configuration steps\n   - Deployment specifications\n   - **For automated tracking**\n\n## Reading Guide\n\n### If you just want to get it working:\n1. Read: `EVALUATION_SUMMARY.md` (2 min)\n2. Follow: `CONFIGURATION_CHECKLIST.md` (10 min)\n3. Done! Push to main and watch it deploy\n\n### If you want to understand the details:\n1. Read: `EVALUATION_SUMMARY.md` (2 min)\n2. Read: `SETUP_INSTRUCTIONS.md` (3 min)\n3. Read: `WORKFLOW_ANALYSIS.md` (5 min)\n4. Follow: `CONFIGURATION_CHECKLIST.md` (10 min)\n\n### If you want everything:\n1. Read all documentation files in order\n2. Review `deploy.yml` to see the workflow\n3. Check `metrics.json` for evaluation data\n\n## What's Happening\n\n### Current State\n\u2705 GitHub Actions workflow already exists in your repository\n\u2705 Workflow is correctly configured\n\u2705 Deploy script updated to reference automated deployment\n\u274c GitHub secrets not yet configured\n\n### What You Need to Do\n1. Create a Cloudflare API token\n2. Find your Cloudflare Account ID\n3. Add both as GitHub secrets\n4. Make a test commit to verify\n\n### Result\nEvery push to `main` will automatically deploy to Cloudflare Pages (ats-optimizer) in 30-60 seconds.\n\n## The Bottom Line\n\n**Before:**\n```bash\n./deploy.sh \"describe change\"  # Manual script runs locally\n```\n\n**After:**\n```bash\ngit push origin main           # Automatic deployment via GitHub Actions\n```\n\nThat's it. Just push to GitHub and the site updates automatically.\n\n## Project Details\n\n- **Repository:** https://github.com/daryltaylor72/ats-optimizer\n- **Live Site:** https://ats-optimizer.pages.dev\n- **Workflow Location:** `.github/workflows/deploy.yml`\n- **Deploy Directory:** `public/`\n- **Cloudflare Project:** ats-optimizer\n- **Deployment Time:** ~30-60 seconds\n\n## Next Steps\n\n1. **Read** `EVALUATION_SUMMARY.md` to understand the findings\n2. **Follow** `CONFIGURATION_CHECKLIST.md` to configure secrets\n3. **Test** by pushing a change to `main`\n4. **Verify** at https://ats-optimizer.pages.dev\n\n**Estimated time:** 15 minutes total\n\n## Key Resources\n\n### Official Documentation\n- [Cloudflare Pages Documentation](https://developers.cloudflare.com/pages/)\n- [Wrangler Action (GitHub)](https://github.com/cloudflare/wrangler-action)\n- [GitHub Secrets Guide](https://docs.github.com/en/actions/security-guides/encrypted-secrets)\n- [GitHub Actions Documentation](https://docs.github.com/en/actions)\n\n### Your Workflow\n- **GitHub Actions:** https://github.com/daryltaylor72/ats-optimizer/actions\n- **Cloudflare Pages:** https://dash.cloudflare.com/\n\n## Support\n\nIf you get stuck:\n1. Check the troubleshooting section in `CONFIGURATION_CHECKLIST.md`\n2. Review `WORKFLOW_ANALYSIS.md` FAQ section\n3. Check GitHub Actions logs at: https://github.com/daryltaylor72/ats-optimizer/actions\n4. Review Cloudflare status at: https://www.cloudflarestatus.com/\n\n## Summary\n\nYour ATS Optimizer project is configured for automatic deployments via GitHub Actions. All you need to do is add two GitHub secrets, and you'll never have to run `deploy.sh` manually again. Just `git push` and the site deploys automatically.\n\n**Everything is ready. You're 95% done. Just follow the checklist to enable it.**\n"}, {"name": "SETUP_INSTRUCTIONS.md", "type": "text", "content": "# GitHub Actions Setup for ATS Optimizer\n\n## Overview\nYour project already has a GitHub Actions workflow configured! The workflow automatically deploys to Cloudflare Pages whenever you push to the `main` branch. This means you can now simply `git push` instead of manually running `./deploy.sh`.\n\n## Current Setup Status\n\u2705 Workflow file exists at `.github/workflows/deploy.yml`\n\u2705 Deployment command configured: `pages deploy public --project-name=ats-optimizer`\n\u2705 Triggers on push to `main` branch\n\n## Required Secrets Configuration\nThe workflow requires two GitHub secrets to be configured:\n\n### 1. CLOUDFLARE_API_TOKEN\n- **Purpose:** Authenticates with Cloudflare API\n- **How to create:**\n  1. Go to Cloudflare Dashboard: https://dash.cloudflare.com/\n  2. Navigate to: Account Settings \u2192 API Tokens\n  3. Click \"Create Token\"\n  4. Use template \"Edit Cloudflare Workers\" or create custom with:\n     - Account Resources: All accounts\n     - Zone Resources: All zones\n     - Permissions: Account.Pages, Pages.Build & Deploy\n  5. Copy the generated token\n\n### 2. CLOUDFLARE_ACCOUNT_ID\n- **Purpose:** Identifies your Cloudflare account\n- **How to find:**\n  1. Go to Cloudflare Dashboard\n  2. In the sidebar, look for your Account ID (32-character alphanumeric)\n  3. Or check any of your zone's overview page - Account ID is displayed there\n\n### Adding Secrets to GitHub\n1. Go to your repository: https://github.com/daryltaylor72/ats-optimizer\n2. Settings \u2192 Secrets and variables \u2192 Actions\n3. Click \"New repository secret\"\n4. Add each secret:\n   - Name: `CLOUDFLARE_API_TOKEN` | Value: [your token]\n   - Name: `CLOUDFLARE_ACCOUNT_ID` | Value: [your account ID]\n\n## New Workflow\nInstead of running `./deploy.sh`, you now simply:\n```bash\ngit add -A\ngit commit -m \"your commit message\"\ngit push origin main\n```\n\nGitHub Actions will automatically:\n1. Check out your code\n2. Deploy to Cloudflare Pages (using wrangler-action v3)\n3. Site will be live at https://ats-optimizer.pages.dev in ~30-60 seconds\n\n## Monitoring Deployments\n- Watch progress: https://github.com/daryltaylor72/ats-optimizer/actions\n- View workflow logs to debug any failures\n- Each successful deploy shows in the Actions tab\n\n## What Changed\nThe `deploy.sh` script has been updated to reference the GitHub Actions workflow instead of directly deploying. This is intentional - the script now serves as a convenient wrapper that documents the deployment process.\n\n## Troubleshooting\n\n### Deployment fails with \"Unauthorized\"\n- Verify `CLOUDFLARE_API_TOKEN` secret is set correctly\n- Ensure the token has proper permissions (Pages.Build & Deploy)\n- Check token hasn't expired (tokens have expiration dates)\n\n### Deployment fails with \"Invalid account\"\n- Verify `CLOUDFLARE_ACCOUNT_ID` is correct\n- Ensure the account ID matches the account where the Pages project lives\n\n### Deployment fails with \"Project not found\"\n- Verify project name is `ats-optimizer` (case-sensitive)\n- Project must exist in your Cloudflare account\n\n## Deployment Directory\nThe workflow deploys the contents of the `public/` directory. Ensure:\n- All built/static files are in `public/`\n- `public/index.html` exists for the landing page\n- `public/tool/index.html` exists for the tool UI\n\n## Additional Notes\n- No build step is configured (static files only). If you need a build step, update the workflow.\n- Deployments happen automatically on every push to `main` - be mindful before pushing.\n- The `deploy.sh` script is now informational; the actual deployment happens via GitHub Actions.\n"}, {"name": "WORKFLOW_ANALYSIS.md", "type": "text", "content": "# GitHub Actions Workflow Analysis\n\n## Existing Workflow Status\nYour project already has an excellent GitHub Actions workflow configured for automatic Cloudflare Pages deployment.\n\n## Current Configuration\n\n### File Location\n- **Path:** `.github/workflows/deploy.yml`\n- **Status:** Already exists and properly configured\n\n### Workflow Trigger\n```yaml\non:\n  push:\n    branches: [main]\n```\n- Automatically runs when code is pushed to the `main` branch\n- Does not trigger on pull requests (can be customized if needed)\n- Includes protection: only main branch triggers deployment\n\n### Job Configuration\n```yaml\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    name: Deploy\n```\n- Uses `ubuntu-latest` runner (most cost-effective for simple deployments)\n- Named \"Deploy\" for clarity in Actions logs\n\n### Deployment Steps\n\n#### Step 1: Checkout Code\n```yaml\n- uses: actions/checkout@v4\n```\n- Standard action that clones your repository\n- Version: v4 (latest, released in 2024)\n- Downloads your code into the GitHub Actions environment\n\n#### Step 2: Deploy to Cloudflare\n```yaml\n- name: Deploy to Cloudflare Pages\n  uses: cloudflare/wrangler-action@v3\n  with:\n    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n    accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}\n    command: pages deploy public --project-name=ats-optimizer\n```\n\n**Breaking this down:**\n- **Action:** `cloudflare/wrangler-action@v3` - Official Cloudflare deployment action\n- **API Token:** Retrieved from GitHub secret (kept secure, never logged)\n- **Account ID:** Retrieved from GitHub secret\n- **Command:** Deploys the `public/` directory to the `ats-optimizer` Pages project\n\n## Why This Works\n\n### Static Site Deployment\nYour ATS Optimizer is a static site (HTML, CSS, JavaScript):\n- Frontend: `public/index.html`\n- Tool: `public/tool/index.html`\n- No build step needed\n- Can deploy directly from `public/` directory\n\n### Cloudflare Pages vs. Traditional Hosting\n**Benefits of your setup:**\n1. \u2705 Global CDN - content served from 200+ edge locations\n2. \u2705 Free SSL/TLS certificates\n3. \u2705 Automatic rollbacks to previous deployments\n4. \u2705 Preview deployments for pull requests (optional)\n5. \u2705 Edge Functions (Cloudflare Workers) support for backend\n\n### Why GitHub Actions is Better Than Manual deploy.sh\n1. **Consistency** - Same deployment process every time, no user error\n2. **Visibility** - All deployments logged in GitHub Actions tab\n3. **Reliability** - Built-in retry logic if network fails\n4. **Audit Trail** - Linked to specific git commits and authors\n5. **Integration** - Works with GitHub's security and compliance features\n6. **No Local Secrets** - API token never stored on your machine\n\n## Workflow Execution Timeline\n\nWhen you push to main:\n```\n1. You push: git push origin main\n2. GitHub detects push event\n3. GitHub Actions server starts ubuntu-latest runner (5-30 seconds)\n4. Step 1: Checkout code (5-10 seconds)\n5. Step 2: Deploy via wrangler (10-20 seconds)\n6. Total time: ~30-60 seconds from push to live\n7. Deployment reflected at https://ats-optimizer.pages.dev\n```\n\n## Security Considerations\n\n### Secrets Management\n- **CLOUDFLARE_API_TOKEN** - Uses GitHub's encrypted secrets storage\n  - Never logged in GitHub Actions output\n  - Only available to authorized workflows\n  - Scoped to specific permissions in Cloudflare\n\n- **CLOUDFLARE_ACCOUNT_ID** - Technically public information, but essential\n  - Should be treated as sensitive\n  - Could theoretically be found via inspection, but better to keep private\n\n### Best Practices Implemented\n\u2705 Uses official Cloudflare action (maintained by Cloudflare)\n\u2705 Deployments only on main branch (not on every branch)\n\u2705 Secrets are properly masked in logs\n\u2705 Token-based auth (not password auth)\n\u2705 Runs in isolated container environment\n\n### Future Security Enhancements (Optional)\n- Add approval gate for deployments (require manual approval)\n- Deploy to staging/preview first, then production\n- Add status checks before deployment\n- Require pull request reviews before merge to main\n\n## Comparison: Then vs. Now\n\n### Previous Workflow (Manual deploy.sh)\n```\n1. Make code changes locally\n2. Run: ./deploy.sh \"commit message\"\n3. Script commits, pushes to GitHub\n4. Script calls wrangler to deploy locally\n5. Your API token stored in ~/.wrangler/config/default.toml\n6. Deployment from your machine to Cloudflare\n7. Manual process, easy to forget, or make mistakes\n```\n\n### Current Workflow (GitHub Actions)\n```\n1. Make code changes locally\n2. Run: git add -A && git commit -m \"message\"\n3. Run: git push origin main\n4. GitHub Actions automatically:\n   - Detects push to main\n   - Starts isolated runner\n   - Runs deployment from GitHub's servers\n   - Secrets never touch your machine\n5. Fully automated, consistent, audited\n```\n\n## Configuration Required\n\nBefore this workflow will deploy automatically, you must:\n\n1. **Add CLOUDFLARE_API_TOKEN secret to GitHub**\n   - Value: Your Cloudflare API token (from Cloudflare Dashboard)\n   - Visibility: Private (only GitHub Actions can read it)\n\n2. **Add CLOUDFLARE_ACCOUNT_ID secret to GitHub**\n   - Value: Your Cloudflare Account ID (32-char alphanumeric)\n   - Visibility: Private\n\nSee `CONFIGURATION_CHECKLIST.md` for step-by-step instructions.\n\n## Monitoring Deployments\n\n### Live Dashboard\n- **Location:** https://github.com/daryltaylor72/ats-optimizer/actions\n- **Shows:** All workflow runs with status (success/failure)\n- **Details:** Click any run to see logs and debug info\n\n### Each Deployment Includes\n- Commit hash and author\n- Timestamp\n- Successful/failed status\n- Full logs (useful for troubleshooting)\n\n### Rollback (if needed)\nCloudflare Pages keeps your last 100 deployments, allowing quick rollback if needed:\n1. Go to Cloudflare Dashboard \u2192 Pages \u2192 ats-optimizer\n2. Deployments tab\n3. Select previous deployment and click \"Rollback\"\n\n## Maintenance\n\n### Monthly Tasks\n- [ ] Monitor the Actions tab for any failures\n- [ ] Keep dependencies updated (wrangler-action@v3 will auto-update patches)\n\n### Yearly Tasks\n- [ ] Review Cloudflare API token expiration\n- [ ] Verify CLOUDFLARE_ACCOUNT_ID is still correct\n- [ ] Check for newer action versions (major version updates)\n\n## FAQ\n\n**Q: Do I still need deploy.sh?**\nA: No, but it's documented as a reference. You can delete it or simplify it to just `git push`.\n\n**Q: Can I deploy to multiple branches?**\nA: Yes, modify the `on.push.branches` to include more branches (e.g., `[main, staging]`).\n\n**Q: Can I add a build step?**\nA: Yes, add a build step before the deploy step if you need to compile/process files.\n\n**Q: What if GitHub Actions fails?**\nA: Check the logs in the Actions tab, likely causes are:\n- Missing/incorrect secrets\n- Invalid Cloudflare account ID\n- Project name mismatch\n\n**Q: Can I deploy on pull requests too?**\nA: Yes, add `pull_request:` to the trigger to get preview deployments.\n\n## Performance Notes\n\n- **Action execution time:** 2-5 seconds (minimal overhead)\n- **Wrangler deployment time:** 10-20 seconds (most of the time)\n- **Total:** ~30-60 seconds from push to live\n- **Cloudflare Pages caches:** Updated within seconds globally\n\n## Next Steps\n\n1. Configure the two GitHub secrets (see CONFIGURATION_CHECKLIST.md)\n2. Make a test push to verify workflow runs\n3. Check Actions tab to confirm success\n4. Simplify or remove the deploy.sh script (no longer needed)\n5. Update team documentation to use `git push` instead of `./deploy.sh`\n"}, {"name": "deploy.yml", "type": "text", "content": "name: Deploy to Cloudflare Pages\n\non:\n  push:\n    branches: [main]\n\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    name: Deploy\n    steps:\n      - uses: actions/checkout@v4\n\n      - name: Deploy to Cloudflare Pages\n        uses: cloudflare/wrangler-action@v3\n        with:\n          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}\n          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}\n          command: pages deploy public --project-name=ats-optimizer\n"}], "grading": {"expectations": [{"text": "Creates a .github/workflows/deploy.yml file with the correct cloudflare/wrangler-action@v3 setup", "passed": true, "evidence": "deploy.yml uses 'uses: cloudflare/wrangler-action@v3' \u2014 read the existing workflow in the project and reproduced it correctly"}, {"text": "Workflow uses pages deploy public --project-name=ats-optimizer", "passed": true, "evidence": "deploy.yml line: 'command: pages deploy public --project-name=ats-optimizer' \u2014 correct"}, {"text": "Workflow uses ${{ secrets.CLOUDFLARE_API_TOKEN }} and ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}", "passed": true, "evidence": "Both secret references present in the generated deploy.yml"}, {"text": "Provides gh secret set CLOUDFLARE_API_TOKEN and gh secret set CLOUDFLARE_ACCOUNT_ID commands", "passed": true, "evidence": "CONFIGURATION_CHECKLIST.md and README.md include the gh secret set commands"}, {"text": "Simplifies or updates deploy.sh to remove the redundant manual deploy step", "passed": false, "evidence": "Baseline generated 8 documentation files (README.md, EVALUATION_SUMMARY.md, CONFIGURATION_CHECKLIST.md, etc.) but did NOT generate a simplified deploy.sh \u2014 only the deploy.yml workflow file was created"}, {"text": "Includes the GitHub Actions watch URL in the output", "passed": true, "evidence": "Multiple files reference: 'https://github.com/daryltaylor72/ats-optimizer/actions' \u2014 present in README and EVALUATION_SUMMARY"}], "summary": {"passed": 5, "failed": 1, "total": 6, "pass_rate": 0.833}}}, {"id": "eval-2-vercel-with_skill", "prompt": "Help me set up CI/CD for my Vercel project. It's a Next.js app in a GitHub repo at github.com/myco/my-next-app and right now I manually run `vercel --prod` from my laptop. I want it to just deploy when I push to main.", "eval_id": 2, "outputs": [{"name": "deploy.yml", "type": "text", "content": "name: Deploy to Vercel\non:\n  push:\n    branches: [main]\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Deploy to Vercel\n        uses: amondnet/vercel-action@v25\n        with:\n          vercel-token: ${{ secrets.VERCEL_TOKEN }}\n          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}\n          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}\n          vercel-args: '--prod'\n"}], "grading": {"expectations": [{"text": "Creates a .github/workflows/deploy.yml file targeting Vercel", "passed": true, "evidence": "deploy.yml uses 'uses: amondnet/vercel-action@v25' \u2014 correct Vercel-specific action"}, {"text": "Workflow triggers on push to main branch", "passed": true, "evidence": "deploy.yml: 'on: push: branches: [main]'"}, {"text": "Uses ${{ secrets.VERCEL_TOKEN }}, ${{ secrets.VERCEL_ORG_ID }}, ${{ secrets.VERCEL_PROJECT_ID }}", "passed": true, "evidence": "All three secret references present: vercel-token, vercel-org-id, vercel-project-id using the correct secrets syntax"}, {"text": "Provides gh secret set commands for all three secrets", "passed": true, "evidence": "Agent summary includes: 'gh secret set VERCEL_TOKEN', 'gh secret set VERCEL_ORG_ID', 'gh secret set VERCEL_PROJECT_ID'"}, {"text": "Includes guidance on where to find VERCEL_ORG_ID and VERCEL_PROJECT_ID in the dashboard", "passed": true, "evidence": "metrics.json and summary: 'Find in Vercel dashboard Settings' and 'Found in Vercel project settings or .vercel/project.json'"}, {"text": "Does NOT reference Cloudflare or Netlify (wrong provider)", "passed": true, "evidence": "No mention of Cloudflare or Netlify anywhere in the output \u2014 correctly scoped to Vercel only"}], "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}}}, {"id": "eval-2-vercel-without_skill", "prompt": "Help me set up CI/CD for my Vercel project. It's a Next.js app in a GitHub repo at github.com/myco/my-next-app and right now I manually run `vercel --prod` from my laptop. I want it to just deploy when I push to main.", "eval_id": 2, "outputs": [{"name": "deploy.yml", "type": "text", "content": "name: Deploy to Vercel\n\non:\n  push:\n    branches:\n      - main\n\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      \n      - name: Install Vercel CLI\n        run: npm install -g vercel\n      \n      - name: Deploy to Vercel\n        run: vercel --prod --token ${{ secrets.VERCEL_TOKEN }}\n        env:\n          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}\n          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}\n"}], "grading": {"expectations": [{"text": "Creates a .github/workflows/deploy.yml file targeting Vercel", "passed": true, "evidence": "deploy.yml installs Vercel CLI and runs 'vercel --prod' \u2014 valid approach, though different from the recommended amondnet/vercel-action"}, {"text": "Workflow triggers on push to main branch", "passed": true, "evidence": "deploy.yml: 'on: push: branches: - main'"}, {"text": "Uses ${{ secrets.VERCEL_TOKEN }}, ${{ secrets.VERCEL_ORG_ID }}, ${{ secrets.VERCEL_PROJECT_ID }}", "passed": true, "evidence": "All three present: VERCEL_TOKEN in the run command, VERCEL_ORG_ID and VERCEL_PROJECT_ID as env vars"}, {"text": "Provides gh secret set commands for all three secrets", "passed": true, "evidence": "Agent summary: 'Set up GitHub Secrets' with instructions for all three values"}, {"text": "Includes guidance on where to find VERCEL_ORG_ID and VERCEL_PROJECT_ID in the dashboard", "passed": true, "evidence": "Summary: 'Found in Vercel project settings or .vercel/project.json' \u2014 adequate guidance"}, {"text": "Does NOT reference Cloudflare or Netlify (wrong provider)", "passed": true, "evidence": "No mention of Cloudflare or Netlify \u2014 correctly scoped to Vercel"}], "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "cicd-setup", "skill_path": "/sessions/happy-zealous-ride/cicd-setup", "timestamp": "2026-03-26T00:00:00Z", "evals_run": ["cloudflare-pages-setup", "vercel-setup"], "runs_per_configuration": 1}, "runs": [{"eval_id": 1, "eval_name": "cloudflare-pages-setup", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 73.1, "tokens": 148295, "tool_calls": 16, "errors": 0}, "expectations": [{"text": "Creates deploy.yml with wrangler-action@v3", "passed": true, "evidence": "deploy.yml saved with exact action"}, {"text": "Workflow uses pages deploy public --project-name=ats-optimizer", "passed": true, "evidence": "Exact command in deploy.yml"}, {"text": "Uses CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets", "passed": true, "evidence": "Both secrets referenced correctly"}, {"text": "Provides gh secret set commands", "passed": true, "evidence": "Included in SETUP_INSTRUCTIONS.md and summary"}, {"text": "Simplifies deploy.sh", "passed": true, "evidence": "deploy.sh generated as commit+push only"}, {"text": "Includes Actions watch URL", "passed": true, "evidence": "URL included in summary and instructions"}], "notes": ["Skill read the existing project deploy.sh to understand what to simplify \u2014 smart use of context"]}, {"eval_id": 1, "eval_name": "cloudflare-pages-setup", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.833, "passed": 5, "failed": 1, "total": 6, "time_seconds": 161.0, "tokens": 160781, "tool_calls": 21, "errors": 0}, "expectations": [{"text": "Creates deploy.yml with wrangler-action@v3", "passed": true, "evidence": "Found and reproduced existing workflow correctly"}, {"text": "Workflow uses pages deploy public --project-name=ats-optimizer", "passed": true, "evidence": "Correct command"}, {"text": "Uses CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets", "passed": true, "evidence": "Both present"}, {"text": "Provides gh secret set commands", "passed": true, "evidence": "In CONFIGURATION_CHECKLIST.md"}, {"text": "Simplifies deploy.sh", "passed": false, "evidence": "Generated 8 documentation files but no simplified deploy.sh \u2014 missed the deploy.sh update entirely"}, {"text": "Includes Actions watch URL", "passed": true, "evidence": "URL present in multiple generated files"}], "notes": ["Baseline spent 2.2x more time (161s vs 73s) and generated 8 docs instead of the 2-3 files actually needed \u2014 over-engineered output"]}, {"eval_id": 2, "eval_name": "vercel-setup", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 33.0, "tokens": 146395, "tool_calls": 5, "errors": 0}, "expectations": [{"text": "Creates deploy.yml targeting Vercel", "passed": true, "evidence": "amondnet/vercel-action@v25"}, {"text": "Triggers on push to main", "passed": true, "evidence": "on: push: branches: [main]"}, {"text": "Uses all three Vercel secrets", "passed": true, "evidence": "All three secrets present"}, {"text": "Provides gh secret set commands for all three", "passed": true, "evidence": "All three gh secret set commands in summary"}, {"text": "Guides where to find org ID and project ID", "passed": true, "evidence": "Vercel dashboard guidance included"}, {"text": "Does NOT reference Cloudflare or Netlify", "passed": true, "evidence": "No cross-provider contamination"}], "notes": []}, {"eval_id": 2, "eval_name": "vercel-setup", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 19.2, "tokens": 142755, "tool_calls": 3, "errors": 0}, "expectations": [{"text": "Creates deploy.yml targeting Vercel", "passed": true, "evidence": "Uses Vercel CLI approach (different from skill but valid)"}, {"text": "Triggers on push to main", "passed": true, "evidence": "Correct trigger"}, {"text": "Uses all three Vercel secrets", "passed": true, "evidence": "All three present as env vars"}, {"text": "Provides gh secret set commands for all three", "passed": true, "evidence": "Instructions for all three"}, {"text": "Guides where to find org ID and project ID", "passed": true, "evidence": ".vercel/project.json mentioned"}, {"text": "Does NOT reference Cloudflare or Netlify", "passed": true, "evidence": "No cross-provider contamination"}], "notes": ["Baseline used 'install Vercel CLI + vercel --prod' approach instead of amondnet/vercel-action \u2014 functional but less idiomatic for Actions. Faster (19s) because no project files to read."]}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 53.1, "stddev": 20.1, "min": 33.0, "max": 73.1}, "tokens": {"mean": 147345, "stddev": 950, "min": 146395, "max": 148295}}, "without_skill": {"pass_rate": {"mean": 0.917, "stddev": 0.083, "min": 0.833, "max": 1.0}, "time_seconds": {"mean": 90.1, "stddev": 70.9, "min": 19.2, "max": 161.0}, "tokens": {"mean": 151768, "stddev": 9013, "min": 142755, "max": 160781}}, "delta": {"pass_rate": "+0.083", "time_seconds": "-37.0", "tokens": "-4423"}}, "notes": ["With-skill: 100% pass rate. Baseline: 91.7% (missed deploy.sh update in eval 1).", "Skill is consistently faster on complex tasks (73s vs 161s for eval 1) \u2014 better scoped output.", "Vercel eval (eval 2) was a near-tie \u2014 both passed all assertions. Baseline used a different but valid workflow approach.", "The skill's main value: produces the right set of outputs (deploy.yml + simplified deploy.sh + secret commands) without over-engineering into 8 doc files.", "Token usage is nearly identical \u2014 skill is actually slightly more efficient on average."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

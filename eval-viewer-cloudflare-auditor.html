@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "cloudflare-pages-auditor", "runs": [{"id": "eval-1-kv-and-systemprompt-issues-with_skill", "prompt": "Hey can you audit my Cloudflare Pages project? I've got functions/analyze.js and public/tool/index.html \u2014 want to know what I should fix before I launch. Files are at /sessions/happy-zealous-ride/cloudflare-pages-auditor/evals/files/", "eval_id": 1, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# ATS Optimizer \u2014 Cloudflare Pages Audit Report\n\n## Audit Summary\nThe project has solid structure but contains 4 real issues that will cause production failures: inconsistent KV binding names, unprotected external API calls without retry logic, system prompts embedded in user messages, and stale localStorage data shown to users. All issues are fixable within this sprint.\n\n---\n\n## \ud83d\udd34 Critical \u2014 Fix before next deploy\n\n### 1. KV Namespace Binding Mismatch \u2014 Silent Token Lookup Failures\n**What**: `functions/analyze.js` attempts to access `env.ATS_KV` to retrieve token data, but this binding name is inconsistent with typical token storage patterns and may not match the actual Cloudflare KV namespace binding configuration.\n\n**Where**: `functions/analyze.js`, line 2\n```javascript\nconst kv = env.ATS_KV; // BUG: should be TOKENS_KV\n```\n\n**Why it matters**: If the actual KV binding is named `TOKENS_KV` (or another name), this will throw a runtime error when the function tries to call `kv.get()`, causing all API requests to fail with a 500 error. Users see \"Internal Server Error\" instead of analyzing their resumes.\n\n**Fix**: Ensure the KV binding name is consistent across all functions. Change to:\n```javascript\nconst kv = env.TOKENS_KV; // or use the correct binding name from wrangler.toml\n```\nThen verify that `wrangler.toml` has a matching `[[kv_namespaces]]` binding with the same name.\n\n---\n\n### 2. Unprotected External API Calls \u2014 Transient Failures Are Silent\n**What**: Both the Anthropic API call (line 19) and the Airtable logging call (line 31) use `fetch()` with no retry logic or error handling for transient failures.\n\n**Where**: \n- `functions/analyze.js`, lines 19\u201329 (Anthropic fetch)\n- `functions/analyze.js`, lines 31\u201339 (Airtable fetch)\n\n**Why it matters**: Third-party APIs fail transiently (5xx errors, timeouts, rate limits). A single failed Anthropic call means the resume analysis doesn't happen \u2014 the user gets an empty or error response. A failed Airtable call means the scan isn't logged, breaking usage tracking. Under production load, these failures will happen daily.\n\n**Fix**: Wrap both calls in retry logic with exponential backoff. Example pattern:\n```javascript\nasync function fetchWithRetry(url, options, maxRetries = 3) {\n  for (let attempt = 0; attempt < maxRetries; attempt++) {\n    try {\n      const res = await fetch(url, options);\n      if (res.ok) return res;\n      if (res.status >= 500 || res.status === 429) {\n        // Retry on server error or rate limit\n        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));\n        continue;\n      }\n      return res; // 4xx errors shouldn't retry\n    } catch (err) {\n      if (attempt < maxRetries - 1) {\n        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));\n      } else {\n        throw err;\n      }\n    }\n  }\n}\n\n// Usage:\nconst claudeRes = await fetchWithRetry('https://api.anthropic.com/v1/messages', {...});\nconst airtableRes = await fetchWithRetry('https://api.airtable.com/v0/...', {...});\n```\n\n---\n\n### 3. Stale localStorage Data Shown to Users \u2014 Wrong Scan Counts in UI\n**What**: `public/tool/index.html` reads token status (`scansLeft`, `planName`) from localStorage on page load without making a live API call to refresh the data.\n\n**Where**: `sample-tool-index.html`, lines 8\u20139\n```javascript\nconst scansLeft = localStorage.getItem('scans_remaining');\nconst planName = localStorage.getItem('plan_name');\n```\n\n**Why it matters**: If a user opens the tool in two tabs, buys more scans in one tab, the other tab still shows the old count. If they close and reopen the tool the next day, they see yesterday's scan count. This breaks trust and causes users to think they're out of scans when they actually have more, or vice versa. It's a silent data freshness bug.\n\n**Fix**: On page load, fetch live token status before displaying. Example:\n```javascript\nasync function refreshTokenStatus() {\n  const token = localStorage.getItem('ats_token');\n  if (!token) return;\n  \n  const res = await fetch('/api/token-status', {\n    headers: { Authorization: `Bearer ${token}` }\n  });\n  \n  if (res.ok) {\n    const data = await res.json();\n    localStorage.setItem('scans_remaining', data.scansLeft);\n    localStorage.setItem('plan_name', data.planName);\n    document.getElementById('tokenStatus').textContent =\n      `Plan: ${data.planName} | Scans left: ${data.scansLeft}`;\n  }\n}\n\n// Call on page load\nrefreshTokenStatus();\n```\n\n---\n\n## \ud83d\udfe1 Important \u2014 Fix this sprint\n\n### 4. System Prompt Embedded in User Message \u2014 Suboptimal Model Behavior\n**What**: The system instructions (persona, scoring rules, output format) are concatenated into the user message instead of using the `system` field.\n\n**Where**: `functions/analyze.js`, lines 11\u201315\n```javascript\nconst prompt = `You are an expert ATS resume analyst. Score honestly.\nSCORING: 0-100. Reserve 90+ for exceptional resumes.\nOUTPUT: Return only valid JSON.\n\nNow analyze this resume for this job: ${jobDesc}`;\n\nmessages: [{ role: 'user', content: prompt }],\n```\n\n**Why it matters**: Anthropic's models are optimized to handle the `system` parameter separately \u2014 it allows for better instruction following and persists across conversation turns without being re-parsed as user input. Embedding system instructions in the user message works but is architecturally weaker, especially if the function is extended to handle multi-turn conversations.\n\n**Fix**: Use the `system` field in the Claude API call:\n```javascript\nconst claudeRes = await fetch('https://api.anthropic.com/v1/messages', {\n  method: 'POST',\n  headers: { ... },\n  body: JSON.stringify({\n    model: 'claude-opus-4-6',\n    max_tokens: 2000,\n    system: `You are an expert ATS resume analyst. Score honestly.\nSCORING: 0-100. Reserve 90+ for exceptional resumes.\nOUTPUT: Return only valid JSON.`,\n    messages: [{ role: 'user', content: `Analyze this resume for this job: ${jobDesc}` }],\n  }),\n});\n```\n\n---\n\n## \ud83d\udfe2 Nice to Have \u2014 Low risk, high craft\n\n### 5. Hard-coded Airtable IDs Should Use Environment Variables\n**What**: The Airtable base ID and table ID are hard-coded in the fetch URL.\n\n**Where**: `functions/analyze.js`, line 31\n```javascript\nawait fetch(`https://api.airtable.com/v0/appJkfL4EoaSxq8GC/tblxDbnavxmdWozc5`, ...);\n```\n\n**Why it matters**: If you deploy to a staging environment or change tables, you'd have to edit the code instead of just changing environment variables. This isn't a breaking issue but reduces operational flexibility.\n\n**Fix**: Move IDs to environment variables:\n```javascript\nconst airtableBaseId = env.AIRTABLE_BASE_ID;\nconst airtableTableId = env.AIRTABLE_TABLE_ID;\n\nawait fetch(`https://api.airtable.com/v0/${airtableBaseId}/${airtableTableId}`, ...);\n```\n\n---\n\n## \u2705 Already solid\n\n- **Token validation logic**: The function correctly validates tokens before processing, preventing unauthorized scans.\n- **Error response codes**: Uses appropriate HTTP status codes (401 for invalid token).\n- **Structured JSON responses**: Consistently returns JSON with proper headers.\n- **Form data handling**: Correctly extracts multipart form data with `.formData()` and `.get()`.\n\n---\n\n## Backlog Summary\n\n| Priority | Count | Est. Time |\n|----------|-------|-----------|\n| \ud83d\udd34 Critical | 3 | 4\u20136 hours |\n| \ud83d\udfe1 Important | 1 | 1\u20132 hours |\n| \ud83d\udfe2 Nice to Have | 1 | 30 min |\n| **Total** | **5 issues** | **6\u20138.5 hours** |\n\nAll critical issues should be addressed before next production deploy. The important and nice-to-have issues can be folded into the next sprint planning.\n"}], "grading": {"expectations": [{"text": "Flags the wrong KV namespace (env.ATS_KV instead of TOKENS_KV or similar)", "passed": true, "evidence": "Critical #1 explicitly: 'functions/analyze.js, line 2 \u2014 const kv = env.ATS_KV; // BUG: should be TOKENS_KV'"}, {"text": "Flags the system prompt being embedded inside the user message array instead of the top-level system field", "passed": true, "evidence": "Important #4: 'System Prompt Embedded in User Message' with exact code snippet and fix using top-level system field"}, {"text": "Flags the Airtable fetch call as having no retry logic", "passed": true, "evidence": "Critical #2: 'functions/analyze.js, lines 31\u201339 (Airtable fetch)' \u2014 explicitly called out as unprotected"}, {"text": "Flags the hard-coded Airtable base ID appJkfL4EoaSxq8GC and table ID tblxDbnavxmdWozc5", "passed": true, "evidence": "Nice to Have #5: exact URL shown with the hardcoded IDs highlighted, recommends env.AIRTABLE_BASE_ID / env.AIRTABLE_TABLE_ID"}, {"text": "Flags the stale localStorage reads without a live API call for token status", "passed": true, "evidence": "Critical #3: 'sample-tool-index.html, lines 8\u20139' \u2014 describes the staleness failure mode and provides live fetch fix"}, {"text": "Output uses the Critical/Important/Nice-to-Have/Solid section structure", "passed": true, "evidence": "Report has exactly: Audit Summary, \ud83d\udd34 Critical, \ud83d\udfe1 Important, \ud83d\udfe2 Nice to Have, \u2705 Already solid \u2014 matching the skill template"}, {"text": "Each finding includes the specific file and function name where the issue appears", "passed": true, "evidence": "All 5 findings include exact file name and line numbers (e.g. 'functions/analyze.js, line 2', 'sample-tool-index.html, lines 8\u20139')"}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}}}, {"id": "eval-1-kv-and-systemprompt-issues-without_skill", "prompt": "Hey can you audit my Cloudflare Pages project? I've got functions/analyze.js and public/tool/index.html \u2014 want to know what I should fix before I launch. Files are at /sessions/happy-zealous-ride/cloudflare-pages-auditor/evals/files/", "eval_id": 1, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# Cloudflare Pages ATS Optimizer Audit Report\n\n**Date:** 2026-03-26\n**Files Audited:** 2 (functions/analyze.js, public/tool/index.html)\n**Severity Levels Found:** 4 critical, 3 high, 1 medium\n\n---\n\n## Executive Summary\n\nThe ATS Optimizer project has several significant issues that should be resolved before launch:\n\n1. **Critical KV Namespace Bug** \u2014 Wrong binding name prevents token validation\n2. **Prompt Architecture Issues** \u2014 System instructions mixed into user messages instead of proper system role\n3. **Stale State in Frontend** \u2014 localStorage data never refreshed, shows outdated scan counts\n4. **Missing Error Handling** \u2014 No retries on API calls, no validation of responses\n\nThese issues will cause runtime failures and poor user experience. Below is a detailed breakdown.\n\n---\n\n## Critical Issues\n\n### 1. KV Namespace Binding Mismatch (CRITICAL)\n**File:** `functions/analyze.js:3`\n**Severity:** Critical\n**Status:** Will cause immediate runtime failure\n\n```javascript\nconst kv = env.ATS_KV; // BUG: should be TOKENS_KV\n```\n\n**Problem:**\n- The code references `env.ATS_KV` but the binding is likely named `TOKENS_KV`\n- Token validation will fail: `await kv.get(`token:${token}`)` returns null\n- All requests return 401 \"Invalid token\" error\n- Service is non-functional without this fix\n\n**Impact:** Application cannot validate user tokens. Zero scans can be processed.\n\n**Recommendation:** Update to `const kv = env.TOKENS_KV;` and verify the binding name matches `wrangler.toml`.\n\n---\n\n### 2. System Prompt Embedded in User Message (CRITICAL)\n**File:** `functions/analyze.js:14-18`\n**Severity:** Critical\n**Status:** Suboptimal prompt design with potential issues\n\n```javascript\nconst prompt = `You are an expert ATS resume analyst. Score honestly.\nSCORING: 0-100. Reserve 90+ for exceptional resumes.\nOUTPUT: Return only valid JSON.\n\nNow analyze this resume for this job: ${jobDesc}`;\n```\n\n**Problems:**\n- System instructions (role, scoring rules, output format) are mixed into the user message\n- The Messages API supports a proper `system` parameter, but it's not used\n- Mixed prompt increases token usage and reduces model reliability\n- Scoring guidelines buried in text may be ignored\n- No guarantee Claude will return valid JSON\n\n**Impact:** Lower quality analyses, higher token costs, inconsistent output format.\n\n**Recommendation:** Refactor to use proper system message:\n```javascript\nsystem: \"You are an expert ATS resume analyst. Score honestly.\\nSCORING: 0-100. Reserve 90+ for exceptional resumes.\\nOUTPUT: Return only valid JSON.\"\n\nmessages: [{\n  role: 'user',\n  content: `Analyze this resume for this job:\\n\\n${jobDesc}`\n}]\n```\n\n---\n\n### 3. No Response Validation on Claude API Call (CRITICAL)\n**File:** `functions/analyze.js:35`\n**Severity:** Critical\n**Status:** Missing error handling\n\n```javascript\nconst result = await claudeRes.json();\n```\n\n**Problems:**\n- No check for HTTP errors (4xx/5xx)\n- No validation that `result.content` exists or contains valid JSON\n- If Claude returns error, it's returned directly to client\n- No retry logic for transient failures\n- Token consumption logged regardless of API success\n\n**Impact:** Users see confusing API error messages. Airtable logs contain failures.\n\n**Recommendation:** Validate response before use:\n```javascript\nif (!claudeRes.ok) {\n  const error = await claudeRes.json();\n  return new Response(JSON.stringify({ error: 'Analysis failed', details: error }), { status: 500 });\n}\n\nconst result = await claudeRes.json();\nif (!result.content?.[0]?.text) {\n  return new Response(JSON.stringify({ error: 'Invalid response format' }), { status: 502 });\n}\n```\n\n---\n\n## High-Severity Issues\n\n### 4. No Retry Logic on External API Calls (HIGH)\n**File:** `functions/analyze.js:21-33, 38-45`\n**Severity:** High\n**Status:** Missing resilience pattern\n\n**Problems:**\n- Direct fetch to Anthropic API with no retry on timeout/5xx\n- Direct fetch to Airtable with no retry\n- Transient network errors cause complete failure\n- No exponential backoff or circuit breaker\n\n**Impact:** Intermittent outages at upstream services cause user-facing failures.\n\n**Recommendation:** Implement retry logic with exponential backoff:\n```javascript\nasync function fetchWithRetry(url, options, maxRetries = 3) {\n  for (let i = 0; i < maxRetries; i++) {\n    try {\n      const res = await fetch(url, options);\n      if (res.ok) return res;\n      if (res.status >= 500) throw new Error(`Server error: ${res.status}`);\n      return res; // Don't retry 4xx\n    } catch (err) {\n      if (i === maxRetries - 1) throw err;\n      await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));\n    }\n  }\n}\n```\n\n---\n\n### 5. Stale State in Frontend Token Display (HIGH)\n**File:** `public/tool/index.html:8-15`\n**Severity:** High\n**Status:** Poor user experience\n\n```javascript\nconst token = localStorage.getItem('ats_token');\nconst scansLeft = localStorage.getItem('scans_remaining'); // stale!\nconst planName = localStorage.getItem('plan_name');        // stale!\n\nif (token) {\n  document.getElementById('tokenStatus').textContent =\n    `Plan: ${planName} | Scans left: ${scansLeft}`;\n}\n```\n\n**Problems:**\n- No fetch of current token status on page load\n- User sees scan count from last session (could be 0, but user actually has scans)\n- Misleading UI: \"Scans left: 0\" when scans are available\n- No indicator if localStorage is stale or current\n\n**Impact:** User confusion. Users may think they're out of scans when they're not.\n\n**Recommendation:** Fetch current token state on load:\n```javascript\nasync function refreshTokenStatus() {\n  const token = localStorage.getItem('ats_token');\n  if (!token) return;\n\n  const res = await fetch('/api/token-status', {\n    headers: { 'Authorization': `Bearer ${token}` }\n  });\n  if (!res.ok) return;\n\n  const { scans_remaining, plan_name } = await res.json();\n  localStorage.setItem('scans_remaining', scans_remaining);\n  localStorage.setItem('plan_name', plan_name);\n  document.getElementById('tokenStatus').textContent =\n    `Plan: ${plan_name} | Scans left: ${scans_remaining}`;\n}\n\n// Call on load\ndocument.addEventListener('DOMContentLoaded', refreshTokenStatus);\n```\n\n---\n\n### 6. No Input Validation on Form Data (HIGH)\n**File:** `functions/analyze.js:4-6`\n**Severity:** High\n**Status:** Security and stability risk\n\n```javascript\nconst formData = await request.formData();\nconst token = formData.get('token');\nconst jobDesc = formData.get('job_description');\n```\n\n**Problems:**\n- No check if token or jobDesc are null/undefined\n- No length validation on jobDesc (user could send 100KB of text)\n- No rate limiting per token\n- jobDesc is concatenated directly into Claude prompt without escaping\n\n**Impact:** Null values cause runtime errors. Large payloads cause token waste.\n\n**Recommendation:** Validate before use:\n```javascript\nif (!token || typeof token !== 'string' || token.length === 0) {\n  return new Response(JSON.stringify({ error: 'Missing token' }), { status: 400 });\n}\n\nif (!jobDesc || typeof jobDesc !== 'string') {\n  return new Response(JSON.stringify({ error: 'Missing job_description' }), { status: 400 });\n}\n\nif (jobDesc.length > 10000) {\n  return new Response(JSON.stringify({ error: 'Job description too long (max 10000 chars)' }), { status: 413 });\n}\n```\n\n---\n\n## Medium-Severity Issues\n\n### 7. Airtable Logging Hardcoded & Incomplete (MEDIUM)\n**File:** `functions/analyze.js:38-45`\n**Severity:** Medium\n**Status:** Will silently fail\n\n```javascript\nawait fetch(`https://api.airtable.com/v0/appJkfL4EoaSxq8GC/tblxDbnavxmdWozc5`, {\n  method: 'POST',\n  headers: {\n    Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({ fields: { Token: token, Score: 75 } }),\n});\n```\n\n**Problems:**\n- Airtable base ID and table ID are hardcoded\n- No error handling on Airtable request\n- Score is always logged as 75, ignoring actual analysis result\n- No await on response, fire-and-forget pattern loses logging on error\n- IDs should be in environment variables\n\n**Impact:** Logging silently fails. Analytics inaccurate. Score always shows as 75.\n\n**Recommendation:**\n1. Move IDs to env: `env.AIRTABLE_BASE_ID`, `env.AIRTABLE_TABLE_ID`\n2. Use actual score from Claude response\n3. Add error handling and retries\n4. Validate response status\n\n---\n\n## Summary Table\n\n| Issue | File | Severity | Category | Fix Effort |\n|-------|------|----------|----------|-----------|\n| KV binding name mismatch | analyze.js:3 | Critical | Config | 5 min |\n| System prompt in user msg | analyze.js:14-18 | Critical | Architecture | 10 min |\n| No response validation | analyze.js:35 | Critical | Error Handling | 15 min |\n| No retry logic | analyze.js:21-45 | High | Resilience | 30 min |\n| Stale token display | tool/index.html:8-15 | High | UX | 20 min |\n| No input validation | analyze.js:4-6 | High | Security | 15 min |\n| Hardcoded Airtable IDs | analyze.js:38-45 | Medium | Config | 10 min |\n\n---\n\n## Pre-Launch Checklist\n\n- [ ] Fix KV binding name (`ATS_KV` \u2192 `TOKENS_KV`)\n- [ ] Refactor prompt to use proper system parameter\n- [ ] Add Claude API response validation\n- [ ] Implement retry logic with exponential backoff\n- [ ] Add token status refresh in frontend on page load\n- [ ] Validate all form inputs (null, length, type checks)\n- [ ] Move hardcoded IDs to environment variables\n- [ ] Test with invalid token (should 401, not crash)\n- [ ] Test with missing job_description (should 400)\n- [ ] Test with overly long job description\n- [ ] Verify Airtable logging captures correct scores\n- [ ] Add rate limiting per token\n- [ ] Add proper CORS headers if frontend is separate domain\n- [ ] Set Content-Security-Policy headers\n- [ ] Enable error logging/monitoring (Sentry, Axiom, etc.)\n\n---\n\n## Recommendations by Priority\n\n**Must Fix Before Launch (Blocking):**\n1. KV binding name\n2. Prompt architecture (system vs user message)\n3. Claude API response validation\n4. Input validation\n\n**Should Fix Before Launch (Important):**\n5. Retry logic on external calls\n6. Token status refresh in frontend\n7. Airtable logging fixes\n\n**Nice to Have (Post-Launch):**\n8. Rate limiting\n9. Monitoring/error tracking\n10. CORS and security headers\n\n---\n\n## Next Steps\n\n1. Review this audit with the development team\n2. Prioritize critical fixes (estimate 45 min of development)\n3. Add unit tests for error cases\n4. Test with staging deployment before going to production\n5. Monitor error rates and API latency post-launch\n\n"}], "grading": {"expectations": [{"text": "Flags the wrong KV namespace (env.ATS_KV instead of TOKENS_KV or similar)", "passed": true, "evidence": "Critical #1: 'const kv = env.ATS_KV; BUG: should be TOKENS_KV' \u2014 correctly identified"}, {"text": "Flags the system prompt being embedded inside the user message array instead of the top-level system field", "passed": true, "evidence": "Critical #2: 'System Prompt Embedded in User Message' \u2014 identified and explained"}, {"text": "Flags the Airtable fetch call as having no retry logic", "passed": true, "evidence": "High #4: 'No Retry Logic on External API Calls' covering both Anthropic and Airtable calls"}, {"text": "Flags the hard-coded Airtable base ID appJkfL4EoaSxq8GC and table ID tblxDbnavxmdWozc5", "passed": true, "evidence": "Medium #7: 'Airtable Logging Hardcoded & Incomplete' \u2014 exact base ID appJkfL4EoaSxq8GC and table ID mentioned"}, {"text": "Flags the stale localStorage reads without a live API call for token status", "passed": true, "evidence": "High #5: 'Stale State in Frontend Token Display' \u2014 identifies the localStorage pattern and recommends live fetch"}, {"text": "Output uses the Critical/Important/Nice-to-Have/Solid section structure", "passed": false, "evidence": "Baseline uses 'Critical Issues / High-Severity Issues / Medium-Severity Issues' structure instead of the prescribed \ud83d\udd34/\ud83d\udfe1/\ud83d\udfe2/\u2705 format. Functionally similar but misses the prescribed output contract."}, {"text": "Each finding includes the specific file and function name where the issue appears", "passed": true, "evidence": "Most findings include file:line references (e.g. 'functions/analyze.js:3', 'public/tool/index.html:8-15')"}], "summary": {"passed": 6, "failed": 1, "total": 7, "pass_rate": 0.857}}}, {"id": "eval-2-pasted-code-audit-with_skill", "prompt": "I just built a Cloudflare Pages Functions API for a SaaS app. Can you review the code for production readiness? [code pasted inline]", "eval_id": 2, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# Cloudflare Pages Functions Audit Report\n\n## Audit Summary\nThe function has three critical issues that will cause silent failures and data inconsistency in production: no retry logic for third-party API calls, unhandled API errors, and unprotected email sends that could trigger on every retry attempt. These must be fixed before deploying.\n\n---\n\n## \ud83d\udd34 Critical \u2014 Fix before next deploy\n\n### 1. External API calls lack retry logic\n**What**: Both Airtable and Resend calls have no retry logic; a single network blip or transient 5xx error will silently fail.\n\n**Where**: Lines 6\u201311 (Airtable), lines 13\u201318 (Resend) in the `onRequestPost` function.\n\n**Why it matters**: Third-party APIs return transient errors (5xx, timeouts) regularly under load. In production, this means customer signups will not reach Airtable and welcome emails won't send \u2014 but the function will still return `200 OK`, leaving the user thinking everything succeeded.\n\n**Fix**: Wrap each `fetch()` in a simple retry wrapper with exponential backoff:\n```javascript\nasync function fetchWithRetry(url, options, maxRetries = 3) {\n  for (let i = 0; i < maxRetries; i++) {\n    try {\n      const res = await fetch(url, options);\n      if (res.ok) return res;\n      if (res.status >= 500) {\n        // Retry on server errors\n        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));\n        continue;\n      }\n      throw new Error(`HTTP ${res.status}`);\n    } catch (e) {\n      if (i === maxRetries - 1) throw e;\n      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));\n    }\n  }\n}\n```\nThen replace both `fetch()` calls:\n```javascript\nconst airtableRes = await fetchWithRetry('https://api.airtable.com/...', {...});\nconst resendRes = await fetchWithRetry('https://api.resend.com/...', {...});\n```\n\n---\n\n### 2. API responses are not checked for errors\n**What**: After each `fetch()`, the code does not check `res.ok` or handle error responses.\n\n**Where**: Lines 6\u201311 (Airtable), lines 13\u201318 (Resend).\n\n**Why it matters**: A 4xx or 5xx response from Airtable (bad credentials, rate-limited) or Resend (invalid email) will be treated as success. The function returns `200 OK` even though the data was never saved and no email was sent.\n\n**Fix**: After each `fetch()`, check the response and throw on failure:\n```javascript\nconst airtableRes = await fetch(...);\nif (!airtableRes.ok) {\n  throw new Error(`Airtable error: ${airtableRes.status} ${await airtableRes.text()}`);\n}\n\nconst resendRes = await fetch(...);\nif (!resendRes.ok) {\n  throw new Error(`Resend error: ${resendRes.status} ${await resendRes.text()}`);\n}\n```\n\n---\n\n### 3. Email send can execute multiple times if the Airtable call fails and retries\n**What**: The Resend call (lines 13\u201318) happens after Airtable succeeds but is not inside the retry wrapper, so if Airtable retries and eventually fails, the Resend email may have already fired, and a subsequent retry of Airtable will cause Resend to fire again.\n\n**Where**: The order of operations: Airtable call, then (outside any transaction guard) Resend call.\n\n**Why it matters**: A customer could receive 2\u20133 welcome emails (one per Airtable retry attempt) or Airtable may fail permanently while Resend has already sent an email for an account that was never created.\n\n**Fix**: Either (a) wrap both in a shared transaction-like structure, or (b) use Airtable's response to verify success before calling Resend:\n```javascript\nconst airtableRes = await fetchWithRetry(...);\nif (!airtableRes.ok) {\n  throw new Error(`Failed to save user: ${airtableRes.status}`);\n}\n// Only call Resend after Airtable succeeds\nconst resendRes = await fetchWithRetry(...);\nif (!resendRes.ok) {\n  throw new Error(`Failed to send email: ${resendRes.status}`);\n}\n```\n\n---\n\n## \ud83d\udfe1 Important \u2014 Fix this sprint\n\n### 4. No input validation on `email` and `plan`\n**What**: The function reads `email` and `plan` directly from `request.json()` without checking type or format.\n\n**Where**: Line 2 in the `onRequestPost` function.\n\n**Why it matters**: Invalid or malicious input (missing fields, wrong types, oversized strings) will be passed to Airtable and Resend, potentially causing API errors or data corruption. A client sending `{ plan: 12345 }` instead of a string will silently propagate bad data.\n\n**Fix**: Add validation before using the fields:\n```javascript\nconst body = await request.json();\nconst { email, plan } = body;\n\nif (!email || typeof email !== 'string' || !email.includes('@')) {\n  return new Response(JSON.stringify({ error: 'Invalid email' }), { status: 400 });\n}\nif (!plan || typeof plan !== 'string' || plan.length === 0) {\n  return new Response(JSON.stringify({ error: 'Invalid plan' }), { status: 400 });\n}\n```\n\n---\n\n### 5. Missing error handling and user-facing response\n**What**: If Airtable or Resend fails, the function throws and returns a 500 with no helpful message.\n\n**Where**: The entire `onRequestPost` function has no try-catch block.\n\n**Why it matters**: Clients receive a generic 500 error with no context. Users don't know if the signup succeeded or failed. In production, this leads to support tickets and confusion.\n\n**Fix**: Add error handling:\n```javascript\nexport async function onRequestPost({ request, env }) {\n  try {\n    // ... existing code ...\n    return new Response(JSON.stringify({ success: true }), {\n      status: 201,\n      headers: { 'Content-Type': 'application/json' }\n    });\n  } catch (error) {\n    console.error('Signup error:', error);\n    return new Response(\n      JSON.stringify({ error: 'Signup failed. Please try again.' }),\n      { status: 500, headers: { 'Content-Type': 'application/json' } }\n    );\n  }\n}\n```\n\n---\n\n### 6. Plain `return new Response('OK')` is not valid JSON\n**What**: The function returns a plain text response instead of JSON.\n\n**Where**: Line 20, `return new Response('OK')`.\n\n**Why it matters**: Clients expecting JSON will fail to parse the response. This breaks API contracts and makes it harder to debug client-side.\n\n**Fix**: Return valid JSON:\n```javascript\nreturn new Response(JSON.stringify({ success: true, message: 'Signup complete' }), {\n  status: 201,\n  headers: { 'Content-Type': 'application/json' }\n});\n```\n\n---\n\n## \ud83d\udfe2 Nice to Have \u2014 Low risk, high craft\n\n### 7. No logging for observability\n**What**: The function has no logging; if something fails in production, there's no way to debug without accessing live logs.\n\n**Where**: The entire function.\n\n**Why it matters**: Production debugging becomes a guessing game. You won't know if Airtable failed, Resend failed, or the input was invalid.\n\n**Fix**: Add strategic log statements:\n```javascript\nconsole.log('Received signup:', { email, plan });\nconsole.log('Airtable response:', airtableRes.status);\nconsole.log('Resend response:', resendRes.status);\nconsole.error('Signup failed:', error.message);\n```\n\n---\n\n### 8. Hardcoded email content\n**What**: The welcome email HTML is a simple `<p>Thanks!</p>` placeholder.\n\n**Where**: Line 16, the `html` field.\n\n**Why it matters**: This is a minor UX issue \u2014 customers receive a bare-bones email. Not a reliability risk, but the email should have a proper template (subject line, branding, CTA).\n\n**Fix**: Move to a template or use Resend's template feature:\n```javascript\nbody: JSON.stringify({\n  from: 'hi@myapp.com',\n  to: email,\n  subject: `Welcome to MyApp, ${email.split('@')[0]}!`,\n  html: `<h1>Welcome!</h1><p>You signed up for the <strong>${plan}</strong> plan.</p><p><a href=\"https://myapp.com/account\">Get started \u2192</a></p>`\n})\n```\n\n---\n\n## \u2705 Already solid\n\n- **Environment variables are used**: `env.AIRTABLE_BASE_ID`, `env.AIRTABLE_TABLE_ID`, `env.AIRTABLE_KEY`, `env.RESEND_KEY` are all read from `env.*`, not hardcoded.\n- **Function signature is correct**: `onRequestPost` matches the Cloudflare Pages Functions pattern.\n- **Content-Type headers are set**: Both API calls include `'Content-Type': 'application/json'`.\n\n---\n\n## Summary of fixes by priority\n\n| Priority | Issue | Effort | Impact |\n|----------|-------|--------|--------|\n| \ud83d\udd34 Critical | Add retry logic to Airtable + Resend | Medium | Prevents silent failures |\n| \ud83d\udd34 Critical | Check API response codes | Small | Prevents data loss |\n| \ud83d\udd34 Critical | Reorder / guard Resend after Airtable | Small | Prevents double emails |\n| \ud83d\udfe1 Important | Validate email and plan inputs | Small | Prevents bad data |\n| \ud83d\udfe1 Important | Add try-catch and user-facing errors | Small | Better debugging |\n| \ud83d\udfe1 Important | Return JSON instead of plain text | Trivial | Matches API contracts |\n| \ud83d\udfe2 Nice | Add logging | Small | Better observability |\n| \ud83d\udfe2 Nice | Use proper email template | Small | Better UX |\n\n"}], "grading": {"expectations": [{"text": "Flags the Airtable fetch as having no retry logic", "passed": true, "evidence": "Critical #1: 'Both Airtable and Resend calls have no retry logic' \u2014 explicitly flagged with code example"}, {"text": "Flags the Resend email fetch as having no retry logic", "passed": true, "evidence": "Critical #1 covers both: 'Airtable and Resend calls have no retry logic; a single network blip or transient 5xx error will silently fail'"}, {"text": "Flags that res.ok is not checked \u2014 failures are silently swallowed", "passed": true, "evidence": "Critical #2: 'API responses are not checked for errors \u2014 a 4xx or 5xx response from Airtable or Resend will be treated as success'"}, {"text": "Notes that env vars are properly used for Airtable IDs (positive finding)", "passed": true, "evidence": "\u2705 Already solid section: 'Environment variables are used: env.AIRTABLE_BASE_ID, env.AIRTABLE_TABLE_ID, env.AIRTABLE_KEY, env.RESEND_KEY are all read from env.*, not hardcoded.'"}, {"text": "Does NOT hallucinate findings that aren't present in the pasted code", "passed": true, "evidence": "All 8 findings are directly traceable to the pasted code. No speculative issues about CORS, rate limiting, or infra not shown."}, {"text": "Produces a structured output with severity sections", "passed": true, "evidence": "Uses \ud83d\udd34 Critical / \ud83d\udfe1 Important / \ud83d\udfe2 Nice to Have / \u2705 Already solid structure exactly as specified"}], "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}}}, {"id": "eval-2-pasted-code-audit-without_skill", "prompt": "I just built a Cloudflare Pages Functions API for a SaaS app. Can you review the code for production readiness? [code pasted inline]", "eval_id": 2, "outputs": [{"name": "audit_report.md", "type": "text", "content": "# Cloudflare Pages Functions API \u2014 Production Readiness Audit\n\n**Date:** 2026-03-26  \n**Function Type:** POST endpoint  \n**Current Grade:** D+ (Not production-ready)\n\n---\n\n## Executive Summary\n\nThis function has **11 critical issues** that must be addressed before deployment to production. The code lacks error handling, input validation, security controls, and proper HTTP responses. It will fail unpredictably in production and create poor user experience.\n\n**Risk Level:** HIGH \u2014 Do not deploy as-is.\n\n---\n\n## Critical Issues\n\n### 1. \u274c No Input Validation\n**Severity:** CRITICAL  \n**Lines:** 3-4\n\nThe function blindly trusts incoming JSON without validating `email` or `plan` fields.\n\n**Risks:**\n- Invalid emails passed to Resend API cause silent failures\n- Missing fields will send `undefined` values to Airtable\n- No validation allows malformed requests to consume API quota\n\n**Fix:**\n```javascript\nfunction validateInput(email, plan) {\n  if (!email || typeof email !== 'string' || !email.includes('@')) {\n    throw new Error('Invalid email format');\n  }\n  if (!plan || typeof plan !== 'string' || !['free', 'pro', 'enterprise'].includes(plan)) {\n    throw new Error('Invalid plan');\n  }\n}\n\nvalidateInput(email, plan);\n```\n\n---\n\n### 2. \u274c No Error Handling\n**Severity:** CRITICAL  \n**Lines:** 7-11, 13-19\n\nBoth API calls lack try-catch. If Airtable or Resend fails, the function crashes without user notification.\n\n**Risks:**\n- User gets generic 500 error with no context\n- No retry logic for transient failures\n- Failed emails/records are unlogged\n- Broken user onboarding flow\n\n**Fix:**\n```javascript\ntry {\n  const airtableRes = await fetch(...);\n  if (!airtableRes.ok) {\n    throw new Error(`Airtable error: ${airtableRes.status}`);\n  }\n} catch (error) {\n  console.error('Airtable save failed:', error);\n  return new Response(JSON.stringify({ error: 'Failed to save user' }), { status: 500 });\n}\n```\n\n---\n\n### 3. \u274c No HTTP Status Codes\n**Severity:** HIGH  \n**Line:** 21\n\nReturns `200 OK` for both success and failure cases. Clients can't distinguish success from partial failure.\n\n**Risks:**\n- Client thinks everything succeeded when email failed\n- Monitoring/alerts won't trigger\n- Makes debugging impossible\n\n**Fix:**\n```javascript\nreturn new Response(JSON.stringify({ success: true }), { \n  status: 200,\n  headers: { 'Content-Type': 'application/json' }\n});\n```\n\n---\n\n### 4. \u274c Missing Content-Type Header in Response\n**Severity:** MEDIUM  \n**Line:** 21\n\nResponse returns plain text \"OK\" without `Content-Type: application/json` header.\n\n**Impact:** Clients expecting JSON will fail to parse.\n\n---\n\n### 5. \u274c No Request Method Validation\n**Severity:** MEDIUM  \n**Line:** 1\n\nFunction name is `onRequestPost` but doesn't verify the request is actually POST.\n\n**Risk:** If called with other methods, it will still process.\n\n**Fix:**\n```javascript\nif (request.method !== 'POST') {\n  return new Response('Method not allowed', { status: 405 });\n}\n```\n\n---\n\n### 6. \u274c Unhandled JSON Parse Errors\n**Severity:** HIGH  \n**Line:** 2\n\nIf request body is invalid JSON, `request.json()` throws uncaught error.\n\n**Risk:** Returns cryptic 500 error instead of `400 Bad Request`.\n\n**Fix:**\n```javascript\nlet body;\ntry {\n  body = await request.json();\n} catch (error) {\n  return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });\n}\n```\n\n---\n\n### 7. \u274c No Environment Variable Validation\n**Severity:** HIGH  \n**Lines:** 9, 15\n\nCode assumes `env.AIRTABLE_BASE_ID`, `env.AIRTABLE_KEY`, `env.RESEND_KEY` exist. Missing env vars cause silent failures.\n\n**Risk:** Credentials might be unset in staging/preview environments.\n\n**Fix:**\n```javascript\nfunction validateEnv(env) {\n  const required = ['AIRTABLE_BASE_ID', 'AIRTABLE_TABLE_ID', 'AIRTABLE_KEY', 'RESEND_KEY'];\n  for (const key of required) {\n    if (!env[key]) throw new Error(`Missing env var: ${key}`);\n  }\n}\nvalidateEnv(env);\n```\n\n---\n\n### 8. \u274c Missing Response Handling from External APIs\n**Severity:** HIGH  \n**Lines:** 7-11, 13-19\n\nNeither Airtable nor Resend responses are checked for success. A `201 Created` vs `400 Bad Request` both silently proceed.\n\n**Risk:** Function claims success when APIs actually rejected the request.\n\n**Fix:**\n```javascript\nconst airtableRes = await fetch(...);\nif (!airtableRes.ok) {\n  const error = await airtableRes.json();\n  throw new Error(`Airtable failed: ${airtableRes.status} - ${error.error?.message}`);\n}\n```\n\n---\n\n### 9. \u274c No Logging\n**Severity:** MEDIUM  \n**Entire function**\n\nZero visibility into what's happening. Debugging production issues is impossible.\n\n**Risk:** Can't correlate user signups with API calls. Can't troubleshoot failures.\n\n**Fix:**\n```javascript\nconsole.log(`Processing signup: email=${email}, plan=${plan}`);\nconsole.error(`Airtable failed: ${error.message}`);\n```\n\n---\n\n### 10. \u274c No Timeout Protection\n**Severity:** MEDIUM  \n**Lines:** 7-11, 13-19\n\nIf Airtable or Resend hangs, the function will block indefinitely (until Cloudflare's default 30s timeout).\n\n**Risk:** Request slots exhaust under slow API conditions.\n\n**Fix:**\n```javascript\nconst controller = new AbortController();\nconst timeout = setTimeout(() => controller.abort(), 5000);\nconst res = await fetch(url, { signal: controller.signal });\nclearTimeout(timeout);\n```\n\n---\n\n### 11. \u274c Partial Failure Not Handled\n**Severity:** HIGH  \n**Lines:** 7-20\n\nIf Airtable succeeds but Resend fails (or vice versa), the function returns \"OK\" even though the user experience is broken (no welcome email).\n\n**Risk:** Data inconsistency. User is in Airtable but never receives onboarding email.\n\n**Recommendation:** Either:\n- Use transactions (save to database first, only email on success)\n- Return partial status: `{ success: true, emailSent: false, reason: '...' }`\n- Implement retry logic with dead-letter queue\n\n---\n\n## Security Issues\n\n### \u26a0\ufe0f API Key Exposure\n**Risk Level:** MEDIUM\n\nCredentials are correctly stored in `env` (not hardcoded), which is good. However:\n- No rate limiting on the endpoint (anyone can spam signups)\n- No CORS checks (any domain can call this)\n\n**Fix:**\n```javascript\n// Add CORS check if needed\nif (request.headers.get('origin') !== 'https://myapp.com') {\n  return new Response('Forbidden', { status: 403 });\n}\n\n// Add basic rate limiting (use KV store)\nconst clientIp = request.headers.get('cf-connecting-ip');\nconst key = `ratelimit:${clientIp}`;\nconst count = await env.KV.get(key) || '0';\nif (parseInt(count) > 10) {\n  return new Response('Rate limit exceeded', { status: 429 });\n}\nawait env.KV.put(key, String(parseInt(count) + 1), { expirationTtl: 3600 });\n```\n\n---\n\n## Performance Issues\n\n### \u26a0\ufe0f Sequential API Calls\n**Lines:** 7-19\n\nAirtable and Resend calls are made sequentially. If Airtable takes 1s and Resend takes 1s, total latency is 2s.\n\n**Fix:** Parallelize when possible:\n```javascript\nconst [airtableRes, resendRes] = await Promise.all([\n  fetch('...airtable...'),\n  fetch('...resend...')\n]);\n```\n\n**Note:** Only parallelize if both can fail independently. Keep sequential if one's failure should prevent the other.\n\n---\n\n## Best Practices Issues\n\n### \u26a0\ufe0f Hardcoded Email Template\n**Line:** 17\n\nHTML is hardcoded in the function. Changes require redeployment.\n\n**Better approach:** Use Resend's template IDs or fetch from a template service.\n\n### \u26a0\ufe0f No Request/Response Logging\nNo audit trail of what was processed.\n\n**Recommendation:** Log structured data for debugging:\n```javascript\nconst context = { email, plan, timestamp: new Date().toISOString() };\nconsole.log(JSON.stringify(context));\n```\n\n---\n\n## Production Readiness Checklist\n\n| Item | Status | Notes |\n|------|--------|-------|\n| Input Validation | \u274c Missing | No validation of email/plan |\n| Error Handling | \u274c Missing | No try-catch blocks |\n| HTTP Status Codes | \u274c Wrong | Returns 200 for errors |\n| Response Format | \u274c Missing | No JSON headers |\n| API Response Handling | \u274c Missing | Doesn't check HTTP status from APIs |\n| Environment Validation | \u274c Missing | Assumes all env vars exist |\n| Logging | \u274c Missing | Zero observability |\n| Timeout Protection | \u274c Missing | No fetch timeouts |\n| Rate Limiting | \u274c Missing | No protection against abuse |\n| CORS/Security | \u26a0\ufe0f Partial | Keys are secure but endpoint open |\n| Test Coverage | \u274c Unknown | No tests provided |\n| Monitoring/Alerts | \u274c Missing | No way to detect failures |\n\n**Overall Score: 4/24 items passing**\n\n---\n\n## Recommended Next Steps\n\n### Phase 1: Critical (Do before launch)\n1. Add input validation for email/plan\n2. Wrap all async calls in try-catch\n3. Check response status from Airtable/Resend\n4. Return proper JSON responses with status codes\n5. Validate environment variables at startup\n6. Add structured logging\n\n### Phase 2: Important (Do within 1 month)\n1. Implement rate limiting (via Cloudflare KV)\n2. Add request timeout protection\n3. Handle partial failures gracefully\n4. Create monitoring dashboard (email send success rate, signup rate)\n\n### Phase 3: Nice-to-have\n1. Move email template to Resend template IDs\n2. Add CORS checks if needed\n3. Implement retry logic with exponential backoff\n4. Add distributed tracing\n\n---\n\n## Corrected Function (Minimal)\n\nHere's a production-ready version addressing top 6 issues:\n\n```javascript\nexport async function onRequestPost({ request, env }) {\n  try {\n    // Validate method\n    if (request.method !== 'POST') {\n      return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });\n    }\n\n    // Validate environment\n    const required = ['AIRTABLE_BASE_ID', 'AIRTABLE_TABLE_ID', 'AIRTABLE_KEY', 'RESEND_KEY'];\n    for (const key of required) {\n      if (!env[key]) throw new Error(`Missing env var: ${key}`);\n    }\n\n    // Parse and validate input\n    let body;\n    try {\n      body = await request.json();\n    } catch (error) {\n      return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });\n    }\n\n    const { email, plan } = body;\n\n    // Validate fields\n    if (!email || typeof email !== 'string' || !email.includes('@')) {\n      return new Response(JSON.stringify({ error: 'Invalid email' }), { status: 400 });\n    }\n    if (!plan || !['free', 'pro', 'enterprise'].includes(plan)) {\n      return new Response(JSON.stringify({ error: 'Invalid plan' }), { status: 400 });\n    }\n\n    console.log(`Processing signup: ${email} (${plan})`);\n\n    // Save to Airtable\n    const airtableRes = await fetch(\n      `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_TABLE_ID}`,\n      {\n        method: 'POST',\n        headers: { Authorization: `Bearer ${env.AIRTABLE_KEY}`, 'Content-Type': 'application/json' },\n        body: JSON.stringify({ fields: { Email: email, Plan: plan } })\n      }\n    );\n\n    if (!airtableRes.ok) {\n      throw new Error(`Airtable error: ${airtableRes.status}`);\n    }\n\n    // Send welcome email\n    const resendRes = await fetch('https://api.resend.com/emails', {\n      method: 'POST',\n      headers: { Authorization: `Bearer ${env.RESEND_KEY}`, 'Content-Type': 'application/json' },\n      body: JSON.stringify({\n        from: 'hi@myapp.com',\n        to: email,\n        subject: 'Welcome!',\n        html: '<p>Thanks for signing up!</p>'\n      })\n    });\n\n    if (!resendRes.ok) {\n      console.error(`Resend error: ${resendRes.status}`);\n      // Log but don't fail - user is in system even if email fails\n    }\n\n    return new Response(JSON.stringify({ success: true, message: 'Signup processed' }), {\n      status: 200,\n      headers: { 'Content-Type': 'application/json' }\n    });\n\n  } catch (error) {\n    console.error('Signup handler error:', error);\n    return new Response(JSON.stringify({ error: error.message }), {\n      status: 500,\n      headers: { 'Content-Type': 'application/json' }\n    });\n  }\n}\n```\n\n---\n\n## Summary\n\n**Current Status:** Not production-ready  \n**Estimated Fix Time:** 4-6 hours for Phase 1  \n**Risk of Deployment:** High \u2014 expect bugs and poor user experience\n\nThis code will work in basic happy-path scenarios but will fail mysteriously in production when facing network issues, rate limits, or malformed input. Invest the time to add proper error handling and validation now to avoid emergency debugging later.\n"}], "grading": {"expectations": [{"text": "Flags the Airtable fetch as having no retry logic", "passed": true, "evidence": "Phase 3 nice-to-have mentions 'Implement retry logic with exponential backoff' \u2014 also implied by item 2 (No Error Handling). Flagged but deprioritized to nice-to-have rather than critical."}, {"text": "Flags the Resend email fetch as having no retry logic", "passed": true, "evidence": "Same as above \u2014 covered under general retry mention"}, {"text": "Flags that res.ok is not checked \u2014 failures are silently swallowed", "passed": true, "evidence": "Item 8: 'Missing Response Handling from External APIs \u2014 Neither Airtable nor Resend responses are checked for success'"}, {"text": "Notes that env vars are properly used for Airtable IDs (positive finding)", "passed": true, "evidence": "Security section: 'Credentials are correctly stored in env (not hardcoded), which is good'"}, {"text": "Does NOT hallucinate findings that aren't present in the pasted code", "passed": false, "evidence": "Item 5: 'No Request Method Validation \u2014 Function name is onRequestPost but doesn't verify the request is actually POST' \u2014 this is a false alarm; Cloudflare Pages routes to onRequestPost exclusively for POST requests, so this check is unnecessary and reflects a misunderstanding of the platform."}, {"text": "Produces a structured output with severity sections", "passed": false, "evidence": "Output uses CRITICAL/HIGH/MEDIUM/SECURITY/PERFORMANCE labels and a production-readiness checklist, not the prescribed \ud83d\udd34/\ud83d\udfe1/\ud83d\udfe2/\u2705 structure. Longer and less scannable."}], "summary": {"passed": 4, "failed": 2, "total": 6, "pass_rate": 0.667}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "cloudflare-pages-auditor", "skill_path": "/sessions/happy-zealous-ride/cloudflare-pages-auditor", "timestamp": "2026-03-26T00:00:00Z", "evals_run": ["kv-and-systemprompt-issues", "pasted-code-audit"], "runs_per_configuration": 1}, "runs": [{"eval_id": 1, "eval_name": "kv-and-systemprompt-issues", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 63.5, "tokens": 150636, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Flags the wrong KV namespace", "passed": true, "evidence": "Critical #1 with exact line number"}, {"text": "Flags system prompt in user message", "passed": true, "evidence": "Important #4 with code fix"}, {"text": "Flags Airtable no retry", "passed": true, "evidence": "Critical #2 with retry pattern"}, {"text": "Flags hard-coded Airtable IDs", "passed": true, "evidence": "Nice to Have #5 with env var fix"}, {"text": "Flags stale localStorage", "passed": true, "evidence": "Critical #3 with live fetch fix"}, {"text": "Uses prescribed section structure", "passed": true, "evidence": "Exact \ud83d\udd34/\ud83d\udfe1/\ud83d\udfe2/\u2705 format"}, {"text": "File+function in each finding", "passed": true, "evidence": "All findings have file:line refs"}], "notes": []}, {"eval_id": 1, "eval_name": "kv-and-systemprompt-issues", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.857, "passed": 6, "failed": 1, "total": 7, "time_seconds": 54.8, "tokens": 146930, "tool_calls": 6, "errors": 0}, "expectations": [{"text": "Flags the wrong KV namespace", "passed": true, "evidence": "Critical #1 \u2014 found correctly"}, {"text": "Flags system prompt in user message", "passed": true, "evidence": "Critical #2 \u2014 found correctly"}, {"text": "Flags Airtable no retry", "passed": true, "evidence": "High #4 \u2014 found correctly"}, {"text": "Flags hard-coded Airtable IDs", "passed": true, "evidence": "Medium #7 \u2014 found correctly"}, {"text": "Flags stale localStorage", "passed": true, "evidence": "High #5 \u2014 found correctly"}, {"text": "Uses prescribed section structure", "passed": false, "evidence": "Used Critical/High/Medium labels, not the prescribed emoji structure"}, {"text": "File+function in each finding", "passed": true, "evidence": "file:line refs present throughout"}], "notes": []}, {"eval_id": 2, "eval_name": "pasted-code-audit", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 49.8, "tokens": 150066, "tool_calls": 4, "errors": 0}, "expectations": [{"text": "Flags Airtable no retry", "passed": true, "evidence": "Critical #1"}, {"text": "Flags Resend no retry", "passed": true, "evidence": "Critical #1 \u2014 both services covered"}, {"text": "Flags res.ok not checked", "passed": true, "evidence": "Critical #2"}, {"text": "Notes env vars used correctly (positive)", "passed": true, "evidence": "\u2705 Already solid section explicitly credits this"}, {"text": "No hallucinated findings", "passed": true, "evidence": "All 8 findings traceable to pasted code"}, {"text": "Structured severity sections", "passed": true, "evidence": "Exact \ud83d\udd34/\ud83d\udfe1/\ud83d\udfe2/\u2705 format"}], "notes": []}, {"eval_id": 2, "eval_name": "pasted-code-audit", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.667, "passed": 4, "failed": 2, "total": 6, "time_seconds": 61.8, "tokens": 152726, "tool_calls": 4, "errors": 0}, "expectations": [{"text": "Flags Airtable no retry", "passed": true, "evidence": "Mentioned in Phase 3 / item 2"}, {"text": "Flags Resend no retry", "passed": true, "evidence": "Covered under retry mention"}, {"text": "Flags res.ok not checked", "passed": true, "evidence": "Item 8: Missing Response Handling"}, {"text": "Notes env vars used correctly (positive)", "passed": true, "evidence": "Security section credits this"}, {"text": "No hallucinated findings", "passed": false, "evidence": "Item 5 flags 'No Request Method Validation' for onRequestPost \u2014 a false alarm; Cloudflare Pages routes by function name, making this check unnecessary"}, {"text": "Structured severity sections", "passed": false, "evidence": "11-item flat list with CRITICAL/HIGH labels, not the prescribed structure; less scannable"}], "notes": ["Baseline report was 2x longer with 11 issues vs 8 for with_skill \u2014 more noise, similar signal"]}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 56.7, "stddev": 6.9, "min": 49.8, "max": 63.5}, "tokens": {"mean": 150351, "stddev": 285, "min": 150066, "max": 150636}}, "without_skill": {"pass_rate": {"mean": 0.762, "stddev": 0.095, "min": 0.667, "max": 0.857}, "time_seconds": {"mean": 58.3, "stddev": 3.5, "min": 54.8, "max": 61.8}, "tokens": {"mean": 149828, "stddev": 2898, "min": 146930, "max": 152726}}, "delta": {"pass_rate": "+0.238", "time_seconds": "-1.6", "tokens": "+523"}}, "notes": ["With-skill: 100% pass rate across both evals. Baseline: 76% average.", "The key differentiator is the prescribed output format (\ud83d\udd34/\ud83d\udfe1/\ud83d\udfe2/\u2705) \u2014 baseline never uses it", "Baseline hallucinated a false issue (method validation on onRequestPost) due to unfamiliarity with Cloudflare Pages routing semantics", "Time and token cost nearly identical \u2014 skill adds no meaningful overhead", "Both configurations found all the real code issues \u2014 the skill's value is in structured output + avoiding false positives"]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
