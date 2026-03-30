@@ -825,6 +825,25 @@
       </div>
     </div>
 
+    <!-- Video Resume Review -->
+    <div class="video-review-card" id="videoReviewCard">
+      <h3>🎬 AI Video Resume Review</h3>
+      <p class="vr-desc">Get a personalized 60–90 second video review from our AI career coach, highlighting your strengths and what to improve.</p>
+      <button class="vr-btn" id="videoReviewBtn" onclick="generateVideoReview()">Generate Video Review</button>
+      <div id="videoReviewResult">
+        <h4>Coaching Script</h4>
+        <div class="vr-script-box" id="vrScript"></div>
+        <h4>Key Strengths</h4>
+        <ul class="vr-bullets" id="vrStrengths"></ul>
+        <h4>Improvements Needed</h4>
+        <ul class="vr-bullets" id="vrImprovements"></ul>
+        <div class="vr-email-note">
+          <span class="vr-note-icon">📧</span>
+          <span>Your personalized video is being generated and will be emailed to you shortly. Check your inbox in the next few minutes.</span>
+        </div>
+      </div>
+    </div>
+
     <button class="again-btn" onclick="reset()">← Analyze Another Resume</button>
   </div>
 
@@ -1540,6 +1559,75 @@
         children,
       }],
     });
+  }
+
+  // ── Video Resume Review ────────────────────────────────────────────────────
+  async function generateVideoReview() {
+    const token = localStorage.getItem('ats_token');
+    const scans = localStorage.getItem('ats_scans');
+    const hasAccess = token && (scans === null || parseInt(scans) > 0);
+    if (!hasAccess) { showPaywall(); return; }
+    if (!selectedFile) return;
+
+    const btn = document.getElementById('videoReviewBtn');
+    btn.textContent = '⏳ Generating review…';
+    btn.disabled = true;
+
+    try {
+      const fd = new FormData();
+      fd.append('resume', selectedFile);
+      fd.append('token', token);
+      fd.append('job_description', jdInput.value);
+      fd.append('email', emailInput.value.trim() || localStorage.getItem('ats_email') || '');
+
+      const res = await fetch('/video-review', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (res.status === 401 || res.status === 402) {
+        localStorage.removeItem('ats_token');
+        localStorage.removeItem('ats_plan');
+        localStorage.removeItem('ats_scans');
+        btn.textContent = 'Generate Video Review';
+        btn.disabled = false;
+        showPaywall();
+        return;
+      }
+
+      if (!res.ok) throw new Error(data.detail || 'Video review failed');
+
+      // Update scans if returned
+      if (data.scans_remaining !== undefined) {
+        localStorage.setItem('ats_scans', data.scans_remaining);
+        updateScansDisplay(data.scans_remaining);
+        fetchTokenStatus(token);
+      }
+
+      // Render coaching script
+      document.getElementById('vrScript').textContent = data.script || '';
+
+      // Render strengths (green dots)
+      const strengthsEl = document.getElementById('vrStrengths');
+      strengthsEl.innerHTML = '';
+      (data.key_strengths || []).forEach(s => {
+        strengthsEl.innerHTML += `<li><span class="dot dot-green"></span>${s}</li>`;
+      });
+
+      // Render improvements (red dots)
+      const improvementsEl = document.getElementById('vrImprovements');
+      improvementsEl.innerHTML = '';
+      (data.improvements || []).forEach(imp => {
+        improvementsEl.innerHTML += `<li><span class="dot dot-red"></span>${imp}</li>`;
+      });
+
+      document.getElementById('videoReviewResult').classList.add('active');
+      btn.textContent = '✅ Review Generated';
+      btn.disabled = false;
+
+    } catch (err) {
+      btn.textContent = 'Generate Video Review';
+      btn.disabled = false;
+      alert('Error: ' + err.message);
+    }
   }
 </script>
 </body>
