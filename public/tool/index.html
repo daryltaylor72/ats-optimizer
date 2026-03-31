@@ -685,6 +685,16 @@
         </a>
       </div>
       <p style="font-size:12px;color:var(--text3)">Secure payment via Stripe · Pro plan billed monthly, cancel anytime</p>
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+        <button onclick="togglePaywallCoupon()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:0;" id="paywallCouponToggle">Have a promo code?</button>
+        <div id="paywallCouponBody" style="display:none;margin-top:10px;">
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="paywallCouponInput" placeholder="e.g. FREETRIAL" autocomplete="off" maxlength="30" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font:13px/1.5 -apple-system,sans-serif;padding:10px 12px;text-transform:uppercase;letter-spacing:0.5px;" />
+            <button onclick="redeemPaywallCoupon()" id="paywallCouponBtn" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;font-weight:600;padding:0 14px;cursor:pointer;white-space:nowrap;">Redeem</button>
+          </div>
+          <div id="paywallCouponMsg" style="font-size:12px;margin-top:6px;"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1212,6 +1222,44 @@
 
   function closePaywall() {
     document.getElementById('paywallOverlay').classList.remove('active');
+  }
+
+  function togglePaywallCoupon() {
+    const body = document.getElementById('paywallCouponBody');
+    body.style.display = body.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async function redeemPaywallCoupon() {
+    const input = document.getElementById('paywallCouponInput');
+    const msg = document.getElementById('paywallCouponMsg');
+    const btn = document.getElementById('paywallCouponBtn');
+    const code = input.value.trim().toUpperCase();
+    if (!code) return;
+    btn.disabled = true;
+    msg.textContent = 'Checking…';
+    msg.style.color = 'var(--text3)';
+    try {
+      const res = await fetch('/redeem-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = data.detail || 'Invalid code.';
+        msg.style.color = 'var(--red)';
+        btn.disabled = false;
+        return;
+      }
+      localStorage.setItem('ats_token', data.token);
+      msg.textContent = '✓ ' + (data.message || 'Code redeemed!');
+      msg.style.color = 'var(--green)';
+      setTimeout(() => { closePaywall(); downloadWord(); }, 1200);
+    } catch {
+      msg.textContent = 'Network error. Try again.';
+      msg.style.color = 'var(--red)';
+      btn.disabled = false;
+    }
   }
 
   async function checkout(plan) {
