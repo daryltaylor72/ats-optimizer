@@ -35,7 +35,12 @@ export async function onRequestGet(context) {
   const raw = await kv.get(`video:${jobId}`);
   if (!raw) return json({ detail: 'Job not found' }, 404);
 
-  const record = JSON.parse(raw);
+  let record;
+  try {
+    record = JSON.parse(raw);
+  } catch (_e) {
+    return json({ detail: 'Invalid job record' }, 500);
+  }
 
   // Ownership check — prevents job ID enumeration
   if (record.token !== token) return json({ detail: 'Forbidden' }, 403);
@@ -45,7 +50,9 @@ export async function onRequestGet(context) {
   if (record.status === 'failed')   return json({ status: 'failed' });
 
   // Timeout check
-  const ageMs = Date.now() - new Date(record.createdAt).getTime();
+  const ageMs = record.createdAt
+    ? Date.now() - new Date(record.createdAt).getTime()
+    : Infinity;
   if (ageMs > TIMEOUT_MS) {
     await kv.put(`video:${jobId}`, JSON.stringify({ ...record, status: 'failed' }), { expirationTtl: 86400 });
     return json({ status: 'failed' });
