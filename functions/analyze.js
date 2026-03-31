@@ -94,16 +94,19 @@ export async function onRequestPost(context) {
     return json({ detail: 'Unsupported file type. Please upload PDF or DOCX.' }, 400);
   }
 
-  // Call Claude API — Opus primary, Sonnet fallback, Haiku last resort
-  const MODEL_SEQUENCE = [
-    { id: 'claude-opus-4-6',    retries: 2, delay: 1000 },
-    { id: 'claude-sonnet-4-6',  retries: 2, delay: 1000 },
+  // ── Provider cascade: Anthropic (Opus→Sonnet→Haiku) then Gemini ─────────────
+  let rawText = null;
+
+  // 1. Try Anthropic models in sequence
+  const ANTHROPIC_MODELS = [
+    { id: 'claude-opus-4-6',           retries: 2, delay: 1000 },
+    { id: 'claude-sonnet-4-6',         retries: 2, delay: 1000 },
     { id: 'claude-haiku-4-5-20251001', retries: 2, delay: 1000 },
   ];
-  let claudeResponse;
 
-  for (const { id: model, retries, delay } of MODEL_SEQUENCE) {
+  for (const { id: model, retries, delay } of ANTHROPIC_MODELS) {
     let overloaded = false;
+    let claudeResponse;
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
@@ -113,12 +116,7 @@ export async function onRequestPost(context) {
             'x-api-key': apiKey,
             'anthropic-version': '2023-06-01'
           },
-          body: JSON.stringify({
-            model,
-            max_tokens: includeRewrite ? 4096 : 4096,
-            system: buildSystemPrompt(),
-            messages
-          })
+          body: JSON.stringify({ model, max_tokens: 4096, system: buildSystemPrompt(), messages })
         });
       } catch (e) {
         if (attempt < retries) { await new Promise(r => setTimeout(r, delay)); continue; }
@@ -126,32 +124,81 @@ export async function onRequestPost(context) {
       }
       if (claudeResponse.status === 529 || claudeResponse.status === 503) {
         if (attempt < retries) { await new Promise(r => setTimeout(r, delay)); continue; }
-        overloaded = true;
+        overloaded = true; break;
       }
+      if (!claudeResponse.ok) {
+        // Non-overload error — surface it immediately, no fallback
+        const errText = await claudeResponse.text();
+        const isPdfError = claudeResponse.status === 400 ||
+          errText.includes('Could not process') || errText.includes('document') || errText.includes('pdf');
+        if (isPdfError) {
+          return json({ detail: 'The uploaded PDF could not be read. Please ensure you are uploading a valid, uncorrupted PDF file.' }, 400);
+        }
+        return json({ detail: 'An error occurred while analyzing your resume. Please try again.' }, 500);
+      }
+      // Success
+      const claudeData = await claudeResponse.json();
+      rawText = claudeData.content?.[0]?.text || '';
       break;
     }
-    if (!overloaded) break; // success — stop trying models
-    // else continue to next model
+    if (rawText !== null) break; // got a result — stop trying models
+    if (!overloaded) break;      // non-overload failure — already returned above
+    // overloaded — try next model
   }
 
-  if (!claudeResponse.ok) {
-    const errText = await claudeResponse.text();
-    if (claudeResponse.status === 529 || claudeResponse.status === 503) {
+  // 2. Gemini fallback if all Anthropic models were overloaded
+  if (rawText === null) {
+    const geminiKey = env.GEMINI_API_KEY;
+    if (!geminiKey) {
       return json({ detail: 'The AI service is temporarily busy. Please try again in a few seconds.' }, 503);
     }
-    // Detect corrupt/unreadable PDF without leaking internal provider details
-    const isPdfError = claudeResponse.status === 400 ||
-      errText.includes('Could not process') ||
-      errText.includes('document') ||
-      errText.includes('pdf');
-    if (isPdfError) {
-      return json({ detail: 'The uploaded PDF could not be read. Please ensure you are uploading a valid, uncorrupted PDF file.' }, 400);
+
+    // Build Gemini parts — PDF gets inlineData, DOCX uses extracted text in the prompt
+    const geminiParts = [];
+    if (ext === 'pdf') {
+      geminiParts.push({ inlineData: { mimeType: 'application/pdf', data: arrayBufferToBase64(bytes) } });
+      geminiParts.push({ text: buildPrompt(null, jobDescription, includeRewrite) });
+    } else {
+      // DOCX — text already extracted into messages[0].content
+      const extractedText = messages[0]?.content || '';
+      geminiParts.push({ text: extractedText });
     }
-    return json({ detail: 'An error occurred while analyzing your resume. Please try again.' }, 500);
+
+    let geminiResponse;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+              contents: [{ parts: geminiParts }],
+              generationConfig: { maxOutputTokens: 4096, responseMimeType: 'application/json' },
+            })
+          }
+        );
+      } catch (e) {
+        if (attempt < 2) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        return json({ detail: 'The AI service is temporarily busy. Please try again in a few seconds.' }, 503);
+      }
+      if (geminiResponse.status === 529 || geminiResponse.status === 503 || geminiResponse.status === 429) {
+        if (attempt < 2) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        return json({ detail: 'The AI service is temporarily busy. Please try again in a few seconds.' }, 503);
+      }
+      if (!geminiResponse.ok) {
+        return json({ detail: 'An error occurred while analyzing your resume. Please try again.' }, 500);
+      }
+      const geminiData = await geminiResponse.json();
+      rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      break;
+    }
   }
 
-  const claudeData = await claudeResponse.json();
-  const rawText = claudeData.content?.[0]?.text || '';
+  if (!rawText) {
+    return json({ detail: 'An error occurred while analyzing your resume. Please try again.' }, 500);
+  }
 
   // Extract JSON — strip markdown fences, then find the outermost { } block
   let cleaned = rawText
