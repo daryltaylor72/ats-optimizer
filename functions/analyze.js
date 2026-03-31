@@ -102,8 +102,7 @@ export async function onRequestPost(context) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'pdfs-2024-09-25'
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
         model: 'claude-opus-4-6',
