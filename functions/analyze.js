@@ -94,29 +94,48 @@ export async function onRequestPost(context) {
     return json({ detail: 'Unsupported file type. Please upload PDF or DOCX.' }, 400);
   }
 
-  // Call Claude API
+  // Call Claude API with retry on transient 529 overload errors
+  const claudeRequestBody = JSON.stringify({
+    model: 'claude-opus-4-6',
+    max_tokens: includeRewrite ? 16000 : 8192,
+    system: buildSystemPrompt(),
+    messages
+  });
+
   let claudeResponse;
-  try {
-    claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-6',
-        max_tokens: includeRewrite ? 16000 : 8192,
-        system: buildSystemPrompt(),
-        messages
-      })
-    });
-  } catch (e) {
-    return json({ detail: `API request failed: ${e.message}` }, 500);
+  const MAX_RETRIES = 3;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: claudeRequestBody
+      });
+    } catch (e) {
+      if (attempt === MAX_RETRIES) {
+        return json({ detail: `API request failed: ${e.message}` }, 500);
+      }
+      await new Promise(r => setTimeout(r, attempt * 2000));
+      continue;
+    }
+
+    // Retry on 529 (overloaded) or 503 (unavailable)
+    if ((claudeResponse.status === 529 || claudeResponse.status === 503) && attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, attempt * 2000));
+      continue;
+    }
+    break;
   }
 
   if (!claudeResponse.ok) {
     const errText = await claudeResponse.text();
+    if (claudeResponse.status === 529 || claudeResponse.status === 503) {
+      return json({ detail: 'The AI service is temporarily busy. Please try again in a few seconds.' }, 503);
+    }
     // Detect corrupt/unreadable PDF without leaking internal provider details
     const isPdfError = claudeResponse.status === 400 ||
       errText.includes('Could not process') ||
@@ -125,8 +144,7 @@ export async function onRequestPost(context) {
     if (isPdfError) {
       return json({ detail: 'The uploaded PDF could not be read. Please ensure you are uploading a valid, uncorrupted PDF file.' }, 400);
     }
-    // DEBUG: surface actual API error temporarily
-    return json({ detail: `API error ${claudeResponse.status}: ${errText.substring(0, 300)}` }, 500);
+    return json({ detail: 'An error occurred while analyzing your resume. Please try again.' }, 500);
   }
 
   const claudeData = await claudeResponse.json();
