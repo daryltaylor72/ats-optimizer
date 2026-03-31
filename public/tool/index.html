@@ -635,6 +635,46 @@
       display: flex; align-items: flex-start; gap: 10px;
     }
     .vr-email-note .vr-note-icon { font-size: 18px; flex-shrink: 0; }
+    .vr-progress {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .vr-progress-bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--border, #e5e7eb);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .vr-progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+      animation: vr-pulse 2s ease-in-out infinite;
+    }
+    @keyframes vr-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .vr-progress-label {
+      font-size: 13px;
+      color: var(--text3, #6b7280);
+    }
+    .vr-video-player {
+      margin-top: 20px;
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #000;
+    }
+    .vr-video-player video {
+      width: 100%;
+      display: block;
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
@@ -851,9 +891,24 @@
         <ul class="vr-bullets" id="vrStrengths"></ul>
         <h4>Improvements Needed</h4>
         <ul class="vr-bullets" id="vrImprovements"></ul>
-        <div class="vr-email-note">
-          <span class="vr-note-icon">📧</span>
-          <span>Your personalized video is being generated and will be emailed to you shortly. Check your inbox in the next few minutes.</span>
+        <div id="vrVideoSection">
+          <!-- Progress bar (shown while generating) -->
+          <div class="vr-progress" id="vrProgress" style="display:none;">
+            <div class="vr-progress-bar-track">
+              <div class="vr-progress-bar-fill" id="vrProgressFill"></div>
+            </div>
+            <div class="vr-progress-label" id="vrProgressLabel">Generating your coaching video…</div>
+          </div>
+          <!-- Video player (shown when complete) -->
+          <div class="vr-video-player" id="vrVideoPlayer" style="display:none;">
+            <video id="vrVideo" controls playsinline>
+              Your browser does not support video playback.
+            </video>
+          </div>
+          <!-- Error fallback -->
+          <div id="vrVideoError" style="display:none; margin-top:16px; font-size:13px; color:var(--text3,#6b7280);">
+            Video generation timed out — your coaching script is above.
+          </div>
         </div>
       </div>
     </div>
@@ -888,6 +943,7 @@
 
   let selectedFile = null;
   let lastResumeText = null;  // stored after successful rewrite for Word/plain-text download
+  let currentToken = localStorage.getItem('ats_token');
 
   // Restore saved email
   const savedEmail = localStorage.getItem('ats_email');
@@ -1619,72 +1675,127 @@
   }
 
   // ── Video Resume Review ────────────────────────────────────────────────────
+  let _vrPollInterval = null;
+  let _vrPollStartTime = null;
+  const VR_POLL_INTERVAL_MS = 5000;
+  const VR_MAX_WAIT_MS = 10 * 60 * 1000; // 10 min client-side hard stop
+  const VR_STATUS_MESSAGES = [
+    'Generating audio from your coaching script…',
+    'Uploading to rendering pipeline…',
+    'Rendering your lip-sync video…',
+    'Almost done — finalizing your video…',
+  ];
+
   async function generateVideoReview() {
-    const token = localStorage.getItem('ats_token');
-    const scans = localStorage.getItem('ats_scans');
-    const hasAccess = token && (scans === null || parseInt(scans) > 0);
-    if (!hasAccess) { showPaywall(); return; }
-    if (!selectedFile) return;
+    if (!currentToken) { alert('No token found. Please reload the page.'); return; }
 
     const btn = document.getElementById('videoReviewBtn');
-    btn.textContent = '⏳ Generating review…';
     btn.disabled = true;
+    btn.textContent = 'Generating…';
 
+    const fd = new FormData();
+    fd.append('token', currentToken);
+    fd.append('resume', fileInput.files[0]);
+    if (jdInput && jdInput.value.trim()) fd.append('job_description', jdInput.value);
+
+    let data;
     try {
-      const fd = new FormData();
-      fd.append('resume', selectedFile);
-      fd.append('token', token);
-      fd.append('job_description', jdInput.value);
-      fd.append('email', emailInput.value.trim() || localStorage.getItem('ats_email') || '');
-
       const res = await fetch('/video-review', { method: 'POST', body: fd });
-      const data = await res.json();
+      data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Video review failed');
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Generate Video Review';
+      alert(e.message || 'An error occurred. Please try again.');
+      return;
+    }
 
-      if (res.status === 401 || res.status === 402) {
-        localStorage.removeItem('ats_token');
-        localStorage.removeItem('ats_plan');
-        localStorage.removeItem('ats_scans');
-        btn.textContent = 'Generate Video Review';
-        btn.disabled = false;
-        showPaywall();
+    // Render coaching script immediately
+    document.getElementById('vrScript').textContent = data.script || '';
+    const strengthsList = document.getElementById('vrStrengths');
+    strengthsList.innerHTML = '';
+    (data.key_strengths || []).forEach(s => {
+      const li = document.createElement('li'); li.textContent = s; strengthsList.appendChild(li);
+    });
+    const improvList = document.getElementById('vrImprovements');
+    improvList.innerHTML = '';
+    (data.improvements || []).forEach(i => {
+      const li = document.createElement('li'); li.textContent = i; improvList.appendChild(li);
+    });
+    document.getElementById('videoReviewResult').classList.add('active');
+
+    btn.disabled = false;
+    btn.textContent = 'Generate Video Review';
+
+    // Start video polling if a job_id was returned
+    if (data.job_id) {
+      _startVideoPolling(data.job_id, currentToken);
+    }
+  }
+
+  function _startVideoPolling(jobId, token) {
+    const progress    = document.getElementById('vrProgress');
+    const fill        = document.getElementById('vrProgressFill');
+    const label       = document.getElementById('vrProgressLabel');
+    const player      = document.getElementById('vrVideoPlayer');
+    const videoEl     = document.getElementById('vrVideo');
+    const errorEl     = document.getElementById('vrVideoError');
+
+    progress.style.display = 'block';
+    player.style.display   = 'none';
+    errorEl.style.display  = 'none';
+
+    _vrPollStartTime = Date.now();
+    let messageIndex = 0;
+    label.textContent = VR_STATUS_MESSAGES[0];
+    fill.style.width  = '10%';
+
+    _vrPollInterval = setInterval(async () => {
+      const elapsed = Date.now() - _vrPollStartTime;
+
+      // Rotate status message every 20s
+      const newIndex = Math.min(Math.floor(elapsed / 20000), VR_STATUS_MESSAGES.length - 1);
+      if (newIndex !== messageIndex) {
+        messageIndex = newIndex;
+        label.textContent = VR_STATUS_MESSAGES[messageIndex];
+      }
+
+      // Advance progress bar (max 90% until complete)
+      const pct = Math.min(10 + (elapsed / VR_MAX_WAIT_MS) * 80, 90);
+      fill.style.width = `${pct}%`;
+
+      // Client-side timeout
+      if (elapsed > VR_MAX_WAIT_MS) {
+        clearInterval(_vrPollInterval);
+        progress.style.display = 'none';
+        errorEl.style.display  = 'block';
         return;
       }
 
-      if (!res.ok) throw new Error(data.detail || 'Video review failed');
-
-      // Update scans if returned
-      if (data.scans_remaining !== undefined) {
-        localStorage.setItem('ats_scans', data.scans_remaining);
-        updateScansDisplay(data.scans_remaining);
-        fetchTokenStatus(token);
+      // Poll server
+      let statusData;
+      try {
+        const res = await fetch(`/video-status?jobId=${encodeURIComponent(jobId)}&token=${encodeURIComponent(token)}`);
+        statusData = await res.json();
+      } catch (_e) {
+        return; // network error — retry next interval
       }
 
-      // Render coaching script
-      document.getElementById('vrScript').textContent = data.script || '';
-
-      // Render strengths (green dots)
-      const strengthsEl = document.getElementById('vrStrengths');
-      strengthsEl.innerHTML = '';
-      (data.key_strengths || []).forEach(s => {
-        strengthsEl.innerHTML += `<li><span class="dot dot-green"></span>${s}</li>`;
-      });
-
-      // Render improvements (red dots)
-      const improvementsEl = document.getElementById('vrImprovements');
-      improvementsEl.innerHTML = '';
-      (data.improvements || []).forEach(imp => {
-        improvementsEl.innerHTML += `<li><span class="dot dot-red"></span>${imp}</li>`;
-      });
-
-      document.getElementById('videoReviewResult').classList.add('active');
-      btn.textContent = '✅ Review Generated';
-      btn.disabled = false;
-
-    } catch (err) {
-      btn.textContent = 'Generate Video Review';
-      btn.disabled = false;
-      alert('Error: ' + err.message);
-    }
+      if (statusData.status === 'complete' && statusData.videoUrl) {
+        clearInterval(_vrPollInterval);
+        fill.style.width = '100%';
+        setTimeout(() => {
+          progress.style.display = 'none';
+          videoEl.src = statusData.videoUrl;
+          player.style.display = 'block';
+          videoEl.play().catch(() => {}); // autoplay may be blocked — silent fail
+        }, 400);
+      } else if (statusData.status === 'failed') {
+        clearInterval(_vrPollInterval);
+        progress.style.display = 'none';
+        errorEl.style.display  = 'block';
+      }
+    }, VR_POLL_INTERVAL_MS);
   }
 </script>
 </body>
