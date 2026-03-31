@@ -125,7 +125,8 @@ export async function onRequestPost(context) {
     if (isPdfError) {
       return json({ detail: 'The uploaded PDF could not be read. Please ensure you are uploading a valid, uncorrupted PDF file.' }, 400);
     }
-    return json({ detail: 'An error occurred while analyzing your resume. Please try again.' }, 500);
+    // DEBUG: surface actual API error temporarily
+    return json({ detail: `API error ${claudeResponse.status}: ${errText.substring(0, 300)}` }, 500);
   }
 
   const claudeData = await claudeResponse.json();
