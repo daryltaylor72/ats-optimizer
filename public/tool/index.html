@@ -1254,7 +1254,7 @@
       localStorage.setItem('ats_token', data.token);
       msg.textContent = '✓ ' + (data.message || 'Code redeemed!');
       msg.style.color = 'var(--green)';
-      setTimeout(() => { closePaywall(); downloadWord(); }, 1200);
+      setTimeout(() => { closePaywall(); getRewrite(); }, 1200);
     } catch {
       msg.textContent = 'Network error. Try again.';
       msg.style.color = 'var(--red)';
