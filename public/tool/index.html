@@ -803,6 +803,10 @@
         <div style="margin-top:8px;">
           <button id="downloadTxtBtn" onclick="downloadPlainText()" style="display:none;background:none;border:none;padding:0;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;text-underline-offset:2px;">Download as plain text instead</button>
         </div>
+        <div id="placeholderTip" style="display:none;margin-top:14px;padding:12px 14px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.6;">
+          <strong style="color:var(--text);">Tip — fill in the brackets to boost your score.</strong><br>
+          Your resume contains <code style="font-size:11px;color:#a78bfa;">[placeholders]</code> where real metrics will make a big difference. Open the Word doc, search for <code style="font-size:11px;color:#a78bfa;">[</code>, and replace each one with your actual number. Then re-upload to see your new score.
+        </div>
         <div class="scans-badge" id="scansBadge"></div>
         <div id="cancelLink" style="display:none;margin-top:8px;">
           <a href="mailto:support@deeptierlabs.com?subject=Cancel%20Pro%20Subscription" style="font-size:12px;color:var(--text3);text-decoration:none;">Cancel subscription</a>
@@ -1200,6 +1204,11 @@
       URL.revokeObjectURL(wordUrl);
       btn.textContent = '✅ Downloaded as Word';
       btn.disabled = false;
+      // Show placeholder tip if the resume contains bracketed placeholders
+      if (lastResumeText && lastResumeText.includes('[')) {
+        const tip = document.getElementById('placeholderTip');
+        if (tip) tip.style.display = 'block';
+      }
     } catch (err) {
       btn.textContent = '⬇ Download as Word (.docx)';
       btn.disabled = false;
