@@ -94,13 +94,17 @@ export async function onRequestPost(context) {
     return json({ detail: 'Unsupported file type. Please upload PDF or DOCX.' }, 400);
   }
 
-  // Call Claude API — Opus primary, Sonnet fallback if overloaded
-  const MODELS = ['claude-opus-4-6', 'claude-sonnet-4-6'];
+  // Call Claude API — Opus primary, Sonnet fallback, Haiku last resort
+  const MODEL_SEQUENCE = [
+    { id: 'claude-opus-4-6',    retries: 2, delay: 1000 },
+    { id: 'claude-sonnet-4-6',  retries: 2, delay: 1000 },
+    { id: 'claude-haiku-4-5-20251001', retries: 2, delay: 1000 },
+  ];
   let claudeResponse;
 
-  for (const model of MODELS) {
+  for (const { id: model, retries, delay } of MODEL_SEQUENCE) {
     let overloaded = false;
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
@@ -111,26 +115,23 @@ export async function onRequestPost(context) {
           },
           body: JSON.stringify({
             model,
-            max_tokens: includeRewrite ? 16000 : 8192,
+            max_tokens: includeRewrite ? 4096 : 4096,
             system: buildSystemPrompt(),
             messages
           })
         });
       } catch (e) {
-        if (attempt === 2) { overloaded = true; break; }
-        await new Promise(r => setTimeout(r, 2000));
-        continue;
+        if (attempt < retries) { await new Promise(r => setTimeout(r, delay)); continue; }
+        overloaded = true; break;
       }
-
       if (claudeResponse.status === 529 || claudeResponse.status === 503) {
-        if (attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
+        if (attempt < retries) { await new Promise(r => setTimeout(r, delay)); continue; }
         overloaded = true;
       }
       break;
     }
-    // If this model is overloaded and there's a fallback, try next model
-    if (overloaded && model !== MODELS[MODELS.length - 1]) continue;
-    if (!overloaded) break;
+    if (!overloaded) break; // success — stop trying models
+    // else continue to next model
   }
 
   if (!claudeResponse.ok) {
