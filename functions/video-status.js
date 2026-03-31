@@ -67,7 +67,7 @@ export async function onRequestGet(context) {
     return json({ status: 'processing' });
   }
 
-  if (hedraResult.status !== 'completed') {
+  if (hedraResult.status !== 'complete') {
     return json({ status: 'processing' });
   }
 

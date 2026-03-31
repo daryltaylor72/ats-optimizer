@@ -4,7 +4,7 @@
  *
  * Exports:
  *  - callElevenLabs()       : Generate TTS audio using ElevenLabs
- *  - hedraUploadAsset()     : Upload binary asset (audio or image) to Hedra
+ *  - hedraUploadAsset()     : Upload binary asset (audio or image) to Hedra (two-step)
  *  - hedraStartJob()        : Start a Hedra lip-sync generation job
  *  - hedraGetStatus()       : Get current status of a Hedra generation job
  *
@@ -13,7 +13,7 @@
  *  - video-status.js       : Poll Hedra status and retrieve final video URL
  */
 
-const HEDRA_BASE = 'https://mercury.dev.dream-ai.com/api';
+const HEDRA_BASE = 'https://api.hedra.com/web-app/public';
 const HEDRA_VEO3_FAST = '9963e814-d1ee-4518-a844-7ed380ddbb20';
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io/v1';
 const ELEVENLABS_VOICE_ID = 'pMsXgVXv3BLzUgSXRplE'; // Serena
@@ -67,74 +67,90 @@ export async function callElevenLabs(text, apiKey) {
 }
 
 /**
- * Upload a binary asset (audio or image) to Hedra.
+ * Upload a binary asset (audio or image) to Hedra (two-step: create record then upload file).
  * @param {ArrayBuffer} buffer
  * @param {string} contentType  e.g. 'audio/mpeg' or 'image/png'
  * @param {string} fileName     e.g. 'coaching.mp3'
+ * @param {string} assetType    'audio' or 'image'
  * @param {string} apiKey
  * @returns {Promise<string>}   Hedra asset ID
  * @throws {Error}  Hedra upload error with status and response preview
  */
-export async function hedraUploadAsset(buffer, contentType, fileName, apiKey) {
-  const url = `${HEDRA_BASE}/v1/assets`;
-  const formData = new FormData();
+export async function hedraUploadAsset(buffer, contentType, fileName, assetType, apiKey) {
+  const jsonHeaders = { 'X-API-Key': apiKey, 'Content-Type': 'application/json' };
 
-  // Create a Blob from the buffer with the correct MIME type
-  const blob = new Blob([buffer], { type: contentType });
-  formData.append('file', blob, fileName);
-
-  let response;
+  // Step 1: Create asset record
+  let createResp;
   try {
-    response = await fetch(url, {
+    createResp = await fetch(`${HEDRA_BASE}/assets`, {
       method: 'POST',
-      headers: {
-        'X-API-Key': apiKey,
-      },
-      body: formData,
-      // Note: FormData automatically sets Content-Type with boundary
+      headers: jsonHeaders,
+      body: JSON.stringify({ name: fileName, type: assetType }),
     });
   } catch (e) {
-    throw new Error(`Hedra upload request failed: ${e.message}`);
+    throw new Error(`Hedra create asset request failed: ${e.message}`);
   }
 
-  if (!response.ok) {
-    let errPreview = '';
-    try {
-      const errText = await response.text();
-      errPreview = errText.substring(0, 200);
-    } catch {
-      errPreview = '(unable to read error body)';
-    }
-    throw new Error(`Hedra upload error ${response.status}: ${errPreview}`);
+  if (!createResp.ok) {
+    const err = await createResp.text().catch(() => '');
+    throw new Error(`Hedra create asset error ${createResp.status}: ${err.substring(0, 200)}`);
   }
 
-  const data = await response.json();
-  if (!data.id) {
-    throw new Error('Hedra upload succeeded but no asset ID returned');
+  const createData = await createResp.json();
+  if (!createData.id) {
+    throw new Error('Hedra create asset succeeded but no ID returned');
+  }
+  const assetId = createData.id;
+
+  // Step 2: Upload file bytes
+  const formData = new FormData();
+  formData.append('file', new Blob([buffer], { type: contentType }), fileName);
+
+  let uploadResp;
+  try {
+    uploadResp = await fetch(`${HEDRA_BASE}/assets/${assetId}/upload`, {
+      method: 'POST',
+      headers: { 'X-API-Key': apiKey },
+      // Note: no Content-Type — FormData sets it automatically with boundary
+      body: formData,
+    });
+  } catch (e) {
+    throw new Error(`Hedra upload file request failed: ${e.message}`);
   }
 
-  return data.id;
+  if (!uploadResp.ok) {
+    const err = await uploadResp.text().catch(() => '');
+    throw new Error(`Hedra upload file error ${uploadResp.status}: ${err.substring(0, 200)}`);
+  }
+
+  return assetId;
 }
 
 /**
  * Start a Hedra lip-sync generation job.
- * @param {string} portraitAssetId  Pre-uploaded portrait asset ID
+ * @param {string} portraitAssetId  Pre-uploaded portrait asset ID (from HEDRA_COACH_PORTRAIT_ID secret)
  * @param {string} audioAssetId     Freshly uploaded audio asset ID
  * @param {string} apiKey
- * @returns {Promise<string>}       Hedra job ID
+ * @returns {Promise<string>}       Hedra generation job ID
  * @throws {Error}  Hedra start job error with status and response preview
  */
 export async function hedraStartJob(portraitAssetId, audioAssetId, apiKey) {
-  const url = `${HEDRA_BASE}/v1/characters`;
   const body = {
-    model: HEDRA_VEO3_FAST,
-    avatarImage: portraitAssetId,
-    audioSource: audioAssetId,
+    type: 'video',
+    ai_model_id: HEDRA_VEO3_FAST,
+    start_keyframe_id: portraitAssetId,
+    audio_id: audioAssetId,
+    generated_video_inputs: {
+      text_prompt: 'Natural speaking movement, professional career coaching, subtle hand gestures',
+      ai_model_id: HEDRA_VEO3_FAST,
+      resolution: '1080p',
+      aspect_ratio: '9:16',
+    },
   };
 
   let response;
   try {
-    response = await fetch(url, {
+    response = await fetch(`${HEDRA_BASE}/generations`, {
       method: 'POST',
       headers: {
         'X-API-Key': apiKey,
@@ -147,22 +163,16 @@ export async function hedraStartJob(portraitAssetId, audioAssetId, apiKey) {
   }
 
   if (!response.ok) {
-    let errPreview = '';
-    try {
-      const errText = await response.text();
-      errPreview = errText.substring(0, 200);
-    } catch {
-      errPreview = '(unable to read error body)';
-    }
-    throw new Error(`Hedra start job error ${response.status}: ${errPreview}`);
+    const err = await response.text().catch(() => '');
+    throw new Error(`Hedra start job error ${response.status}: ${err.substring(0, 200)}`);
   }
 
   const data = await response.json();
-  if (!data.jobId) {
-    throw new Error('Hedra start job succeeded but no jobId returned');
+  if (!data.id) {
+    throw new Error('Hedra start job succeeded but no generation ID returned');
   }
 
-  return data.jobId;
+  return data.id;
 }
 
 /**
@@ -170,40 +180,35 @@ export async function hedraStartJob(portraitAssetId, audioAssetId, apiKey) {
  * @param {string} hedraJobId
  * @param {string} apiKey
  * @returns {Promise<{status: string, videoUrl: string|null}>}
+ *   status: 'complete' | 'error' | 'pending' | 'processing' (or other Hedra status strings)
+ *   videoUrl: URL when status is 'complete', null otherwise
  * @throws {Error}  Hedra status error with status and response preview
  */
 export async function hedraGetStatus(hedraJobId, apiKey) {
-  const url = `${HEDRA_BASE}/v1/characters/${hedraJobId}`;
-
   let response;
   try {
-    response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'X-API-Key': apiKey,
-      },
+    response = await fetch(`${HEDRA_BASE}/generations/${hedraJobId}/status`, {
+      headers: { 'X-API-Key': apiKey },
     });
   } catch (e) {
     throw new Error(`Hedra status request failed: ${e.message}`);
   }
 
   if (!response.ok) {
-    let errPreview = '';
-    try {
-      const errText = await response.text();
-      errPreview = errText.substring(0, 200);
-    } catch {
-      errPreview = '(unable to read error body)';
-    }
-    throw new Error(`Hedra status error ${response.status}: ${errPreview}`);
+    const err = await response.text().catch(() => '');
+    throw new Error(`Hedra status error ${response.status}: ${err.substring(0, 200)}`);
   }
 
   const data = await response.json();
   if (!data.status) {
     throw new Error('Hedra status response missing status field');
   }
-  return {
-    status: data.status,
-    videoUrl: data.videoUrl || null,
-  };
+
+  // Video URL can appear at the top level or nested in batch_results
+  const videoUrl = data.url || data.video_url
+    || data.batch_results?.[0]?.url
+    || data.batch_results?.[0]?.video_url
+    || null;
+
+  return { status: data.status, videoUrl };
 }

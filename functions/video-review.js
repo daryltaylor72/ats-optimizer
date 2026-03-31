@@ -176,7 +176,7 @@ export async function onRequestPost(context) {
       // 1. TTS — script text → MP3 buffer
       const audioBuffer = await callElevenLabs(result.script, elevenlabsKey);
       // 2. Upload audio to Hedra
-      const audioAssetId = await hedraUploadAsset(audioBuffer, 'audio/mpeg', 'coaching.mp3', hedraKey);
+      const audioAssetId = await hedraUploadAsset(audioBuffer, 'audio/mpeg', 'coaching.mp3', 'audio', hedraKey);
       // 3. Start Hedra lip-sync job
       const hedraJobId = await hedraStartJob(portraitId, audioAssetId, hedraKey);
       // 4. Write job record to KV; frontend polls /video-status?jobId=X

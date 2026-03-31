@@ -92,16 +92,19 @@ await test('callElevenLabs — API error throws with status code', async () => {
 
 await test('hedraUploadAsset — success returns asset ID', async () => {
   installMockFetch();
+  // Step 1: create asset record
   enqueueMock({ ok: true, json: { id: 'asset-abc123' } });
+  // Step 2: upload file bytes
+  enqueueMock({ ok: true });
 
   const buffer = new ArrayBuffer(512);
-  const result = await hedraUploadAsset(buffer, 'audio/mpeg', 'test.mp3', 'test-key');
+  const result = await hedraUploadAsset(buffer, 'audio/mpeg', 'test.mp3', 'audio', 'test-key');
 
   assert(result === 'asset-abc123', 'returns the asset ID');
   uninstallMockFetch();
 });
 
-await test('hedraUploadAsset — API error throws', async () => {
+await test('hedraUploadAsset — create asset error throws', async () => {
   installMockFetch();
   enqueueMock({ ok: false, status: 500, text: 'Internal Server Error' });
 
@@ -109,7 +112,7 @@ await test('hedraUploadAsset — API error throws', async () => {
   let errorMessage = '';
   try {
     const buffer = new ArrayBuffer(512);
-    await hedraUploadAsset(buffer, 'audio/mpeg', 'test.mp3', 'test-key');
+    await hedraUploadAsset(buffer, 'audio/mpeg', 'test.mp3', 'audio', 'test-key');
   } catch (e) {
     threw = true;
     errorMessage = e.message;
@@ -120,11 +123,33 @@ await test('hedraUploadAsset — API error throws', async () => {
   uninstallMockFetch();
 });
 
+await test('hedraUploadAsset — upload file error throws', async () => {
+  installMockFetch();
+  // Step 1 succeeds
+  enqueueMock({ ok: true, json: { id: 'asset-abc123' } });
+  // Step 2 fails
+  enqueueMock({ ok: false, status: 413, text: 'Payload Too Large' });
+
+  let threw = false;
+  let errorMessage = '';
+  try {
+    const buffer = new ArrayBuffer(512);
+    await hedraUploadAsset(buffer, 'audio/mpeg', 'test.mp3', 'audio', 'test-key');
+  } catch (e) {
+    threw = true;
+    errorMessage = e.message;
+  }
+
+  assert(threw === true, 'throws on upload error');
+  assert(errorMessage.includes('413'), `error message includes '413' (got: ${errorMessage})`);
+  uninstallMockFetch();
+});
+
 // ─── hedraStartJob Tests ───────────────────────────────────────────────────
 
 await test('hedraStartJob — success returns jobId', async () => {
   installMockFetch();
-  enqueueMock({ ok: true, json: { jobId: 'job-xyz789' } });
+  enqueueMock({ ok: true, json: { id: 'job-xyz789' } });
 
   const result = await hedraStartJob('portrait-id', 'audio-id', 'test-key');
 
@@ -152,19 +177,19 @@ await test('hedraStartJob — API error throws', async () => {
 
 // ─── hedraGetStatus Tests ──────────────────────────────────────────────────
 
-await test('hedraGetStatus — completed returns status and videoUrl', async () => {
+await test('hedraGetStatus — complete returns status and videoUrl', async () => {
   installMockFetch();
   enqueueMock({
     ok: true,
     json: {
-      status: 'completed',
-      videoUrl: 'https://cdn.hedra.ai/video.mp4'
+      status: 'complete',
+      url: 'https://cdn.hedra.ai/video.mp4'
     }
   });
 
   const result = await hedraGetStatus('job-123', 'test-key');
 
-  assert(result.status === 'completed', `status is 'completed' (got: ${result.status})`);
+  assert(result.status === 'complete', `status is 'complete' (got: ${result.status})`);
   assert(result.videoUrl === 'https://cdn.hedra.ai/video.mp4',
     `videoUrl is correct (got: ${result.videoUrl})`);
   uninstallMockFetch();
