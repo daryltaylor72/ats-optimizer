@@ -164,35 +164,40 @@ export async function onRequestPost(context) {
       geminiParts.push({ text: extractedText });
     }
 
-    let geminiResponse;
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        geminiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
-              contents: [{ parts: geminiParts }],
-              generationConfig: { maxOutputTokens: 4096, responseMimeType: 'application/json' },
-            })
-          }
-        );
-      } catch (e) {
-        if (attempt < 2) { await new Promise(r => setTimeout(r, 1000)); continue; }
-        return json({ detail: 'The AI service is temporarily busy. Please try again in a few seconds.' }, 503);
+    // Gemini cascade: 2.5 Pro (Opus-quality) → 2.0 Flash (Sonnet-quality)
+    const GEMINI_MODELS = ['gemini-2.5-pro', 'gemini-2.0-flash'];
+    for (const geminiModel of GEMINI_MODELS) {
+      let geminiOverloaded = false;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        let geminiResponse;
+        try {
+          geminiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
+                contents: [{ parts: geminiParts }],
+                generationConfig: { maxOutputTokens: 4096, responseMimeType: 'application/json' },
+              })
+            }
+          );
+        } catch (e) {
+          if (attempt < 2) { await new Promise(r => setTimeout(r, 1000)); continue; }
+          geminiOverloaded = true; break;
+        }
+        if (geminiResponse.status === 529 || geminiResponse.status === 503 || geminiResponse.status === 429) {
+          if (attempt < 2) { await new Promise(r => setTimeout(r, 1000)); continue; }
+          geminiOverloaded = true; break;
+        }
+        if (!geminiResponse.ok) { geminiOverloaded = true; break; }
+        const geminiData = await geminiResponse.json();
+        rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        break;
       }
-      if (geminiResponse.status === 529 || geminiResponse.status === 503 || geminiResponse.status === 429) {
-        if (attempt < 2) { await new Promise(r => setTimeout(r, 1000)); continue; }
-        return json({ detail: 'The AI service is temporarily busy. Please try again in a few seconds.' }, 503);
-      }
-      if (!geminiResponse.ok) {
-        return json({ detail: 'An error occurred while analyzing your resume. Please try again.' }, 500);
-      }
-      const geminiData = await geminiResponse.json();
-      rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      break;
+      if (rawText !== null) break;
+      if (!geminiOverloaded) break;
     }
   }
 
