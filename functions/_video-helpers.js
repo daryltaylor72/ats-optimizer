@@ -199,6 +199,9 @@ export async function hedraGetStatus(hedraJobId, apiKey) {
   }
 
   const data = await response.json();
+  if (!data.status) {
+    throw new Error('Hedra status response missing status field');
+  }
   return {
     status: data.status,
     videoUrl: data.videoUrl || null,
