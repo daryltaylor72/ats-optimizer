@@ -5,6 +5,7 @@
  */
 
 import mammoth from 'mammoth';
+import { callElevenLabs, hedraUploadAsset, hedraStartJob } from './_video-helpers.js';
 import { acquireScanMutex, releaseScanMutex } from './_shared.js';
 
 export async function onRequestPost(context) {
@@ -162,7 +163,38 @@ export async function onRequestPost(context) {
     }
   }
 
-  return json({ ...result, scans_remaining: tokenData.scans_remaining });
+  // ── Video pipeline kickoff ────────────────────────────────────────────
+  // Runs after script generation. If any step fails, we still return the
+  // script — the user gets text coaching at minimum.
+  let jobId = null;
+  const elevenlabsKey = env.ELEVENLABS_API_KEY;
+  const hedraKey      = env.HEDRA_API_KEY;
+  const portraitId    = env.HEDRA_COACH_PORTRAIT_ID;
+
+  if (elevenlabsKey && hedraKey && portraitId) {
+    try {
+      // 1. TTS — script text → MP3 buffer
+      const audioBuffer = await callElevenLabs(result.script, elevenlabsKey);
+      // 2. Upload audio to Hedra
+      const audioAssetId = await hedraUploadAsset(audioBuffer, 'audio/mpeg', 'coaching.mp3', hedraKey);
+      // 3. Start Hedra lip-sync job
+      const hedraJobId = await hedraStartJob(portraitId, audioAssetId, hedraKey);
+      // 4. Write job record to KV; frontend polls /video-status?jobId=X
+      jobId = crypto.randomUUID();
+      await kv.put(`video:${jobId}`, JSON.stringify({
+        status: 'processing',
+        hedraJobId,
+        videoUrl: null,
+        createdAt: new Date().toISOString(),
+        token,
+      }), { expirationTtl: 86400 });
+    } catch (_e) {
+      // Video pipeline failed — degrade gracefully, return script only
+      jobId = null;
+    }
+  }
+
+  return json({ ...result, scans_remaining: tokenData.scans_remaining, job_id: jobId });
 }
 
 function buildVideoReviewSystemPrompt() {
