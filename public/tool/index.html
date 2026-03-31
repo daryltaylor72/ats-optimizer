@@ -1465,7 +1465,7 @@
     if (window.docx) return Promise.resolve();
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'https://unpkg.com/docx@8.5.0/build/index.js';
+      s.src = '/docx.js';
       s.onload = resolve;
       s.onerror = () => reject(new Error('Could not load the Word document library. Please check your internet connection and try again.'));
       document.head.appendChild(s);
