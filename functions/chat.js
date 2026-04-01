@@ -11,7 +11,7 @@ About ResumeATS:
 - Free ATS resume checker: upload a PDF or DOCX resume and get an ATS score (0-100), category breakdown (formatting, keywords, contact info, content quality, readability), and specific recommendations. Free scans are available, no sign-up needed.
 - Single Scan ($12): 1 credit — use for ATS scanner, cover letter generator, or interview prep Q&A. Token emailed after purchase.
 - Starter Pack ($49): 5 credits ($9.80 each) — best value for active job seekers applying to multiple roles. Mix and match across tools.
-- Video + Scan Bundle ($20): 1 ATS scan + AI resume rewrite + a personalized 60-90 second AI coaching video emailed to you in ~5 minutes. Powered by ElevenLabs + Hedra lip-sync AI.
+- Video + Scan Bundle ($29): 1 ATS scan + AI resume rewrite + a personalized 60-90 second AI coaching video emailed to you in ~5 minutes. Powered by ElevenLabs + Hedra lip-sync AI. No competitors offer this — it's a fraction of what a human career coach costs ($75-150/session).
 - Pro ($49/mo): Unlimited credits for all tools — ATS scanner, cover letter, interview prep. Cancel anytime.
 - All plans come with a 7-day satisfaction guarantee.
 

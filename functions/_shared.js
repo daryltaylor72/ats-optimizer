@@ -19,7 +19,7 @@ export const PLAN_LABELS = {
   single:  { name: 'Single Scan',          desc: '1 AI-optimized resume rewrite',                  price: '$12'    },
   starter: { name: 'Starter Pack',         desc: '5 AI-optimized resume rewrites ($9.80 each)',    price: '$49'    },
   pro:     { name: 'Pro — Unlimited',      desc: 'Unlimited rewrites for 30 days',                 price: '$49/mo' },
-  bundle:  { name: 'Video + Scan Bundle',  desc: '1 AI video coaching review + 1 resume rewrite',  price: '$20'    },
+  bundle:  { name: 'Video + Scan Bundle',  desc: '1 AI video coaching review + 1 resume rewrite',  price: '$29'    },
 };
 
 /** Generates a 48-char hex token using the Web Crypto API. */
