@@ -1,30 +1,29 @@
 /**
- * GET /verify-payment?session_id=cs_xxx&plan=starter
- * Verifies Stripe payment, issues a token stored in KV.
- * Returns: { token, plan, scans_remaining }
+ * GET /verify-payment?session_id=cs_xxx
+ * Verifies Stripe payment and issues a token stored in KV.
+ * Returns: { ok, plan, scans_remaining }
  */
 
-function generateToken() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-const PLAN_SCANS = { single: 1, starter: 5, pro: 9999 };
+import { PLAN_SCANS, PLAN_LABELS, issueToken } from './_shared.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const sessionId = url.searchParams.get('session_id');
-  const planKey   = url.searchParams.get('plan');
+  const ignoredPlan = url.searchParams.get('plan');
 
-  if (!sessionId || !planKey) return json({ error: 'Missing params' }, 400);
+  if (!sessionId) return json({ error: 'Missing session_id' }, 400);
+  if (ignoredPlan) {
+    console.warn('[verify-payment] Ignoring client-supplied plan parameter', { sessionId, ignoredPlan });
+  }
 
   const stripeKey = env.STRIPE_SECRET_KEY;
   if (!stripeKey) return json({ error: 'Stripe not configured' }, 500);
+  const kv = env.TOKENS_KV;
+  if (!kv) return json({ error: 'Token storage not configured' }, 500);
 
   // Verify the session with Stripe
-  const res = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
+  const res = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}?expand[]=line_items`, {
     headers: { 'Authorization': `Bearer ${stripeKey}` },
   });
   const session = await res.json();
@@ -39,61 +38,92 @@ export async function onRequestGet(context) {
   }
 
   // Check if we already issued a token for this session (prevent double-issue)
-  const kv = env.TOKENS_KV;
-  if (kv) {
-    const existing = await kv.get(`session:${sessionId}`);
-    if (existing) {
-      const token = JSON.parse(existing);
-      return json({ token: token.token, plan: token.plan, scans_remaining: token.scans_remaining });
-    }
+  const existing = await kv.get(`session:${sessionId}`);
+  if (existing) {
+    const tokenData = JSON.parse(existing);
+    return json({ ok: true, plan: tokenData.plan, scans_remaining: tokenData.scans_remaining });
   }
 
-  const scans = PLAN_SCANS[planKey] || 1;
-  const token = generateToken();
-  const expiresAt = planKey === 'pro'
-    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()  // 30 days
-    : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year
+  const planKey = await derivePlanFromSession(session, stripeKey);
+  if (!planKey) {
+    console.error('[verify-payment] Unable to derive plan from Stripe session', {
+      sessionId,
+      metadataPlan: session.metadata?.plan || null,
+      amountTotal: session.amount_total ?? null,
+      currency: session.currency ?? null,
+      mode: session.mode ?? null,
+    });
+    return json({ error: 'Unable to verify purchased plan' }, 400);
+  }
 
   const customerEmail = session.customer_details?.email || session.customer_email || null;
-
-  const tokenData = {
-    token,
-    plan: planKey,
-    scans_remaining: scans,
-    created_at: new Date().toISOString(),
-    expires_at: expiresAt,
-    session_id: sessionId,
-    email: customerEmail,
-  };
-
-  // Store token in KV (primary key), session→token mapping, and email→token for recovery
-  if (kv) {
-    const ttlSeconds = planKey === 'pro' ? 30 * 24 * 3600 : 365 * 24 * 3600;
-    const writes = [
-      kv.put(`token:${token}`, JSON.stringify(tokenData), { expirationTtl: ttlSeconds }),
-      kv.put(`session:${sessionId}`, JSON.stringify(tokenData), { expirationTtl: ttlSeconds }),
-    ];
-    if (customerEmail) {
-      writes.push(kv.put(`email:${customerEmail.toLowerCase()}`, token, { expirationTtl: ttlSeconds }));
-    }
-    await Promise.all(writes);
-  }
+  const tokenData = await issueToken(kv, planKey, sessionId, customerEmail);
 
   // Send receipt email
-  let receiptError = null;
-  if (customerEmail && env.RESEND_API_KEY) {
-    try { await sendReceiptEmail(env.RESEND_API_KEY, customerEmail, planKey, scans, token); }
-    catch (e) { receiptError = e.message; }
+  if (customerEmail && env.RESEND_API_KEY && tokenData) {
+    try {
+      await sendReceiptEmail(env.RESEND_API_KEY, customerEmail, planKey, tokenData.scans_remaining, tokenData.token);
+    } catch (e) {
+      console.error('[verify-payment] Receipt email failed:', e);
+    }
   }
 
-  return json({ token, plan: planKey, scans_remaining: scans, _receipt_email: customerEmail || 'no email', _receipt_error: receiptError });
+  return json({ ok: true, plan: planKey, scans_remaining: tokenData.scans_remaining });
 }
 
-const PLAN_LABELS = {
-  single:  { name: 'Single Scan',    desc: '1 AI-optimized resume rewrite',           price: '$5' },
-  starter: { name: 'Starter Pack',   desc: '5 AI-optimized resume rewrites',          price: '$19' },
-  pro:     { name: 'Pro — Unlimited', desc: 'Unlimited rewrites for 30 days',         price: '$39/mo' },
-};
+async function derivePlanFromSession(session, stripeKey) {
+  const metadataPlan = session.metadata?.plan;
+  if (metadataPlan && PLAN_SCANS[metadataPlan] !== undefined) {
+    return metadataPlan;
+  }
+
+  const lineItems = session.line_items?.data;
+  const inferredFromItems = inferPlanFromLineItems(lineItems);
+  if (inferredFromItems) {
+    return inferredFromItems;
+  }
+
+  return inferPlanFromAmount(session);
+}
+
+function inferPlanFromLineItems(lineItems = []) {
+  for (const item of lineItems) {
+    const metadataPlan = item.price?.metadata?.plan || item.price?.product?.metadata?.plan;
+    if (metadataPlan && PLAN_SCANS[metadataPlan] !== undefined) {
+      return metadataPlan;
+    }
+
+    const lookupKey = item.price?.lookup_key;
+    if (lookupKey && PLAN_SCANS[lookupKey] !== undefined) {
+      return lookupKey;
+    }
+  }
+
+  return null;
+}
+
+function inferPlanFromAmount(session) {
+  const amountTotal = session.amount_total;
+  if (typeof amountTotal !== 'number') {
+    return null;
+  }
+
+  const amountMap = {
+    usd: {
+      payment: {
+        500: 'single',
+        1900: 'starter',
+      },
+      subscription: {
+        3900: 'pro',
+      },
+    },
+  };
+
+  const currency = (session.currency || 'usd').toLowerCase();
+  const mode = session.mode === 'subscription' ? 'subscription' : 'payment';
+  return amountMap[currency]?.[mode]?.[amountTotal] || null;
+}
 
 async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
   const plan = PLAN_LABELS[planKey] || { name: planKey, desc: '', price: '' };

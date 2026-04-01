@@ -14,6 +14,11 @@ export async function onRequestPost(context) {
     return json({ error: 'API key not configured' }, 500);
   }
 
+  const sizeGuard = validateMultipartSize(request);
+  if (sizeGuard) {
+    return sizeGuard;
+  }
+
   // Rate limiting: 5 free analyses per IP per hour
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   const rateKey = `ratelimit:analyze:${ip}:${Math.floor(Date.now() / 3_600_000)}`;
@@ -223,29 +228,42 @@ export async function onRequestPost(context) {
       try {
         result = JSON.parse(match[0]);
       } catch {
-        return json({ detail: 'Failed to parse AI response as JSON', raw: cleaned.substring(0, 200) }, 500);
+        console.error('[analyze] Failed to parse extracted JSON', { preview: cleaned.substring(0, 200) });
+        return json({ detail: 'Failed to parse AI response as JSON' }, 500);
       }
     } else {
-      return json({ detail: 'Failed to parse AI response as JSON', raw: cleaned.substring(0, 200) }, 500);
+      console.error('[analyze] Failed to locate JSON in AI response', { preview: cleaned.substring(0, 200) });
+      return json({ detail: 'Failed to parse AI response as JSON' }, 500);
     }
   }
 
   // Send results email + capture lead
   const isPaidUser = userPlan !== 'free';
-  const debugErrors = [];
   if (email) {
     const isJobMatch = !!(jobDescription?.trim());
     if (env.RESEND_API_KEY) {
       try { await sendAnalysisEmail(env.RESEND_API_KEY, email, result, isPaidUser, token); }
-      catch (e) { debugErrors.push(`resend: ${e.message}`); }
-    } else { debugErrors.push('resend: RESEND_API_KEY not set'); }
+      catch (e) { console.error('[analyze] Failed to send analysis email:', e); }
+    } else {
+      console.error('[analyze] RESEND_API_KEY not set');
+    }
     if (env.AIRTABLE_ATS_SECRET_KEY) {
       try { await captureAirtableLead(env.AIRTABLE_ATS_SECRET_KEY, { email, plan: userPlan, score: result.score, grade: result.grade, source: userPlan === 'free' ? 'free_scan' : 'paid_scan', jobMatch: isJobMatch }); }
-      catch (e) { debugErrors.push(`airtable: ${e.message}`); }
-    } else { debugErrors.push('airtable: AIRTABLE_ATS_SECRET_KEY not set'); }
+      catch (e) { console.error('[analyze] Failed to capture Airtable lead:', e); }
+    } else {
+      console.error('[analyze] AIRTABLE_ATS_SECRET_KEY not set');
+    }
   }
 
-  return json({ ...result, _debug: debugErrors }, 200);
+  return json(result, 200);
+}
+
+function validateMultipartSize(request) {
+  const contentLength = Number.parseInt(request.headers.get('content-length') || '', 10);
+  if (Number.isFinite(contentLength) && contentLength > 10 * 1024 * 1024) {
+    return json({ detail: 'File too large (max 10MB)' }, 400);
+  }
+  return null;
 }
 
 async function sendAnalysisEmail(apiKey, to, result, isPaidUser = false, token = '') {

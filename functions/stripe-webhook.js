@@ -62,23 +62,47 @@ export async function onRequestPost(context) {
     return json({ error: 'KV not configured' }, 500);
   }
 
+  const eventId = event.id;
+  const isMutatingEvent = isMutatingStripeEvent(event.type);
+  if (isMutatingEvent && eventId) {
+    const dedupeKey = getProcessedEventKey(eventId);
+    const alreadyProcessed = await kv.get(dedupeKey);
+    if (alreadyProcessed) {
+      console.log('[stripe-webhook] Duplicate event ignored:', eventId, event.type);
+      return json({ received: true, duplicate: true, event_id: eventId, type: event.type }, 200);
+    }
+  }
+
   // ── 4. Route to event handlers ────────────────────────────────────────────
   try {
+    let response;
     switch (event.type) {
 
       case 'checkout.session.completed':
-        return await handleCheckoutCompleted(event.data.object, kv, env);
+        response = await handleCheckoutCompleted(event.data.object, kv, env);
+        break;
 
       case 'invoice.paid':
-        return await handleInvoicePaid(event.data.object, kv, env);
+        response = await handleInvoicePaid(event.data.object, kv, env);
+        break;
 
       case 'customer.subscription.deleted':
-        return await handleSubscriptionDeleted(event.data.object, kv);
+        response = await handleSubscriptionDeleted(event.data.object, kv);
+        break;
 
       default:
         // Acknowledge unhandled events — Stripe expects a 2xx or it will retry
-        return json({ received: true, handled: false, type: event.type }, 200);
+        response = json({ received: true, handled: false, type: event.type }, 200);
     }
+
+    if (isMutatingEvent && eventId && response.ok) {
+      await kv.put(getProcessedEventKey(eventId), JSON.stringify({
+        type: event.type,
+        processed_at: new Date().toISOString(),
+      }), { expirationTtl: 24 * 3600 });
+    }
+
+    return response;
   } catch (err) {
     console.error('[stripe-webhook] Handler error:', err);
     // Return 500 so Stripe retries — but only for unexpected errors, not logic rejections
@@ -377,4 +401,14 @@ function json(data, status = 200) {
       'X-Content-Type-Options': 'nosniff',
     },
   });
+}
+
+function isMutatingStripeEvent(eventType) {
+  return eventType === 'invoice.paid' ||
+    eventType === 'customer.subscription.deleted' ||
+    eventType === 'checkout.session.completed';
+}
+
+function getProcessedEventKey(eventId) {
+  return `stripe:event:${eventId}`;
 }

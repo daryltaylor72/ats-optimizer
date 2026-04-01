@@ -7,32 +7,50 @@
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+  const genericResponse = { ok: true };
 
   let body;
-  try { body = await request.json(); } catch { return json({ ok: true }); }
+  try { body = await request.json(); } catch { return json(genericResponse); }
 
   const email = (body.email || '').trim().toLowerCase();
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: true });
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(genericResponse);
 
   const kv = env.TOKENS_KV;
-  if (!kv || !env.RESEND_API_KEY) return json({ ok: true, _debug: !kv ? 'no_kv' : 'no_resend_key' });
+  if (!kv || !env.RESEND_API_KEY) {
+    console.error('[recover] Recovery unavailable', { hasKv: !!kv, hasResendKey: !!env.RESEND_API_KEY });
+    return json(genericResponse);
+  }
 
   const token = await kv.get(`email:${email}`);
-  if (!token) return json({ ok: true, _debug: 'email_not_found_in_kv' });
+  if (!token) {
+    console.error('[recover] No token found for email', { email });
+    return json(genericResponse);
+  }
 
   // Verify token is still valid
   const raw = await kv.get(`token:${token}`);
-  if (!raw) return json({ ok: true, _debug: 'token_not_found_in_kv' });
+  if (!raw) {
+    console.error('[recover] Email index pointed to missing token', { email });
+    return json(genericResponse);
+  }
 
   const tokenData = JSON.parse(raw);
-  if (new Date(tokenData.expires_at) < new Date()) return json({ ok: true, _debug: 'token_expired' });
-  if (tokenData.scans_remaining <= 0 && tokenData.plan !== 'pro') return json({ ok: true, _debug: 'no_scans_remaining' });
+  if (new Date(tokenData.expires_at) < new Date()) {
+    console.error('[recover] Token expired', { email, token });
+    return json(genericResponse);
+  }
+  if (tokenData.scans_remaining <= 0 && tokenData.plan !== 'pro') {
+    console.error('[recover] No scans remaining for recovery', { email, token, plan: tokenData.plan });
+    return json(genericResponse);
+  }
 
-  let emailError = null;
-  try { await sendRecoveryEmail(env.RESEND_API_KEY, email, token, tokenData); }
-  catch (e) { emailError = e.message; }
+  try {
+    await sendRecoveryEmail(env.RESEND_API_KEY, email, token, tokenData);
+  } catch (e) {
+    console.error('[recover] Failed to send recovery email:', e);
+  }
 
-  return json({ ok: true, _debug: emailError || 'sent' });
+  return json(genericResponse);
 }
 
 async function sendRecoveryEmail(apiKey, to, token, tokenData) {

@@ -11,6 +11,11 @@ import { acquireScanMutex, releaseScanMutex } from './_shared.js';
 export async function onRequestPost(context) {
   const { request, env } = context;
 
+  const sizeGuard = validateMultipartSize(request);
+  if (sizeGuard) {
+    return sizeGuard;
+  }
+
   let formData;
   try { formData = await request.formData(); }
   catch { return json({ detail: 'Invalid form data' }, 400); }
@@ -77,6 +82,9 @@ export async function onRequestPost(context) {
   }
 
   const bytes = await resumeFile.arrayBuffer();
+  if (bytes.byteLength > 10 * 1024 * 1024) {
+    return json({ detail: 'File too large (max 10MB)' }, 400);
+  }
   const ext   = (resumeFile.name || '').split('.').pop().toLowerCase();
 
   const apiKey = env.ANTHROPIC_API_KEY;
@@ -125,19 +133,30 @@ export async function onRequestPost(context) {
 
   // Send cover letter email + capture lead
   const sendTo = email || tokenData.email;
-  const debugErrors = [];
   if (sendTo) {
     if (env.RESEND_API_KEY) {
       try { await withRetry(() => sendCoverLetterEmail(env.RESEND_API_KEY, sendTo, coverLetter, tokenData.scans_remaining, companyName, roleTitle)); }
-      catch (e) { debugErrors.push(`resend: ${e.message}`); }
-    } else { debugErrors.push('resend: RESEND_API_KEY not set'); }
+      catch (e) { console.error('[cover-letter] Failed to send cover letter email:', e); }
+    } else {
+      console.error('[cover-letter] RESEND_API_KEY not set');
+    }
     if (env.AIRTABLE_ATS_SECRET_KEY) {
       try { await withRetry(() => captureAirtableLead(env.AIRTABLE_ATS_SECRET_KEY, { email: sendTo, plan: tokenData.plan, source: 'cover_letter', jobMatch: !!jobDesc?.trim() }, env)); }
-      catch (e) { debugErrors.push(`airtable: ${e.message}`); }
+      catch (e) { console.error('[cover-letter] Failed to capture Airtable lead:', e); }
     }
-  } else { debugErrors.push('resend: no email address available'); }
+  } else {
+    console.error('[cover-letter] No email address available for delivery');
+  }
 
-  return json({ cover_letter: coverLetter, scans_remaining: tokenData.scans_remaining, _debug: debugErrors });
+  return json({ cover_letter: coverLetter, scans_remaining: tokenData.scans_remaining });
+}
+
+function validateMultipartSize(request) {
+  const contentLength = Number.parseInt(request.headers.get('content-length') || '', 10);
+  if (Number.isFinite(contentLength) && contentLength > 10 * 1024 * 1024) {
+    return json({ detail: 'File too large (max 10MB)' }, 400);
+  }
+  return null;
 }
 
 /**
