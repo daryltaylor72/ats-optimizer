@@ -194,7 +194,7 @@ export async function onRequestPost(context) {
     }
   }
 
-  return json({ ...result, scans_remaining: tokenData.scans_remaining, job_id: jobId });
+  return json({ ...result, scans_remaining: tokenData.scans_remaining, job_id: jobId, _debug: { hasElevenLabs: !!elevenlabsKey, hasHedra: !!hedraKey, hasPortrait: !!portraitId } });
 }
 
 function buildVideoReviewSystemPrompt() {
