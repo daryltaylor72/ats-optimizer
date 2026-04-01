@@ -1025,7 +1025,7 @@
 
     <div class="analyze-btn">
       <button id="analyzeBtn" onclick="analyze()" disabled aria-label="Analyze resume for ATS compatibility">Analyze Resume</button>
-      <span class="mode-badge" id="modeBadge" aria-label="Current analysis mode">Generic ATS Scan</span>
+      <span class="mode-badge" id="modeBadge" aria-label="Current analysis mode">ATS Compatibility Scan</span>
     </div>
 
     <!-- Live token status — populated by fetchTokenStatus() on load / after rewrite -->
@@ -1261,7 +1261,7 @@
   jdInput.addEventListener('input', () => {
     modeBadge.textContent = jdInput.value.trim()
       ? '🎯 Job-Match Mode'
-      : 'Generic ATS Scan';
+      : 'ATS Compatibility Scan';
   });
 
   const loadingSteps = [
@@ -1762,7 +1762,7 @@
     dropText.textContent = 'Drop your resume here or click to browse';
     dropSub.textContent = 'PDF or DOCX — up to 10MB';
     jdInput.value = '';
-    modeBadge.textContent = 'Generic ATS Scan';
+    modeBadge.textContent = 'ATS Compatibility Scan';
     updateAnalyzeBtn();
     document.getElementById('uploadCard').style.display = 'block';
     document.getElementById('results').classList.remove('active');
