@@ -74,7 +74,7 @@ async function sendRecoveryEmail(apiKey, to, token, tokenData) {
     </div>
 
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
-      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">DeepTier Labs · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a> · <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
+      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">ATScore · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a> · <a href="mailto:support@atscore.ai" style="color:#6c63ff;text-decoration:none;">support@atscore.ai</a></p>
       <p style="color:#5a6080;font-size:11px;margin:0;">If you didn't request this, you can safely ignore it.</p>
     </div>
   </div>
@@ -85,8 +85,8 @@ async function sendRecoveryEmail(apiKey, to, token, tokenData) {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'ATS Optimizer <results@deeptierlabs.com>',
-      reply_to: ['support@deeptierlabs.com'],
+      from: 'ATScore <results@atscore.ai>',
+      reply_to: ['support@atscore.ai'],
       to: [to],
       subject: 'Your ATS Optimizer access link',
       html,

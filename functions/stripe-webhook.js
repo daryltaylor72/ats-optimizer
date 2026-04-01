@@ -132,7 +132,7 @@ async function handleCheckoutCompleted(session, kv, env) {
     }
   }
 
-  // Send internal sale notification to support@deeptierlabs.com (best-effort)
+  // Send internal sale notification to support@atscore.ai (best-effort)
   if (env.RESEND_API_KEY) {
     try {
       await sendInternalNotification(env.RESEND_API_KEY, planKey, customerEmail, sessionId, tokenData.token);
@@ -247,7 +247,7 @@ async function handleSubscriptionDeleted(subscription, kv) {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Internal sale notification — sent to support@deeptierlabs.com on every confirmed payment.
+ * Internal sale notification — sent to support@atscore.ai on every confirmed payment.
  * Best-effort only; never blocks the webhook response.
  */
 async function sendInternalNotification(apiKey, planKey, customerEmail, sessionId, token) {
@@ -300,8 +300,8 @@ async function sendInternalNotification(apiKey, planKey, customerEmail, sessionI
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from:    'ATS Optimizer <results@deeptierlabs.com>',
-      to:      ['support@deeptierlabs.com'],
+      from:    'ATScore <results@atscore.ai>',
+      to:      ['support@atscore.ai'],
       subject: `💰 New sale: ${plan.name} — ${customerEmail || 'anonymous'}`,
       html,
     }),
@@ -345,7 +345,7 @@ async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
       <p style="color:#5a6080;font-size:12px;margin-top:12px;">Bookmark this link — it restores your scans on any device.</p>
     </div>
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
-      <p style="color:#5a6080;font-size:12px;margin:0;">Questions? <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
+      <p style="color:#5a6080;font-size:12px;margin:0;">Questions? <a href="mailto:support@atscore.ai" style="color:#6c63ff;text-decoration:none;">support@atscore.ai</a></p>
     </div>
   </div>
 </body>
@@ -355,8 +355,8 @@ async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from:     'ATS Optimizer <results@deeptierlabs.com>',
-      reply_to: ['support@deeptierlabs.com'],
+      from:     'ATScore <results@atscore.ai>',
+      reply_to: ['support@atscore.ai'],
       to:       [to],
       subject:  `Your ${plan.name} is ready — let's optimize your resume`,
       html,

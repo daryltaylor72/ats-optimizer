@@ -21,7 +21,7 @@ Key facts:
 - The AI rewrite preserves your real experience — no fabrication
 - Resume data is not stored after analysis
 - Token recovery: visit /tool#recover or check your purchase confirmation email
-- Pro cancellations: email support@deeptierlabs.com
+- Pro cancellations: email support@atscore.ai
 - Video coaching (in the Bundle) takes ~3-5 minutes to generate; link is emailed automatically
 
 Rules:
@@ -32,7 +32,7 @@ Rules:
 - If someone asks about pricing, explain the options clearly
 - If someone seems ready to buy, encourage them with the relevant CTA
 - Never make up features that don't exist
-- If you're unsure, say "I'm not sure — email support@deeptierlabs.com for help"`;
+- If you're unsure, say "I'm not sure — email support@atscore.ai for help"`;
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {

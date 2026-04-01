@@ -116,7 +116,7 @@ async function sendVideoEmail(to, name, videoUrl, apiKey) {
     </div>
     <p style="color:#5a6080;font-size:12px;line-height:1.5;margin:24px 0 0;">The video link is valid for 24 hours. If you need to access it again, generate a new video review from the tool.</p>
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;margin-top:24px;text-align:center;">
-      <p style="color:#5a6080;font-size:12px;margin:0;">DeepTier Labs · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a></p>
+      <p style="color:#5a6080;font-size:12px;margin:0;">ATScore · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a></p>
     </div>
   </div>
 </body>
@@ -126,8 +126,8 @@ async function sendVideoEmail(to, name, videoUrl, apiKey) {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'ATS Optimizer <results@deeptierlabs.com>',
-      reply_to: ['support@deeptierlabs.com'],
+      from: 'ATScore <results@atscore.ai>',
+      reply_to: ['support@atscore.ai'],
       to: [to],
       subject: '▶ Your AI Career Coaching Video is Ready',
       html,
