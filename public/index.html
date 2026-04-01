@@ -1303,7 +1303,7 @@
     /* Chat window */
     #chat-window {
       position: fixed; bottom: 96px; right: 24px; z-index: 9998;
-      width: 340px; max-height: 520px;
+      width: 340px; max-width: calc(100vw - 32px); max-height: 520px;
       background: var(--surface);
       border: 1px solid var(--border2);
       border-radius: 20px;
@@ -1311,6 +1311,11 @@
       display: none; flex-direction: column; overflow: hidden;
     }
     #chat-window.open { display: flex; }
+    @media (max-width: 400px) {
+      #chat-window { right: 16px; max-width: calc(100vw - 32px); }
+      #chat-launcher { right: 16px; }
+      #chat-launcher-label { right: 84px; }
+    }
 
     .chat-header {
       padding: 16px 20px;
