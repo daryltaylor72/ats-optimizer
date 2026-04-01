@@ -94,7 +94,46 @@ export async function onRequestGet(context) {
     { expirationTtl: 86400 }
   );
 
+  // Send email notification (fire-and-forget — don't block the response)
+  if (record.email && env.RESEND_API_KEY) {
+    sendVideoEmail(record.email, record.name, videoUrl, env.RESEND_API_KEY).catch(() => {});
+  }
+
   return json({ status: 'complete', videoUrl });
+}
+
+async function sendVideoEmail(to, name, videoUrl, apiKey) {
+  const greeting = name ? `Hi ${name},` : 'Hi there,';
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#0a0b0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:560px;margin:40px auto;padding:32px;background:#111318;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
+    <h1 style="color:#e8eaf0;font-size:22px;margin:0 0 12px;">Your AI Video Review is Ready</h1>
+    <p style="color:#9299b0;font-size:14px;line-height:1.6;margin:0 0 24px;">${greeting} Your personalized career coaching video has finished generating.</p>
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${videoUrl}" target="_blank" style="display:inline-block;background:#6c63ff;color:#fff;font-size:15px;font-weight:600;padding:14px 32px;border-radius:10px;text-decoration:none;">▶ Watch Your Coaching Video</a>
+    </div>
+    <p style="color:#5a6080;font-size:12px;line-height:1.5;margin:24px 0 0;">The video link is valid for 24 hours. If you need to access it again, generate a new video review from the tool.</p>
+    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;margin-top:24px;text-align:center;">
+      <p style="color:#5a6080;font-size:12px;margin:0;">DeepTier Labs · <a href="https://ats.deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">ats.deeptierlabs.com</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'ATS Optimizer <results@deeptierlabs.com>',
+      reply_to: ['support@deeptierlabs.com'],
+      to: [to],
+      subject: '▶ Your AI Career Coaching Video is Ready',
+      html,
+    }),
+  });
+  if (!r.ok) throw new Error(await r.text());
 }
 
 export async function onRequestOptions() {

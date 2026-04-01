@@ -188,6 +188,8 @@ export async function onRequestPost(context) {
         videoUrl: null,
         createdAt: new Date().toISOString(),
         token,
+        email: tokenData.email || null,
+        name: result.name_extracted || null,
       }), { expirationTtl: 86400 });
     } catch (_e) {
       // Video pipeline failed — degrade gracefully, return script only
