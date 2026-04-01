@@ -5,9 +5,11 @@
  */
 
 const PLANS = {
-  single:  { name: 'Single Scan',   amount: 500,  currency: 'usd', mode: 'payment',      scans: 1    },
-  starter: { name: 'Starter Pack',  amount: 1900, currency: 'usd', mode: 'payment',      scans: 5    },
-  pro:     { name: 'Pro (30 days)', amount: 3900, currency: 'usd', mode: 'subscription', scans: 9999 },
+  single:  { name: 'Single Scan',          amount: 500,  currency: 'usd', mode: 'payment',      scans: 1,    desc: '1 AI-optimized resume rewrite'                   },
+  starter: { name: 'Starter Pack',         amount: 1900, currency: 'usd', mode: 'payment',      scans: 5,    desc: '5 AI-optimized resume rewrites'                  },
+  pro:     { name: 'Pro (30 days)',         amount: 3900, currency: 'usd', mode: 'subscription', scans: 9999, desc: 'Unlimited ATS resume analyses for 30 days'       },
+  video:   { name: 'AI Video Coaching',    amount: 1200, currency: 'usd', mode: 'payment',      scans: 0,    desc: 'Personalized AI career coaching video review'    },
+  bundle:  { name: 'Video + Scan Bundle',  amount: 1500, currency: 'usd', mode: 'payment',      scans: 1,    desc: '1 AI video coaching review + 1 resume rewrite'   },
 };
 
 export async function onRequestPost(context) {
@@ -31,9 +33,7 @@ export async function onRequestPost(context) {
     'payment_method_types[]': 'card',
     'line_items[0][price_data][currency]': plan.currency,
     'line_items[0][price_data][product_data][name]': `ResumeATS — ${plan.name}`,
-    'line_items[0][price_data][product_data][description]': plan.scans === 9999
-      ? 'Unlimited ATS resume analyses for 30 days'
-      : `${plan.scans} AI-powered ATS resume ${plan.scans === 1 ? 'analysis' : 'analyses'}`,
+    'line_items[0][price_data][product_data][description]': plan.desc,
     'line_items[0][price_data][unit_amount]': plan.amount,
     'line_items[0][quantity]': '1',
     'mode': plan.mode,

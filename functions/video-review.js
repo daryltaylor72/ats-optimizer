@@ -23,21 +23,19 @@ export async function onRequestPost(context) {
   const kv = env.TOKENS_KV;
   if (!kv) return json({ detail: 'Token system not configured', code: 'no_kv' }, 500);
 
-  // Fast pre-check before acquiring mutex — avoids the 50ms lock delay for
-  // clearly invalid tokens (bad token, expired, already at 0 scans).
+  // Fast pre-check before acquiring mutex
   const preCheckRaw = await kv.get(`token:${token}`);
-  if (!preCheckRaw) return json({ detail: 'Invalid or expired token. Please purchase a scan.', code: 'invalid_token' }, 401);
+  if (!preCheckRaw) return json({ detail: 'Invalid or expired token.', code: 'invalid_token' }, 401);
   const preCheck = JSON.parse(preCheckRaw);
   if (new Date(preCheck.expires_at) < new Date()) {
     return json({ detail: 'Token has expired.', code: 'expired' }, 401);
   }
-  if (preCheck.scans_remaining <= 0) {
-    return json({ detail: 'No scans remaining on this token.', code: 'no_scans' }, 402);
+  const preVideoRemaining = preCheck.video_reviews_remaining ?? 0;
+  if (preVideoRemaining <= 0) {
+    return json({ detail: 'No video reviews remaining. Purchase a Video Coaching or Video + Scan Bundle to generate a coaching video.', code: 'no_video_credits' }, 402);
   }
 
-  // Acquire mutex to prevent concurrent double-spend of the same scan.
-  // Two simultaneous requests could both pass the pre-check above — the mutex
-  // ensures only one proceeds to decrement at a time.
+  // Acquire mutex to prevent concurrent double-spend
   const { acquired } = await acquireScanMutex(kv, token);
   if (!acquired) {
     return json({ detail: 'A request is already processing this token. Please try again in a moment.', code: 'concurrent_request' }, 429);
@@ -47,24 +45,24 @@ export async function onRequestPost(context) {
   let tokenData;
   try {
     const lockedRaw = await kv.get(`token:${token}`);
-    if (!lockedRaw) return json({ detail: 'Invalid or expired token. Please purchase a scan.', code: 'invalid_token' }, 401);
+    if (!lockedRaw) return json({ detail: 'Invalid or expired token.', code: 'invalid_token' }, 401);
     tokenData = JSON.parse(lockedRaw);
 
     if (new Date(tokenData.expires_at) < new Date()) {
       return json({ detail: 'Token has expired.', code: 'expired' }, 401);
     }
-    if (tokenData.scans_remaining <= 0) {
-      return json({ detail: 'No scans remaining on this token.', code: 'no_scans' }, 402);
+    const videoRemaining = tokenData.video_reviews_remaining ?? 0;
+    if (videoRemaining <= 0) {
+      return json({ detail: 'No video reviews remaining. Purchase a Video Coaching or Video + Scan Bundle to generate a coaching video.', code: 'no_video_credits' }, 402);
     }
 
-    // Safe to decrement — we hold the mutex and just confirmed scans > 0
-    tokenData.scans_remaining -= 1;
+    // Safe to decrement — we hold the mutex and just confirmed video_reviews > 0
+    tokenData.video_reviews_remaining = videoRemaining - 1;
     const ttlSeconds = Math.max(
       Math.floor((new Date(tokenData.expires_at) - Date.now()) / 1000), 1
     );
     await kv.put(`token:${token}`, JSON.stringify(tokenData), { expirationTtl: ttlSeconds });
   } finally {
-    // Always release — even if an early return fires above, finally still runs
     await releaseScanMutex(kv, token);
   }
 
@@ -198,7 +196,7 @@ export async function onRequestPost(context) {
     }
   }
 
-  return json({ ...result, scans_remaining: tokenData.scans_remaining, job_id: jobId, _debug: { hasElevenLabs: !!elevenlabsKey, hasHedra: !!hedraKey, hasPortrait: !!portraitId, pipelineError: _pipelineError } });
+  return json({ ...result, video_reviews_remaining: tokenData.video_reviews_remaining, job_id: jobId });
 }
 
 function buildVideoReviewSystemPrompt() {

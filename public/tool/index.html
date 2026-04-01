@@ -884,6 +884,21 @@
       <h3>🎬 AI Video Resume Review</h3>
       <p class="vr-desc">Get a personalized 60–90 second video review from our AI career coach, highlighting your strengths and what to improve.</p>
       <button class="vr-btn" id="videoReviewBtn" onclick="generateVideoReview()">Generate Video Review</button>
+      <div id="vrPaywall" style="display:none;margin-top:16px;padding:16px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;">
+        <p style="color:var(--text2);font-size:13px;margin:0 0 12px;">Video coaching is a separate add-on. Choose a plan to unlock your personalized coaching video:</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="#" onclick="checkout('video');return false;" style="flex:1;min-width:140px;display:block;padding:12px 16px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;text-decoration:none;">
+            <div style="color:var(--text);font-size:14px;font-weight:600;">Video Coaching</div>
+            <div style="color:var(--text3);font-size:12px;margin-top:2px;">1 video review</div>
+            <div style="color:var(--accent);font-size:18px;font-weight:700;margin-top:6px;">$12</div>
+          </a>
+          <a href="#" onclick="checkout('bundle');return false;" style="flex:1;min-width:140px;display:block;padding:12px 16px;background:var(--surface);border:2px solid var(--accent);border-radius:8px;text-decoration:none;">
+            <div style="color:var(--text);font-size:14px;font-weight:600;">Video + Scan Bundle ⭐</div>
+            <div style="color:var(--text3);font-size:12px;margin-top:2px;">1 video + 1 resume rewrite</div>
+            <div style="color:var(--accent);font-size:18px;font-weight:700;margin-top:6px;">$15</div>
+          </a>
+        </div>
+      </div>
       <div id="videoReviewResult">
         <h4>Coaching Script</h4>
         <div class="vr-script-box" id="vrScript"></div>
@@ -1705,7 +1720,15 @@
     try {
       const res = await fetch('/video-review', { method: 'POST', body: fd });
       data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Video review failed');
+      if (!res.ok) {
+        if (data.code === 'no_video_credits') {
+          btn.disabled = false;
+          btn.textContent = 'Generate Video Review';
+          document.getElementById('vrPaywall').style.display = 'block';
+          return;
+        }
+        throw new Error(data.detail || 'Video review failed');
+      }
     } catch (e) {
       btn.disabled = false;
       btn.textContent = 'Generate Video Review';
