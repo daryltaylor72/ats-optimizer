@@ -14,7 +14,7 @@
  */
 
 const HEDRA_BASE = 'https://api.hedra.com/web-app/public';
-const HEDRA_VEO3_FAST = '9963e814-d1ee-4518-a844-7ed380ddbb20';
+const HEDRA_CHARACTER_3 = 'd1dd37a3-e39a-4854-a298-6510289f9cf2'; // Auto-duration lip-sync, requires audio
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io/v1';
 const ELEVENLABS_VOICE_ID = 'pMsXgVXv3BLzUgSXRplE'; // Serena
 const ELEVENLABS_MODEL = 'eleven_turbo_v2';
@@ -137,15 +137,14 @@ export async function hedraUploadAsset(buffer, contentType, fileName, assetType,
 export async function hedraStartJob(portraitAssetId, audioAssetId, apiKey) {
   const body = {
     type: 'video',
-    ai_model_id: HEDRA_VEO3_FAST,
+    ai_model_id: HEDRA_CHARACTER_3,
     start_keyframe_id: portraitAssetId,
     audio_id: audioAssetId,
     generated_video_inputs: {
       text_prompt: 'Natural speaking movement, professional career coaching, subtle hand gestures',
-      ai_model_id: HEDRA_VEO3_FAST,
-      resolution: '1080p',
+      ai_model_id: HEDRA_CHARACTER_3,
+      resolution: '540p',
       aspect_ratio: '9:16',
-      duration_ms: 8000,
     },
   };
 
