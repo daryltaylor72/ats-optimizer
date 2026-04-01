@@ -145,6 +145,7 @@ export async function hedraStartJob(portraitAssetId, audioAssetId, apiKey) {
       ai_model_id: HEDRA_VEO3_FAST,
       resolution: '1080p',
       aspect_ratio: '9:16',
+      duration_ms: 8000,
     },
   };
 
