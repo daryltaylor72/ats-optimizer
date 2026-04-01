@@ -901,7 +901,7 @@
           </div>
           <!-- Video player (shown when complete) -->
           <div class="vr-video-player" id="vrVideoPlayer" style="display:none;">
-            <video id="vrVideo" controls playsinline>
+            <video id="vrVideo" controls playsinline muted>
               Your browser does not support video playback.
             </video>
           </div>
@@ -1787,6 +1787,7 @@
         setTimeout(() => {
           progress.style.display = 'none';
           videoEl.src = statusData.videoUrl;
+          videoEl.load();
           player.style.display = 'block';
           videoEl.play().catch(() => {}); // autoplay may be blocked — silent fail
         }, 400);
