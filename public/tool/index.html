@@ -1799,6 +1799,7 @@
         return; // network error — retry next interval
       }
 
+      console.log('[VR poll]', statusData);
       if (statusData.status === 'complete' && statusData.videoUrl) {
         clearInterval(_vrPollInterval);
         sessionStorage.removeItem('vrJobId');
@@ -1810,6 +1811,7 @@
           videoEl.load();
           document.getElementById('vrVideoLink').href = statusData.videoUrl;
           player.style.display = 'block';
+          console.log('[VR] player shown, src=', statusData.videoUrl);
         }, 400);
       } else if (statusData.status === 'failed') {
         clearInterval(_vrPollInterval);
