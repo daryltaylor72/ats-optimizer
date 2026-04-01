@@ -167,6 +167,7 @@ export async function onRequestPost(context) {
   // Runs after script generation. If any step fails, we still return the
   // script — the user gets text coaching at minimum.
   let jobId = null;
+  let _pipelineError = null;
   const elevenlabsKey = env.ELEVENLABS_API_KEY;
   const hedraKey      = env.HEDRA_API_KEY;
   const portraitId    = env.HEDRA_COACH_PORTRAIT_ID;
@@ -191,10 +192,11 @@ export async function onRequestPost(context) {
     } catch (_e) {
       // Video pipeline failed — degrade gracefully, return script only
       jobId = null;
+      _pipelineError = _e.message || String(_e);
     }
   }
 
-  return json({ ...result, scans_remaining: tokenData.scans_remaining, job_id: jobId, _debug: { hasElevenLabs: !!elevenlabsKey, hasHedra: !!hedraKey, hasPortrait: !!portraitId } });
+  return json({ ...result, scans_remaining: tokenData.scans_remaining, job_id: jobId, _debug: { hasElevenLabs: !!elevenlabsKey, hasHedra: !!hedraKey, hasPortrait: !!portraitId, pipelineError: _pipelineError } });
 }
 
 function buildVideoReviewSystemPrompt() {
