@@ -901,9 +901,12 @@
           </div>
           <!-- Video player (shown when complete) -->
           <div class="vr-video-player" id="vrVideoPlayer" style="display:none;">
-            <video id="vrVideo" controls playsinline muted>
+            <video id="vrVideo" controls playsinline>
               Your browser does not support video playback.
             </video>
+            <div style="margin-top:10px;text-align:center;">
+              <a id="vrVideoLink" href="#" target="_blank" rel="noopener" style="font-size:13px;color:var(--accent,#6c63ff);text-decoration:none;">↗ Open video in new tab</a>
+            </div>
           </div>
           <!-- Error fallback -->
           <div id="vrVideoError" style="display:none; margin-top:16px; font-size:13px; color:var(--text3,#6b7280);">
@@ -1788,8 +1791,8 @@
           progress.style.display = 'none';
           videoEl.src = statusData.videoUrl;
           videoEl.load();
+          document.getElementById('vrVideoLink').href = statusData.videoUrl;
           player.style.display = 'block';
-          videoEl.play().catch(() => {}); // autoplay may be blocked — silent fail
         }, 400);
       } else if (statusData.status === 'failed') {
         clearInterval(_vrPollInterval);
