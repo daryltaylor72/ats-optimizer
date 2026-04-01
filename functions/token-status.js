@@ -45,13 +45,14 @@ export async function onRequestGet({ env, request }) {
   const isUnlimited = data.scans_remaining >= 9000;
 
   return json({
-    plan:             data.plan,
-    plan_label:       planMeta.name,
-    plan_price:       planMeta.price,
-    scans_remaining:  data.scans_remaining,
-    is_unlimited:     isUnlimited,
-    expires_at:       data.expires_at,
-    created_at:       data.created_at,
+    plan:                   data.plan,
+    plan_label:             planMeta.name,
+    plan_price:             planMeta.price,
+    scans_remaining:        data.scans_remaining,
+    is_unlimited:           isUnlimited,
+    video_reviews_remaining: data.video_reviews_remaining || 0,
+    expires_at:             data.expires_at,
+    created_at:             data.created_at,
   });
 }
 

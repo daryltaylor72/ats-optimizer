@@ -964,21 +964,21 @@
             <div class="plan-name">Single Scan</div>
             <div class="plan-detail">1 rewrite download</div>
           </div>
-          <div class="plan-price">$5</div>
+          <div class="plan-price">$12</div>
         </a>
         <a href="#" onclick="checkout('starter');return false;" class="paywall-plan featured">
           <div>
             <div class="plan-name">Starter Pack ⭐</div>
-            <div class="plan-detail">5 rewrite downloads — best value</div>
+            <div class="plan-detail">5 credits — $9.80 each</div>
           </div>
-          <div class="plan-price">$19</div>
+          <div class="plan-price">$49</div>
         </a>
         <a href="#" onclick="checkout('pro');return false;" class="paywall-plan">
           <div>
             <div class="plan-name">Pro — Unlimited</div>
-            <div class="plan-detail">Unlimited rewrites · Billed monthly · Cancel anytime</div>
+            <div class="plan-detail">Unlimited rewrites · Cancel anytime</div>
           </div>
-          <div class="plan-price">$39/mo</div>
+          <div class="plan-price">$49/mo</div>
         </a>
       </div>
       <p style="font-size:12px;color:var(--text3)">Secure payment via Stripe · Pro plan billed monthly, cancel anytime</p>
@@ -1138,23 +1138,23 @@
 
     <!-- Video Resume Review -->
     <div class="video-review-card" id="videoReviewCard">
-      <h3>🎬 AI Video Resume Review</h3>
-      <p class="vr-desc">Get a personalized 60–90 second video review from our AI career coach, highlighting your strengths and what to improve.</p>
-      <button class="vr-btn" id="videoReviewBtn" onclick="generateVideoReview()">Generate Video Review</button>
-      <div id="vrPaywall" style="display:none;margin-top:16px;padding:16px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;">
-        <p style="color:var(--text2);font-size:13px;margin:0 0 12px;">Video coaching is a separate add-on. Choose a plan to unlock your personalized coaching video:</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <a href="#" onclick="checkout('video');return false;" style="flex:1;min-width:140px;display:block;padding:12px 16px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;text-decoration:none;">
-            <div style="color:var(--text);font-size:14px;font-weight:600;">Video Coaching</div>
-            <div style="color:var(--text3);font-size:12px;margin-top:2px;">1 video review</div>
-            <div style="color:var(--accent);font-size:18px;font-weight:700;margin-top:6px;">$12</div>
-          </a>
-          <a href="#" onclick="checkout('bundle');return false;" style="flex:1;min-width:140px;display:block;padding:12px 16px;background:var(--surface);border:2px solid var(--accent);border-radius:8px;text-decoration:none;">
-            <div style="color:var(--text);font-size:14px;font-weight:600;">Video + Scan Bundle ⭐</div>
-            <div style="color:var(--text3);font-size:12px;margin-top:2px;">1 video + 1 resume rewrite</div>
-            <div style="color:var(--accent);font-size:18px;font-weight:700;margin-top:6px;">$15</div>
-          </a>
+      <!-- Upsell shown to users without video credits -->
+      <div id="vrUpsell">
+        <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+          <div style="font-size:36px;line-height:1;flex-shrink:0;">🎬</div>
+          <div style="flex:1;min-width:200px;">
+            <h3 id="vrUpsellHeading" style="margin:0 0 8px;">Want an AI coach to walk you through your results on video?</h3>
+            <p class="vr-desc" style="margin:0 0 16px;">Get a personalized 60–90 second coaching video delivered to your inbox in ~5 minutes. Our AI career coach speaks directly to your score, your specific gaps, and your next steps.</p>
+            <button class="vr-btn" onclick="checkout('video');return false;">Get AI Video Coaching — $19</button>
+            <p style="font-size:11px;color:var(--text3);margin:8px 0 0;">Emailed when ready · Powered by Hedra lip-sync AI · 7-day guarantee</p>
+          </div>
         </div>
+      </div>
+      <!-- Generate button shown to users who already have video credits -->
+      <div id="vrGenerateSection" style="display:none;">
+        <h3>🎬 AI Video Resume Review</h3>
+        <p class="vr-desc">Generate your personalized 60–90 second video coaching review.</p>
+        <button class="vr-btn" id="videoReviewBtn" onclick="generateVideoReview()">Generate Video Review</button>
       </div>
       <div id="videoReviewResult">
         <h4>Coaching Script</h4>
@@ -1413,6 +1413,9 @@
       });
     }
 
+    // Personalise and show video upsell section
+    initVideoSection(score);
+
     // Gate detailed sections if no token or no scans remaining
     const token = localStorage.getItem('ats_token');
     const scans = localStorage.getItem('ats_scans');
@@ -1435,6 +1438,38 @@
       // Show rewrite teaser — specific fixes the AI would make
       showRewriteTeaser(data);
     }
+  }
+
+  async function initVideoSection(score) {
+    const upsell  = document.getElementById('vrUpsell');
+    const genSection = document.getElementById('vrGenerateSection');
+    if (!upsell || !genSection) return;
+
+    // Personalise the heading with their score
+    const heading = document.getElementById('vrUpsellHeading');
+    if (heading && score) {
+      const gaps = score < 50 ? 'critical gaps' : score < 70 ? 'improvement areas' : 'remaining gaps';
+      heading.textContent = `Your score is ${score}/100. Want an AI coach to walk through your ${gaps} on video?`;
+    }
+
+    // Check if they have video credits
+    const token = localStorage.getItem('ats_token');
+    if (token) {
+      try {
+        const res = await fetch(`/token-status?token=${encodeURIComponent(token)}`);
+        if (res.ok) {
+          const status = await res.json();
+          if ((status.video_reviews_remaining || 0) > 0) {
+            upsell.style.display = 'none';
+            genSection.style.display = 'block';
+            return;
+          }
+        }
+      } catch { /* fall through to upsell */ }
+    }
+
+    upsell.style.display = 'block';
+    genSection.style.display = 'none';
   }
 
   function showRewriteTeaser(data) {
@@ -1466,7 +1501,7 @@
       <ul class="rewrite-teaser-items">
         ${fixes.map(f => `<li>${f}</li>`).join('')}
       </ul>
-      <button class="rewrite-teaser-cta" onclick="showPaywall()">Get Your Optimized Resume — from $5 →</button>
+      <button class="rewrite-teaser-cta" onclick="showPaywall()">Get Your Optimized Resume — from $12 →</button>
     `;
     resultsEl.appendChild(teaser);
   }

@@ -557,16 +557,12 @@
     .reveal.in-view { opacity: 1; transform: none; }
 
     /* Responsive */
-    @media (max-width: 1100px) {
-      .pricing-grid[style] { grid-template-columns: repeat(2,1fr) !important; }
-    }
     @media (max-width: 900px) {
       .hero-inner { grid-template-columns: 1fr; }
       .score-widget { max-width: 420px; }
       .stats-inner { grid-template-columns: 1fr; }
       .stat-divider { display: none; }
-      .how-grid, .features-grid { grid-template-columns: 1fr; }
-      .pricing-grid, .pricing-grid[style] { grid-template-columns: 1fr !important; }
+      .how-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
       .price-card.featured { transform: none; }
     }
     @media (max-width: 768px) {
@@ -927,7 +923,7 @@
         <h2 class="section-headline">One toolkit. Simple pricing.</h2>
         <p class="section-sub" style="margin:0 auto">Credits work across ATS Scanner, Cover Letter, and Interview Prep. Pick the plan that fits where you are in your search.</p>
       </div>
-      <div class="pricing-grid reveal" style="grid-template-columns:repeat(4,1fr);">
+      <div class="pricing-grid reveal">
 
         <div class="price-card">
           <div class="price-name">Single Scan</div>
@@ -949,7 +945,7 @@
         </div>
 
         <div class="price-card featured">
-          <div class="price-badge">Best Value</div>
+          <div class="price-badge">Most Popular</div>
           <div class="price-name">Starter Pack</div>
           <div class="price-tagline">For active job seekers</div>
           <div class="price-amount">
@@ -966,25 +962,6 @@
             <li>Mix &amp; match across roles</li>
           </ul>
           <a href="#" onclick="checkout('starter');return false;" class="price-cta price-cta-accent">Get 5 Credits — $49</a>
-          <p class="price-guarantee">7-day satisfaction guarantee</p>
-        </div>
-
-        <div class="price-card">
-          <div class="price-name">Video + Scan</div>
-          <div class="price-tagline">Full coaching experience</div>
-          <div class="price-amount">
-            <span class="price-dollar">$</span>
-            <span class="price-num">29</span>
-          </div>
-          <div class="price-divider"></div>
-          <ul class="price-features">
-            <li>1 ATS scan + full AI rewrite</li>
-            <li>60–90 sec AI coaching video</li>
-            <li>Personalized strengths &amp; improvements</li>
-            <li>Video emailed in ~5 minutes</li>
-            <li>Powered by Hedra lip-sync AI</li>
-          </ul>
-          <a href="#" onclick="checkout('bundle');return false;" class="price-cta price-cta-ghost">Get Bundle — $29</a>
           <p class="price-guarantee">7-day satisfaction guarantee</p>
         </div>
 
@@ -1010,6 +987,7 @@
         </div>
 
       </div>
+      <p style="text-align:center;font-size:13px;color:var(--text3);margin-top:24px;">🎬 <strong style="color:var(--text2)">AI Video Coaching — $19</strong> · Offered as an add-on after your scan on the results page</p>
     </div>
   </section>
 
