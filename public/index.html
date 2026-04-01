@@ -296,7 +296,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px; padding: 60px 48px;
-      display: grid; grid-template-columns: repeat(3,1fr);
+      display: grid; grid-template-columns: repeat(4,1fr);
       gap: 32px;
     }
     .stat-item { text-align: center; }
@@ -820,6 +820,11 @@
         <div class="stat-item">
           <div class="stat-num accent">3×</div>
           <div class="stat-label">more callbacks for resumes <strong>optimized for ATS</strong> vs. standard formatting</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num accent" id="scanCounter">—</div>
+          <div class="stat-label"><strong>resumes analyzed</strong> and counting</div>
         </div>
       </div>
     </div>
@@ -1618,6 +1623,27 @@
         }
       }
       window.chatKeydown = chatKeydown;
+    })();
+  </script>
+  <script>
+    // Scan counter — fetches real count from /stats and animates it
+    (function() {
+      const el = document.getElementById('scanCounter');
+      if (!el) return;
+      fetch('/stats').then(r => r.json()).then(data => {
+        const target = data.total_scans || 0;
+        if (target < 1) { el.textContent = '0'; return; }
+        const duration = 1200;
+        const start = performance.now();
+        function step(now) {
+          const t = Math.min((now - start) / duration, 1);
+          const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+          el.textContent = Math.floor(eased * target).toLocaleString();
+          if (t < 1) requestAnimationFrame(step);
+          else el.textContent = target.toLocaleString() + '+';
+        }
+        requestAnimationFrame(step);
+      }).catch(() => { el.textContent = '—'; });
     })();
   </script>
 </body>

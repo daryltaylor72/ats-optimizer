@@ -24,6 +24,8 @@ export async function onRequestPost(context) {
       return json({ detail: 'Too many requests. Please try again in an hour, or purchase a plan for unlimited access.' }, 429);
     }
     await kv.put(rateKey, String(count + 1), { expirationTtl: 3600 });
+    // Increment global scan counter (fire-and-forget)
+    kv.get('stats:total_scans').then(v => kv.put('stats:total_scans', String((parseInt(v) || 0) + 1)));
   }
 
   let formData;
