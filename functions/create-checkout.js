@@ -31,7 +31,7 @@ export async function onRequestPost(context) {
   const params = new URLSearchParams({
     'payment_method_types[]': 'card',
     'line_items[0][price_data][currency]': plan.currency,
-    'line_items[0][price_data][product_data][name]': `ResumeATS — ${plan.name}`,
+    'line_items[0][price_data][product_data][name]': `ATScore — ${plan.name}`,
     'line_items[0][price_data][product_data][description]': plan.desc,
     'line_items[0][price_data][unit_amount]': plan.amount,
     'line_items[0][quantity]': '1',

@@ -209,7 +209,7 @@ async function sendInterviewPrepEmail(apiKey, to, interviewPrep, scansRemaining)
     <p style="color:#9299b0;font-size:13px;margin:0 0 32px;">${scansText}</p>
 
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
-      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">DeepTier Labs · <a href="https://ats.deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">ats.deeptierlabs.com</a> · <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
+      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">DeepTier Labs · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a> · <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
       <p style="color:#5a6080;font-size:11px;margin:0;">If you didn't receive this email, check your spam or promotions folder.</p>
     </div>
   </div>

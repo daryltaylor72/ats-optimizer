@@ -67,14 +67,14 @@ async function sendRecoveryEmail(apiKey, to, token, tokenData) {
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://ats.deeptierlabs.com/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="https://atscore.ai/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Restore My Scans →
       </a>
       <p style="color:#5a6080;font-size:12px;margin-top:12px;">Bookmark this link to avoid needing to recover access again.</p>
     </div>
 
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
-      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">DeepTier Labs · <a href="https://ats.deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">ats.deeptierlabs.com</a> · <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
+      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">DeepTier Labs · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a> · <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
       <p style="color:#5a6080;font-size:11px;margin:0;">If you didn't request this, you can safely ignore it.</p>
     </div>
   </div>

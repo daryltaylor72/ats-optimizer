@@ -287,7 +287,7 @@ async function sendAnalysisEmail(apiKey, to, result, isPaidUser = false, token =
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://ats.deeptierlabs.com/tool${token ? '?token=' + token : ''}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="https://atscore.ai/tool${token ? '?token=' + token : ''}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Run Another Scan \u2192
       </a>
     </div>` : `
@@ -303,14 +303,14 @@ async function sendAnalysisEmail(apiKey, to, result, isPaidUser = false, token =
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://ats.deeptierlabs.com/#pricing" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="https://atscore.ai/#pricing" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Unlock Full Analysis \u2014 Starting at $5
       </a>
       <p style="color:#5a6080;font-size:12px;margin-top:12px;">Secure payment via Stripe \u00b7 Pro plan billed monthly, cancel anytime</p>
     </div>`}
 
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
-      <p style="color:#5a6080;font-size:12px;margin:0 0 8px;">DeepTier Labs · <a href="https://ats.deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">ats.deeptierlabs.com</a> · <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
+      <p style="color:#5a6080;font-size:12px;margin:0 0 8px;">DeepTier Labs · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a> · <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a></p>
       <p style="color:#5a6080;font-size:11px;margin:0;">If you didn't receive this email, check your spam or promotions folder.</p>
     </div>
   </div>

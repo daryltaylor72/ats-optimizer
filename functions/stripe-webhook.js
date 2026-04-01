@@ -339,7 +339,7 @@ async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
       </div>
     </div>
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://ats.deeptierlabs.com/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="https://atscore.ai/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Start Optimizing Your Resume →
       </a>
       <p style="color:#5a6080;font-size:12px;margin-top:12px;">Bookmark this link — it restores your scans on any device.</p>

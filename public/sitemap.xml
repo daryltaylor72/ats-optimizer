@@ -1,137 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ats.deeptierlabs.com/</loc>
+    <loc>https://atscore.ai/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/tool</loc>
+    <loc>https://atscore.ai/tool</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/</loc>
+    <loc>https://atscore.ai/blog/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/how-to-pass-ats-screening/</loc>
+    <loc>https://atscore.ai/blog/how-to-pass-ats-screening/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/ats-resume-format-guide/</loc>
+    <loc>https://atscore.ai/blog/ats-resume-format-guide/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/why-resume-rejected-by-ats/</loc>
+    <loc>https://atscore.ai/blog/why-resume-rejected-by-ats/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/ats-keywords-by-industry/</loc>
+    <loc>https://atscore.ai/blog/ats-keywords-by-industry/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/what-is-good-ats-score/</loc>
+    <loc>https://atscore.ai/blog/what-is-good-ats-score/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/resume-action-verbs/</loc>
+    <loc>https://atscore.ai/blog/resume-action-verbs/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/ats-resume-career-change/</loc>
+    <loc>https://atscore.ai/blog/ats-resume-career-change/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/how-to-tailor-resume-for-each-job/</loc>
+    <loc>https://atscore.ai/blog/how-to-tailor-resume-for-each-job/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/ats-friendly-resume-template/</loc>
+    <loc>https://atscore.ai/blog/ats-friendly-resume-template/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/resume-skills-section-ats/</loc>
+    <loc>https://atscore.ai/blog/resume-skills-section-ats/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/ats-resume-summary-examples/</loc>
+    <loc>https://atscore.ai/blog/ats-resume-summary-examples/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/blog/employment-gap-resume-ats/</loc>
+    <loc>https://atscore.ai/blog/employment-gap-resume-ats/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/software-engineer/</loc>
+    <loc>https://atscore.ai/ats-checker/software-engineer/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/nurse/</loc>
+    <loc>https://atscore.ai/ats-checker/nurse/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/accountant/</loc>
+    <loc>https://atscore.ai/ats-checker/accountant/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/project-manager/</loc>
+    <loc>https://atscore.ai/ats-checker/project-manager/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/marketing-manager/</loc>
+    <loc>https://atscore.ai/ats-checker/marketing-manager/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/data-analyst/</loc>
+    <loc>https://atscore.ai/ats-checker/data-analyst/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/sales-representative/</loc>
+    <loc>https://atscore.ai/ats-checker/sales-representative/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/graphic-designer/</loc>
+    <loc>https://atscore.ai/ats-checker/graphic-designer/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/human-resources/</loc>
+    <loc>https://atscore.ai/ats-checker/human-resources/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/teacher/</loc>
+    <loc>https://atscore.ai/ats-checker/teacher/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/mechanical-engineer/</loc>
+    <loc>https://atscore.ai/ats-checker/mechanical-engineer/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ats.deeptierlabs.com/ats-checker/customer-service/</loc>
+    <loc>https://atscore.ai/ats-checker/customer-service/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

@@ -128,7 +128,7 @@ async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://ats.deeptierlabs.com/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="https://atscore.ai/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Start Optimizing Your Resume →
       </a>
       <p style="color:#5a6080;font-size:12px;margin-top:12px;">Bookmark this link or save this email — it restores your scans on any device.</p>
@@ -141,7 +141,7 @@ async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
     </div>
 
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
-      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">Questions? <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a> · <a href="https://ats.deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">ats.deeptierlabs.com</a></p>
+      <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">Questions? <a href="mailto:support@deeptierlabs.com" style="color:#6c63ff;text-decoration:none;">support@deeptierlabs.com</a> · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a></p>
       <p style="color:#5a6080;font-size:11px;margin:0;">If you didn't receive this email, check your spam or promotions folder.</p>
     </div>
   </div>
