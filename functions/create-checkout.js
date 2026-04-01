@@ -5,11 +5,10 @@
  */
 
 const PLANS = {
-  single:  { name: 'Single Scan',          amount: 500,  currency: 'usd', mode: 'payment',      scans: 1,    desc: '1 AI-optimized resume rewrite'                   },
-  starter: { name: 'Starter Pack',         amount: 1900, currency: 'usd', mode: 'payment',      scans: 5,    desc: '5 AI-optimized resume rewrites'                  },
-  pro:     { name: 'Pro (30 days)',         amount: 3900, currency: 'usd', mode: 'subscription', scans: 9999, desc: 'Unlimited ATS resume analyses for 30 days'       },
-  video:   { name: 'AI Video Coaching',    amount: 1200, currency: 'usd', mode: 'payment',      scans: 0,    desc: 'Personalized AI career coaching video review'    },
-  bundle:  { name: 'Video + Scan Bundle',  amount: 1500, currency: 'usd', mode: 'payment',      scans: 1,    desc: '1 AI video coaching review + 1 resume rewrite'   },
+  single:  { name: 'Single Scan',          amount: 1200, currency: 'usd', mode: 'payment',      scans: 1,    desc: '1 AI-optimized ATS resume rewrite'                        },
+  starter: { name: 'Starter Pack',         amount: 4900, currency: 'usd', mode: 'payment',      scans: 5,    desc: '5 AI-optimized resume rewrites ($9.80 each)'              },
+  pro:     { name: 'Pro (30 days)',         amount: 4900, currency: 'usd', mode: 'subscription', scans: 9999, desc: 'Unlimited ATS resume analyses for 30 days'                },
+  bundle:  { name: 'Video + Scan Bundle',  amount: 2000, currency: 'usd', mode: 'payment',      scans: 1,    desc: '1 AI video coaching review + 1 ATS resume rewrite'       },
 };
 
 export async function onRequestPost(context) {

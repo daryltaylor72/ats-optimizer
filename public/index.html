@@ -447,6 +447,10 @@
       border: 1px solid var(--border2);
     }
     .price-cta-ghost:hover { color: var(--text); border-color: var(--accent); }
+    .price-guarantee {
+      text-align: center; font-size: 11px; color: var(--text3);
+      margin-top: 10px; margin-bottom: 0;
+    }
 
     /* ── FAQ ── */
     .faq { padding: 100px 0; position: relative; z-index: 1; }
@@ -553,15 +557,17 @@
     .reveal.in-view { opacity: 1; transform: none; }
 
     /* Responsive */
-    .video-pricing-grid { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 1100px) {
+      .pricing-grid[style] { grid-template-columns: repeat(2,1fr) !important; }
+    }
     @media (max-width: 900px) {
       .hero-inner { grid-template-columns: 1fr; }
       .score-widget { max-width: 420px; }
       .stats-inner { grid-template-columns: 1fr; }
       .stat-divider { display: none; }
-      .how-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+      .how-grid, .features-grid { grid-template-columns: 1fr; }
+      .pricing-grid, .pricing-grid[style] { grid-template-columns: 1fr !important; }
       .price-card.featured { transform: none; }
-      .video-pricing-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
       .nav-links a.btn-ghost:not(.nav-keep),
@@ -919,117 +925,91 @@
       <div class="reveal" style="text-align:center">
         <span class="section-tag">Pricing</span>
         <h2 class="section-headline">One toolkit. Simple pricing.</h2>
-        <p class="section-sub" style="margin:0 auto">Text tool credits work across ATS Scanner, Cover Letter, and Interview Prep. AI Video Coaching is a separate add-on — buy it solo or bundled.</p>
+        <p class="section-sub" style="margin:0 auto">Credits work across ATS Scanner, Cover Letter, and Interview Prep. Pick the plan that fits where you are in your search.</p>
       </div>
-      <div class="pricing-grid reveal">
+      <div class="pricing-grid reveal" style="grid-template-columns:repeat(4,1fr);">
 
         <div class="price-card">
           <div class="price-name">Single Scan</div>
-          <div class="price-tagline">Try it out</div>
+          <div class="price-tagline">Try it once</div>
           <div class="price-amount">
             <span class="price-dollar">$</span>
-            <span class="price-num">5</span>
+            <span class="price-num">12</span>
           </div>
           <div class="price-divider"></div>
           <ul class="price-features">
             <li>1 credit — ATS scanner, cover letter, or interview prep</li>
-            <li>ATS analysis + score + breakdown</li>
+            <li>ATS score + full breakdown</li>
             <li>AI resume rewrite</li>
             <li>Cover letter generator</li>
             <li>Interview prep Q&amp;A</li>
           </ul>
-          <a href="#" onclick="checkout('single');return false;" class="price-cta price-cta-ghost">Get One Credit</a>
+          <a href="#" onclick="checkout('single');return false;" class="price-cta price-cta-ghost">Get One Credit — $12</a>
+          <p class="price-guarantee">7-day satisfaction guarantee</p>
         </div>
 
         <div class="price-card featured">
-          <div class="price-badge">Most Popular</div>
+          <div class="price-badge">Best Value</div>
           <div class="price-name">Starter Pack</div>
           <div class="price-tagline">For active job seekers</div>
           <div class="price-amount">
             <span class="price-dollar">$</span>
-            <span class="price-num">19</span>
+            <span class="price-num">49</span>
           </div>
           <div class="price-divider"></div>
           <ul class="price-features">
-            <li>5 credits — ATS scanner, cover letter, or interview prep</li>
-            <li>ATS analysis + score + breakdown</li>
+            <li>5 credits — $9.80 each (vs $12 individually)</li>
+            <li>ATS score + full breakdown</li>
             <li>AI resume rewrite</li>
             <li>Cover letter generator</li>
             <li>Interview prep Q&amp;A</li>
-            <li>Mix and match across roles</li>
+            <li>Mix &amp; match across roles</li>
           </ul>
-          <a href="#" onclick="checkout('starter');return false;" class="price-cta price-cta-accent">Get 5 Credits — $19</a>
+          <a href="#" onclick="checkout('starter');return false;" class="price-cta price-cta-accent">Get 5 Credits — $49</a>
+          <p class="price-guarantee">7-day satisfaction guarantee</p>
+        </div>
+
+        <div class="price-card">
+          <div class="price-name">Video + Scan</div>
+          <div class="price-tagline">Full coaching experience</div>
+          <div class="price-amount">
+            <span class="price-dollar">$</span>
+            <span class="price-num">20</span>
+          </div>
+          <div class="price-divider"></div>
+          <ul class="price-features">
+            <li>1 ATS scan + full AI rewrite</li>
+            <li>60–90 sec AI coaching video</li>
+            <li>Personalized strengths &amp; improvements</li>
+            <li>Video emailed in ~5 minutes</li>
+            <li>Powered by Hedra lip-sync AI</li>
+          </ul>
+          <a href="#" onclick="checkout('bundle');return false;" class="price-cta price-cta-ghost">Get Bundle — $20</a>
+          <p class="price-guarantee">7-day satisfaction guarantee</p>
         </div>
 
         <div class="price-card">
           <div class="price-name">Pro</div>
-          <div class="price-tagline">Unlimited · Billed monthly · Cancel anytime</div>
+          <div class="price-tagline">Unlimited · Cancel anytime</div>
           <div class="price-amount">
             <span class="price-dollar">$</span>
-            <span class="price-num">39</span>
+            <span class="price-num">49</span>
             <span class="price-period">/mo</span>
           </div>
           <div class="price-divider"></div>
           <ul class="price-features">
-            <li>Unlimited credits — ATS scanner, cover letter &amp; interview prep</li>
-            <li>ATS analysis + score + breakdown</li>
+            <li>Unlimited credits — all tools</li>
+            <li>ATS score + full breakdown</li>
             <li>AI resume rewrite</li>
             <li>Cover letter generator</li>
             <li>Interview prep Q&amp;A</li>
             <li>Priority processing</li>
           </ul>
-          <a href="#" onclick="checkout('pro');return false;" class="price-cta price-cta-ghost">Go Unlimited</a>
+          <a href="#" onclick="checkout('pro');return false;" class="price-cta price-cta-ghost">Go Unlimited — $49/mo</a>
+          <p class="price-guarantee">Cancel anytime</p>
         </div>
 
       </div>
-
-      <!-- Video Add-ons -->
-      <div style="margin-top:48px;" class="reveal">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
-          <div style="flex:1;height:1px;background:var(--border);"></div>
-          <span style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);white-space:nowrap;">🎬 AI Video Coaching Add-on</span>
-          <div style="flex:1;height:1px;background:var(--border);"></div>
-        </div>
-        <div class="video-pricing-grid" style="display:grid;gap:16px;max-width:680px;margin:0 auto;">
-
-          <div class="price-card">
-            <div class="price-name">Video Coaching</div>
-            <div class="price-tagline">AI avatar analyzes your resume on camera — 60–90 sec personalized video delivered by email</div>
-            <div class="price-amount">
-              <span class="price-dollar">$</span>
-              <span class="price-num">12</span>
-            </div>
-            <div class="price-divider"></div>
-            <ul class="price-features">
-              <li>1 AI coaching video (60–90 sec)</li>
-              <li>Personalized strengths &amp; improvements</li>
-              <li>Emailed to you when ready</li>
-              <li>Powered by Hedra lip-sync AI</li>
-            </ul>
-            <a href="#" onclick="checkout('video');return false;" class="price-cta price-cta-ghost">Get Video Review — $12</a>
-          </div>
-
-          <div class="price-card featured">
-            <div class="price-badge">Best Value</div>
-            <div class="price-name">Video + Scan Bundle</div>
-            <div class="price-tagline">Video coaching + resume rewrite</div>
-            <div class="price-amount">
-              <span class="price-dollar">$</span>
-              <span class="price-num">15</span>
-            </div>
-            <div class="price-divider"></div>
-            <ul class="price-features">
-              <li>1 AI coaching video (60–90 sec)</li>
-              <li>1 full ATS scan + score + rewrite</li>
-              <li>Personalized strengths &amp; improvements</li>
-              <li>Emailed to you when ready</li>
-            </ul>
-            <a href="#" onclick="checkout('bundle');return false;" class="price-cta price-cta-accent">Get Bundle — $15</a>
-          </div>
-
-        </div>
-      </div>
-
     </div>
   </section>
 

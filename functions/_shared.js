@@ -16,11 +16,10 @@ export const PLAN_SCANS = { single: 1, starter: 5, pro: 9999, video: 0, bundle: 
 export const PLAN_VIDEO_REVIEWS = { single: 0, starter: 0, pro: 0, video: 1, bundle: 1 };
 
 export const PLAN_LABELS = {
-  single:  { name: 'Single Scan',          desc: '1 AI-optimized resume rewrite',               price: '$5'     },
-  starter: { name: 'Starter Pack',         desc: '5 AI-optimized resume rewrites',              price: '$19'    },
-  pro:     { name: 'Pro — Unlimited',      desc: 'Unlimited rewrites for 30 days',              price: '$39/mo' },
-  video:   { name: 'Video Coaching',       desc: '1 personalized AI video coaching review',     price: '$12'    },
-  bundle:  { name: 'Video + Scan Bundle',  desc: '1 AI video coaching review + 1 resume rewrite', price: '$15'  },
+  single:  { name: 'Single Scan',          desc: '1 AI-optimized resume rewrite',                  price: '$12'    },
+  starter: { name: 'Starter Pack',         desc: '5 AI-optimized resume rewrites ($9.80 each)',    price: '$49'    },
+  pro:     { name: 'Pro — Unlimited',      desc: 'Unlimited rewrites for 30 days',                 price: '$49/mo' },
+  bundle:  { name: 'Video + Scan Bundle',  desc: '1 AI video coaching review + 1 resume rewrite',  price: '$20'    },
 };
 
 /** Generates a 48-char hex token using the Web Crypto API. */
