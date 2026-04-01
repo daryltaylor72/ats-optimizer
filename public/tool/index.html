@@ -1680,8 +1680,8 @@
   // ── Video Resume Review ────────────────────────────────────────────────────
   let _vrPollInterval = null;
   let _vrPollStartTime = null;
-  const VR_POLL_INTERVAL_MS = 5000;
-  const VR_MAX_WAIT_MS = 10 * 60 * 1000; // 10 min client-side hard stop
+  const VR_POLL_INTERVAL_MS = 8000;
+  const VR_MAX_WAIT_MS = 20 * 60 * 1000; // 20 min client-side hard stop
   const VR_STATUS_MESSAGES = [
     'Generating audio from your coaching script…',
     'Uploading to rendering pipeline…',
@@ -1732,9 +1732,22 @@
 
     // Start video polling if a job_id was returned
     if (data.job_id) {
+      sessionStorage.setItem('vrJobId', data.job_id);
+      sessionStorage.setItem('vrToken', currentToken);
       _startVideoPolling(data.job_id, currentToken);
     }
   }
+
+  // Resume polling if job was in-progress when page loaded
+  (function resumePendingVideoJob() {
+    const savedJobId = sessionStorage.getItem('vrJobId');
+    const savedToken = sessionStorage.getItem('vrToken');
+    if (savedJobId && savedToken) {
+      // Show the video section container
+      document.getElementById('videoReviewResult').classList.add('active');
+      _startVideoPolling(savedJobId, savedToken);
+    }
+  })();
 
   function _startVideoPolling(jobId, token) {
     const progress    = document.getElementById('vrProgress');
@@ -1770,6 +1783,8 @@
       // Client-side timeout
       if (elapsed > VR_MAX_WAIT_MS) {
         clearInterval(_vrPollInterval);
+        sessionStorage.removeItem('vrJobId');
+        sessionStorage.removeItem('vrToken');
         progress.style.display = 'none';
         errorEl.style.display  = 'block';
         return;
@@ -1786,6 +1801,8 @@
 
       if (statusData.status === 'complete' && statusData.videoUrl) {
         clearInterval(_vrPollInterval);
+        sessionStorage.removeItem('vrJobId');
+        sessionStorage.removeItem('vrToken');
         fill.style.width = '100%';
         setTimeout(() => {
           progress.style.display = 'none';
@@ -1796,6 +1813,8 @@
         }, 400);
       } else if (statusData.status === 'failed') {
         clearInterval(_vrPollInterval);
+        sessionStorage.removeItem('vrJobId');
+        sessionStorage.removeItem('vrToken');
         progress.style.display = 'none';
         errorEl.style.display  = 'block';
       }
