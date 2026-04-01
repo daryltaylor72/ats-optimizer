@@ -553,6 +553,7 @@
     .reveal.in-view { opacity: 1; transform: none; }
 
     /* Responsive */
+    .video-pricing-grid { grid-template-columns: repeat(2, 1fr); }
     @media (max-width: 900px) {
       .hero-inner { grid-template-columns: 1fr; }
       .score-widget { max-width: 420px; }
@@ -560,11 +561,11 @@
       .stat-divider { display: none; }
       .how-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
       .price-card.featured { transform: none; }
-      .video-pricing-grid { grid-template-columns: 1fr !important; }
+      .video-pricing-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
       .nav-links a.btn-ghost:not(.nav-keep),
-      .nav-links button.btn-ghost { display: none; }
+      .nav-links button.btn-ghost:not(.nav-keep) { display: none; }
       .nav-links .btn-accent { display: flex; }
     }
     @media (max-width: 600px) {
@@ -984,7 +985,7 @@
           <span style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);white-space:nowrap;">🎬 AI Video Coaching Add-on</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
-        <div class="video-pricing-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:680px;margin:0 auto;">
+        <div class="video-pricing-grid" style="display:grid;gap:16px;max-width:680px;margin:0 auto;">
 
           <div class="price-card">
             <div class="price-name">Video Coaching</div>
@@ -1271,6 +1272,273 @@
         alert('Something went wrong: ' + err.message);
       }
     }
+  </script>
+
+  <!-- AI CHATBOT WIDGET -->
+  <style>
+    /* Chat launcher button */
+    #chat-launcher {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 4px 20px rgba(108,99,255,0.45);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    #chat-launcher:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(108,99,255,0.55); }
+    #chat-launcher svg { width: 26px; height: 26px; fill: #fff; }
+    #chat-launcher-label {
+      position: fixed; bottom: 28px; right: 92px; z-index: 9999;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text2); font-family: var(--mono);
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      padding: 6px 12px; border-radius: 99px;
+      pointer-events: none;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    #chat-launcher:hover + #chat-launcher-label,
+    #chat-launcher-label.visible { opacity: 1; }
+
+    /* Chat window */
+    #chat-window {
+      position: fixed; bottom: 96px; right: 24px; z-index: 9998;
+      width: 340px; max-height: 520px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      display: none; flex-direction: column; overflow: hidden;
+    }
+    #chat-window.open { display: flex; }
+
+    .chat-header {
+      padding: 16px 20px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .chat-header-info { display: flex; align-items: center; gap: 10px; }
+    .chat-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--accent); display: flex; align-items: center;
+      justify-content: center; font-family: var(--mono);
+      font-size: 12px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .chat-header-name { font-weight: 700; font-size: 14px; color: var(--text); }
+    .chat-header-status {
+      font-size: 11px; color: var(--green);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .chat-header-status::before {
+      content: ''; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--green);
+    }
+    .chat-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--text3); font-size: 18px; line-height: 1;
+      padding: 4px;
+    }
+    .chat-close:hover { color: var(--text); }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+      scroll-behavior: smooth;
+    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+    .chat-bubble {
+      max-width: 85%; padding: 10px 14px;
+      border-radius: 14px; font-size: 13px; line-height: 1.55;
+    }
+    .chat-bubble.bot {
+      background: var(--surface2); color: var(--text2);
+      border-bottom-left-radius: 4px; align-self: flex-start;
+    }
+    .chat-bubble.user {
+      background: var(--accent); color: #fff;
+      border-bottom-right-radius: 4px; align-self: flex-end;
+    }
+    .chat-bubble.typing { display: flex; align-items: center; gap: 4px; }
+    .chat-bubble.typing span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text3); animation: dot-bounce 1.2s infinite;
+    }
+    .chat-bubble.typing span:nth-child(2) { animation-delay: 0.2s; }
+    .chat-bubble.typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dot-bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+
+    .chat-quick-replies {
+      padding: 0 16px 12px;
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .chat-quick-btn {
+      background: none; border: 1px solid var(--border2);
+      color: var(--text2); font-size: 12px;
+      padding: 6px 12px; border-radius: 99px; cursor: pointer;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .chat-quick-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    .chat-input-row {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 8px; align-items: center;
+    }
+    #chat-input {
+      flex: 1; background: var(--surface2);
+      border: 1px solid var(--border2); border-radius: 10px;
+      color: var(--text); font-family: var(--sans); font-size: 13px;
+      padding: 10px 14px; outline: none; resize: none;
+      line-height: 1.4;
+    }
+    #chat-input::placeholder { color: var(--text3); }
+    #chat-input:focus { border-color: var(--accent); }
+    #chat-send {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 10px; padding: 10px 16px;
+      font-weight: 700; font-size: 13px; cursor: pointer;
+      transition: opacity 0.15s; flex-shrink: 0;
+    }
+    #chat-send:hover { opacity: 0.85; }
+    #chat-send:disabled { opacity: 0.4; cursor: default; }
+  </style>
+
+  <button id="chat-launcher" onclick="toggleChat()" aria-label="Open chat">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+    </svg>
+  </button>
+  <div id="chat-launcher-label">ATS AI</div>
+
+  <div id="chat-window">
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-avatar">AI</div>
+        <div>
+          <div class="chat-header-name">ResumeATS Assistant</div>
+          <div class="chat-header-status">Online</div>
+        </div>
+      </div>
+      <button class="chat-close" onclick="toggleChat()">&#x2715;</button>
+    </div>
+
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <div class="chat-quick-replies" id="chat-quick-replies">
+      <button class="chat-quick-btn" onclick="sendQuick('What is ATS?')">What is ATS?</button>
+      <button class="chat-quick-btn" onclick="sendQuick('How does pricing work?')">Pricing</button>
+      <button class="chat-quick-btn" onclick="sendQuick('Tell me about the video coaching review')">Video coaching</button>
+      <button class="chat-quick-btn" onclick="sendQuick('How does the free scan work?')">Free scan</button>
+    </div>
+
+    <div class="chat-input-row">
+      <textarea id="chat-input" rows="1" placeholder="Ask us anything..." onkeydown="chatKeydown(event)"></textarea>
+      <button id="chat-send" onclick="sendChat()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const chatHistory = [];
+      let chatOpen = false;
+      const BOT_GREETING = "Hi! 👋 I'm the ResumeATS assistant. I can help with questions about ATS scores, pricing, video coaching, or anything else. What would you like to know?";
+
+      function toggleChat() {
+        chatOpen = !chatOpen;
+        const win = document.getElementById('chat-window');
+        win.classList.toggle('open', chatOpen);
+        if (chatOpen && document.getElementById('chat-messages').children.length === 0) {
+          appendBubble('bot', BOT_GREETING);
+        }
+        if (chatOpen) document.getElementById('chat-input').focus();
+      }
+      window.toggleChat = toggleChat;
+
+      function appendBubble(role, text) {
+        const msgs = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.className = 'chat-bubble ' + role;
+        div.textContent = text;
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+        return div;
+      }
+
+      function showTyping() {
+        const msgs = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.className = 'chat-bubble bot typing';
+        div.id = 'chat-typing';
+        div.innerHTML = '<span></span><span></span><span></span>';
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+
+      function removeTyping() {
+        const el = document.getElementById('chat-typing');
+        if (el) el.remove();
+      }
+
+      async function sendMessage(text) {
+        if (!text.trim()) return;
+
+        // Hide quick replies after first message
+        document.getElementById('chat-quick-replies').style.display = 'none';
+
+        appendBubble('user', text);
+        chatHistory.push({ role: 'user', content: text });
+
+        const sendBtn = document.getElementById('chat-send');
+        sendBtn.disabled = true;
+        showTyping();
+
+        try {
+          const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, history: chatHistory.slice(0, -1) }),
+          });
+          const data = await res.json();
+          removeTyping();
+          const reply = data.reply || 'Sorry, something went wrong. Please try again.';
+          appendBubble('bot', reply);
+          chatHistory.push({ role: 'assistant', content: reply });
+        } catch {
+          removeTyping();
+          appendBubble('bot', 'Having trouble connecting. Please try again.');
+        }
+
+        sendBtn.disabled = false;
+        document.getElementById('chat-input').value = '';
+        document.getElementById('chat-input').focus();
+      }
+
+      function sendChat() {
+        const input = document.getElementById('chat-input');
+        sendMessage(input.value.trim());
+      }
+      window.sendChat = sendChat;
+
+      function sendQuick(text) {
+        sendMessage(text);
+      }
+      window.sendQuick = sendQuick;
+
+      function chatKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendChat();
+        }
+      }
+      window.chatKeydown = chatKeydown;
+    })();
   </script>
 </body>
 </html>
