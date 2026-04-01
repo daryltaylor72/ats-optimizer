@@ -1440,6 +1440,20 @@
       <button class="chat-quick-btn" onclick="sendQuick('Tell me about the video coaching review')">Video coaching</button>
       <button class="chat-quick-btn" onclick="sendQuick('How does the free scan work?')">Free scan</button>
     </div>
+    <style>
+      .chat-inline-pills {
+        display: flex; flex-wrap: wrap; gap: 6px;
+        padding: 4px 0 2px; align-self: flex-start;
+      }
+      .chat-inline-pill {
+        background: none; border: 1px solid var(--border2);
+        color: var(--text2); font-size: 12px;
+        padding: 5px 12px; border-radius: 99px; cursor: pointer;
+        transition: all 0.15s; white-space: nowrap;
+        font-family: var(--sans);
+      }
+      .chat-inline-pill:hover { border-color: var(--accent); color: var(--text); }
+    </style>
 
     <div class="chat-input-row">
       <textarea id="chat-input" rows="1" placeholder="Ask us anything..." onkeydown="chatKeydown(event)"></textarea>
@@ -1489,10 +1503,42 @@
         if (el) el.remove();
       }
 
+      const FOLLOW_UPS = {
+        pricing:  ['What\'s included in the bundle?', 'How do scan credits work?', 'Is there a free trial?'],
+        video:    ['How long does the video take?', 'What does the video cover?', 'How do I get the video?'],
+        ats:      ['How do I improve my ATS score?', 'What formatting does ATS hate?', 'Try the free scan'],
+        scan:     ['What file types work?', 'How does the rewrite work?', 'See pricing'],
+        default:  ['How does pricing work?', 'What is ATS?', 'Tell me about video coaching'],
+      };
+
+      function getFollowUps(userMsg, botReply) {
+        const combined = (userMsg + ' ' + botReply).toLowerCase();
+        if (combined.match(/price|cost|\$|plan|bundle|starter|pro|pay/)) return FOLLOW_UPS.pricing;
+        if (combined.match(/video|hedra|elevenlabs|coaching|lip/)) return FOLLOW_UPS.video;
+        if (combined.match(/ats|applicant|tracking|keyword|format/)) return FOLLOW_UPS.ats;
+        if (combined.match(/scan|rewrite|upload|pdf|docx|file/)) return FOLLOW_UPS.scan;
+        return FOLLOW_UPS.default;
+      }
+
+      function appendFollowUps(pills) {
+        const msgs = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.className = 'chat-inline-pills';
+        pills.forEach(label => {
+          const btn = document.createElement('button');
+          btn.className = 'chat-inline-pill';
+          btn.textContent = label;
+          btn.onclick = () => sendMessage(label);
+          div.appendChild(btn);
+        });
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+
       async function sendMessage(text) {
         if (!text.trim()) return;
 
-        // Hide quick replies after first message
+        // Hide the static quick-reply bar after first use
         document.getElementById('chat-quick-replies').style.display = 'none';
 
         appendBubble('user', text);
@@ -1513,6 +1559,7 @@
           const reply = data.reply || 'Sorry, something went wrong. Please try again.';
           appendBubble('bot', reply);
           chatHistory.push({ role: 'assistant', content: reply });
+          appendFollowUps(getFollowUps(text, reply));
         } catch {
           removeTyping();
           appendBubble('bot', 'Having trouble connecting. Please try again.');
