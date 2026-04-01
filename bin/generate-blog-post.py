@@ -287,10 +287,14 @@ def main() -> None:
     with open(TOPICS_FILE) as f:
         data = json.load(f)
 
-    # Find next unpublished topic
-    topic = next((t for t in data["topics"] if not t.get("published")), None)
+    # Find next unpublished topic that doesn't already have a directory (safety check)
+    topic = next(
+        (t for t in data["topics"]
+         if not t.get("published") and not (BLOG_DIR / t["slug"]).exists()),
+        None
+    )
     if not topic:
-        print("No unpublished topics remaining. Add more to blog-topics.json.")
+        print("No unpublished topics remaining (or all pending slugs already exist on disk). Add more to blog-topics.json.")
         sys.exit(0)
 
     slug  = topic["slug"]
