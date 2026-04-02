@@ -1679,6 +1679,7 @@
         return;
       }
       localStorage.setItem('ats_token', data.token);
+      currentToken = data.token;
       msg.textContent = '✓ ' + (data.message || 'Code redeemed! Loading your video review…');
       msg.style.color = 'var(--green)';
       setTimeout(() => {
@@ -2073,7 +2074,8 @@
         if (data.code === 'no_video_credits') {
           btn.disabled = false;
           btn.textContent = 'Generate Video Review';
-          document.getElementById('vrPaywall').style.display = 'block';
+          const vrPaywall = document.getElementById('vrPaywall');
+          if (vrPaywall) vrPaywall.style.display = 'block';
           return;
         }
         throw new Error(data.detail || 'Video review failed');
