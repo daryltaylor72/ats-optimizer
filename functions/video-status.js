@@ -12,7 +12,7 @@
 
 import { hedraGetStatus } from './_video-helpers.js';
 
-const TIMEOUT_MS = 8 * 60 * 1000; // 8 minutes — mark as failed if exceeded
+const TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes — mark as failed if exceeded
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -67,6 +67,10 @@ export async function onRequestGet(context) {
     return json({ status: 'processing' });
   }
 
+  if (hedraResult.status === 'failed' || hedraResult.status === 'error') {
+    await kv.put(`video:${jobId}`, JSON.stringify({ ...record, status: 'failed' }), { expirationTtl: 86400 });
+    return json({ status: 'failed' });
+  }
   if (hedraResult.status !== 'complete') {
     return json({ status: 'processing' });
   }
