@@ -180,13 +180,14 @@ export async function onRequestPost(context) {
       const hedraJobId = await hedraStartJob(portraitId, audioAssetId, hedraKey);
       // 4. Write job record to KV; frontend polls /video-status?jobId=X
       jobId = crypto.randomUUID();
+      const email = formData.get('email') || tokenData.email || '';
       await kv.put(`video:${jobId}`, JSON.stringify({
         status: 'processing',
         hedraJobId,
         videoUrl: null,
         createdAt: new Date().toISOString(),
         token,
-        email: tokenData.email || null,
+        email: email || null,
         name: result.name_extracted || null,
       }), { expirationTtl: 86400 });
     } catch (_e) {

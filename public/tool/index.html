@@ -920,6 +920,52 @@
       font-size: 13px;
       color: var(--text3, #6b7280);
     }
+    /* Stage indicator */
+    .vr-stages {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0;
+      margin-bottom: 14px;
+    }
+    .vr-stage {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text3, #6b7280);
+      white-space: nowrap;
+    }
+    .vr-stage + .vr-stage::before {
+      content: '›';
+      margin: 0 6px;
+      color: var(--text3, #6b7280);
+      opacity: 0.4;
+    }
+    .vr-stage .vr-stage-icon { font-size: 13px; }
+    .vr-stage.done .vr-stage-icon { color: #22c55e; }
+    .vr-stage.done .vr-stage-label { color: #22c55e; font-weight: 500; }
+    .vr-stage.active .vr-stage-icon { display: inline-block; animation: vr-spin 1.2s linear infinite; }
+    .vr-stage.active .vr-stage-label { color: var(--text1, #f1f5f9); font-weight: 600; }
+    .vr-stage.pending .vr-stage-icon { opacity: 0.35; }
+    .vr-stage.pending .vr-stage-label { opacity: 0.35; }
+    .vr-stage-sublabel {
+      font-size: 10px;
+      color: var(--text3, #6b7280);
+      opacity: 0.7;
+      margin-left: 2px;
+    }
+    @keyframes vr-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .vr-elapsed {
+      font-size: 12px;
+      color: var(--text3, #6b7280);
+      margin-bottom: 10px;
+      text-align: center;
+    }
     .vr-video-player {
       margin-top: 20px;
       width: 100%;
@@ -1168,6 +1214,14 @@
       <div id="vrGenerateSection" style="display:none;">
         <h3>🎬 AI Video Resume Review</h3>
         <p class="vr-desc">Generate your personalized 60–90 second video coaching review.</p>
+        <div style="margin-bottom:12px;">
+          <input type="email" id="vrEmailInput" placeholder="Email me when ready (optional)"
+                 style="width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);
+                        border-radius:8px;color:var(--text1);font-size:13px;box-sizing:border-box;" />
+          <p style="font-size:11px;color:var(--text3);margin:4px 0 0;">
+            You can leave this page — we'll email you when your video is ready.
+          </p>
+        </div>
         <button class="vr-btn" id="videoReviewBtn" onclick="generateVideoReview()">Generate Video Review</button>
       </div>
       <div id="videoReviewResult">
@@ -1180,6 +1234,32 @@
         <div id="vrVideoSection">
           <!-- Progress bar (shown while generating) -->
           <div class="vr-progress" id="vrProgress" style="display:none;">
+            <!-- Stage indicator -->
+            <div class="vr-stages" id="vrStages">
+              <div class="vr-stage pending" id="vrStage1">
+                <span class="vr-stage-icon">·</span>
+                <span class="vr-stage-label">Analyzing resume</span>
+              </div>
+              <div class="vr-stage pending" id="vrStage2">
+                <span class="vr-stage-icon">·</span>
+                <span class="vr-stage-label">Writing script</span>
+              </div>
+              <div class="vr-stage pending" id="vrStage3">
+                <span class="vr-stage-icon">·</span>
+                <span class="vr-stage-label">Generating voice</span>
+              </div>
+              <div class="vr-stage pending" id="vrStage4">
+                <span class="vr-stage-icon">·</span>
+                <span class="vr-stage-label">Rendering video</span>
+                <span class="vr-stage-sublabel">(longest step)</span>
+              </div>
+              <div class="vr-stage pending" id="vrStage5">
+                <span class="vr-stage-icon">·</span>
+                <span class="vr-stage-label">Finalizing</span>
+              </div>
+            </div>
+            <!-- Elapsed timer -->
+            <div class="vr-elapsed" id="vrElapsed">0:00 elapsed · usually 3–8 min</div>
             <div class="vr-progress-bar-track">
               <div class="vr-progress-bar-fill" id="vrProgressFill"></div>
             </div>
@@ -2065,6 +2145,8 @@
     fd.append('token', currentToken);
     fd.append('resume', fileInput.files[0]);
     if (jdInput && jdInput.value.trim()) fd.append('job_description', jdInput.value);
+    const emailVal = (document.getElementById('vrEmailInput')?.value || '').trim();
+    if (emailVal) fd.append('email', emailVal);
 
     let data;
     try {
@@ -2110,6 +2192,20 @@
     }
   }
 
+  // Update a single stage element: 'done' | 'active' | 'pending'
+  function _setVideoStage(stageNum, state) {
+    const el = document.getElementById(`vrStage${stageNum}`);
+    if (!el) return;
+    el.className = `vr-stage ${state}`;
+    const icon  = el.querySelector('.vr-stage-icon');
+    if (!icon) return;
+    if (state === 'done')    icon.textContent = '✓';
+    else if (state === 'active') icon.textContent = '⏳';
+    else                    icon.textContent = '·';
+  }
+
+  let _vrTimerInterval = null;
+
   function _startVideoPolling(jobId, token) {
     const progress    = document.getElementById('vrProgress');
     const fill        = document.getElementById('vrProgressFill');
@@ -2117,6 +2213,7 @@
     const player      = document.getElementById('vrVideoPlayer');
     const videoEl     = document.getElementById('vrVideo');
     const errorEl     = document.getElementById('vrVideoError');
+    const elapsedEl   = document.getElementById('vrElapsed');
 
     progress.style.display = 'block';
     player.style.display   = 'none';
@@ -2126,6 +2223,22 @@
     let messageIndex = 0;
     label.textContent = VR_STATUS_MESSAGES[0];
     fill.style.width  = '10%';
+
+    // Stages 1-3 are already complete server-side when job_id is returned
+    _setVideoStage(1, 'done');
+    _setVideoStage(2, 'done');
+    _setVideoStage(3, 'done');
+    _setVideoStage(4, 'active');
+    _setVideoStage(5, 'pending');
+
+    // Elapsed timer — updates every second
+    if (_vrTimerInterval) clearInterval(_vrTimerInterval);
+    _vrTimerInterval = setInterval(() => {
+      const secs = Math.floor((Date.now() - _vrPollStartTime) / 1000);
+      const m = Math.floor(secs / 60);
+      const s = String(secs % 60).padStart(2, '0');
+      if (elapsedEl) elapsedEl.textContent = `${m}:${s} elapsed · usually 3–8 min`;
+    }, 1000);
 
     _vrPollInterval = setInterval(async () => {
       const elapsed = Date.now() - _vrPollStartTime;
@@ -2144,6 +2257,7 @@
       // Client-side timeout
       if (elapsed > VR_MAX_WAIT_MS) {
         clearInterval(_vrPollInterval);
+        clearInterval(_vrTimerInterval);
 
         progress.style.display = 'none';
         errorEl.style.display  = 'block';
@@ -2162,8 +2276,17 @@
       console.log('[VR poll]', statusData);
       if (statusData.status === 'complete' && statusData.videoUrl) {
         clearInterval(_vrPollInterval);
+        clearInterval(_vrTimerInterval);
 
+        // Mark stage 4 done, stage 5 active briefly then done
+        _setVideoStage(4, 'done');
+        _setVideoStage(5, 'active');
         fill.style.width = '100%';
+
+        setTimeout(() => {
+          _setVideoStage(5, 'done');
+        }, 1000);
+
         setTimeout(() => {
           progress.style.display = 'none';
           videoEl.src = statusData.videoUrl;
@@ -2171,9 +2294,10 @@
           document.getElementById('vrVideoLink').href = statusData.videoUrl;
           player.style.display = 'block';
           console.log('[VR] player shown, src=', statusData.videoUrl);
-        }, 400);
+        }, 1400);
       } else if (statusData.status === 'failed') {
         clearInterval(_vrPollInterval);
+        clearInterval(_vrTimerInterval);
 
         progress.style.display = 'none';
         errorEl.style.display  = 'block';
