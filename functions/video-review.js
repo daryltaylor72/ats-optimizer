@@ -197,7 +197,7 @@ export async function onRequestPost(context) {
     }
   }
 
-  return json({ ...result, video_reviews_remaining: tokenData.video_reviews_remaining, job_id: jobId, _pipeline_error: _pipelineError || undefined });
+  return json({ ...result, video_reviews_remaining: tokenData.video_reviews_remaining, job_id: jobId });
 }
 
 function buildVideoReviewSystemPrompt() {
