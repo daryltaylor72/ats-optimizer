@@ -107,6 +107,7 @@ export async function onRequestPost(context) {
 
     const tokenData = {
       scans_remaining: 1,
+      video_reviews_remaining: 1,
       expires_at: expiresAt,
       plan: 'trial',
       email,
@@ -121,6 +122,7 @@ export async function onRequestPost(context) {
   return json({
     token: tokenId,
     scans_remaining: 1,
+    video_reviews_remaining: 1,
     expires_at: expiresAt,
     message: 'Your free trial is ready!',
   });

@@ -1151,6 +1151,16 @@
             </div>
             <button class="vr-btn" onclick="checkout('video');return false;">Get AI Video Coaching — $19</button>
             <p style="font-size:11px;color:var(--text3);margin:8px 0 0;">Emailed when ready · Powered by Hedra lip-sync AI · 7-day guarantee</p>
+            <div style="margin-top:12px;">
+              <button onclick="toggleVrCoupon()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:0;" id="vrCouponToggle">Have a promo code?</button>
+              <div id="vrCouponBody" style="display:none;margin-top:8px;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" id="vrCouponInput" placeholder="e.g. FREETRIAL" autocomplete="off" maxlength="30" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font:13px/1.5 -apple-system,sans-serif;padding:10px 12px;text-transform:uppercase;letter-spacing:0.5px;" />
+                  <button onclick="redeemVrCoupon()" id="vrCouponBtn" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;font-weight:600;padding:0 14px;height:40px;cursor:pointer;white-space:nowrap;">Redeem</button>
+                </div>
+                <div id="vrCouponMsg" style="font-size:12px;margin-top:6px;"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1634,6 +1644,49 @@
       msg.textContent = '✓ ' + (data.message || 'Code redeemed!');
       msg.style.color = 'var(--green)';
       setTimeout(() => { closePaywall(); getRewrite(); }, 1200);
+    } catch {
+      msg.textContent = 'Network error. Try again.';
+      msg.style.color = 'var(--red)';
+      btn.disabled = false;
+    }
+  }
+
+  function toggleVrCoupon() {
+    const body = document.getElementById('vrCouponBody');
+    body.style.display = body.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async function redeemVrCoupon() {
+    const input = document.getElementById('vrCouponInput');
+    const msg   = document.getElementById('vrCouponMsg');
+    const btn   = document.getElementById('vrCouponBtn');
+    const code  = input.value.trim().toUpperCase();
+    if (!code) return;
+    btn.disabled = true;
+    msg.textContent = 'Checking…';
+    msg.style.color = 'var(--text3)';
+    try {
+      const res  = await fetch('/redeem-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = data.detail || 'Invalid code.';
+        msg.style.color = 'var(--red)';
+        btn.disabled = false;
+        return;
+      }
+      localStorage.setItem('ats_token', data.token);
+      msg.textContent = '✓ ' + (data.message || 'Code redeemed! Loading your video review…');
+      msg.style.color = 'var(--green)';
+      setTimeout(() => {
+        const upsell = document.getElementById('vrUpsell');
+        const genSec = document.getElementById('vrGenerateSection');
+        if (upsell) upsell.style.display = 'none';
+        if (genSec) genSec.style.display = 'block';
+      }, 1000);
     } catch {
       msg.textContent = 'Network error. Try again.';
       msg.style.color = 'var(--red)';
