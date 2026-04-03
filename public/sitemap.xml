@@ -81,6 +81,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://ats.deeptierlabs.com/blog/quantify-resume-achievements/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://atscore.ai/ats-checker/software-engineer/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
