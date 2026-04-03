@@ -3,7 +3,7 @@
     {
       "slug": "ats-cover-letter-tips",
       "title": "How to Write a Cover Letter That Passes ATS",
-      "description": "Cover letters are scanned by ATS too — learn what to include, how to format it, and which keywords to use to make sure yours doesn't get filtered out before a human reads it.",
+      "description": "Cover letters are scanned by ATS too \u2014 learn what to include, how to format it, and which keywords to use to make sure yours doesn't get filtered out before a human reads it.",
       "tag": "Guide",
       "published": true,
       "published_date": "2026-04-01"
@@ -13,13 +13,13 @@
       "title": "How Long Should Your Resume Be for ATS?",
       "description": "One page or two? The ATS-backed answer to resume length by career stage, plus what happens when your resume is too long or too short.",
       "tag": "Formatting",
-      "published": false,
-      "published_date": null
+      "published": true,
+      "published_date": "2026-04-03"
     },
     {
       "slug": "entry-level-ats-resume",
       "title": "ATS Resume Guide for Entry-Level Job Seekers",
-      "description": "How to build an ATS-friendly resume when you have little to no experience — what sections to include, how to frame internships and projects, and which keywords matter most.",
+      "description": "How to build an ATS-friendly resume when you have little to no experience \u2014 what sections to include, how to frame internships and projects, and which keywords matter most.",
       "tag": "Guide",
       "published": false,
       "published_date": null
@@ -27,7 +27,7 @@
     {
       "slug": "software-engineer-resume-ats",
       "title": "Software Engineer Resume: ATS Optimization Guide",
-      "description": "The exact keywords, section structure, and formatting rules that get software engineering resumes past Greenhouse, Lever, and Workday — with examples.",
+      "description": "The exact keywords, section structure, and formatting rules that get software engineering resumes past Greenhouse, Lever, and Workday \u2014 with examples.",
       "tag": "Industry",
       "published": false,
       "published_date": null
@@ -91,7 +91,7 @@
     {
       "slug": "executive-resume-ats",
       "title": "ATS Resume Strategies for Directors and C-Suite Executives",
-      "description": "Senior-level candidates face different ATS challenges — learn how executive search firms use ATS, which leadership keywords rank highest, and how to keep a long career history scannable.",
+      "description": "Senior-level candidates face different ATS challenges \u2014 learn how executive search firms use ATS, which leadership keywords rank highest, and how to keep a long career history scannable.",
       "tag": "Strategy",
       "published": false,
       "published_date": null
@@ -99,7 +99,7 @@
     {
       "slug": "ats-resume-no-experience",
       "title": "How to Write an ATS Resume With No Work Experience",
-      "description": "How students, recent grads, and career returners can build a keyword-rich ATS resume using projects, coursework, volunteer work, and transferable skills — with real examples.",
+      "description": "How students, recent grads, and career returners can build a keyword-rich ATS resume using projects, coursework, volunteer work, and transferable skills \u2014 with real examples.",
       "tag": "Guide",
       "published": false,
       "published_date": null
@@ -115,7 +115,7 @@
     {
       "slug": "ats-applicant-tracking-systems-compared",
       "title": "Workday vs Greenhouse vs Taleo vs Lever: How Each ATS Scores Resumes",
-      "description": "A breakdown of the four most common ATS platforms — how they parse resumes differently, which formatting quirks matter for each, and how to optimize for the system you're actually applying through.",
+      "description": "A breakdown of the four most common ATS platforms \u2014 how they parse resumes differently, which formatting quirks matter for each, and how to optimize for the system you're actually applying through.",
       "tag": "Guide",
       "published": false,
       "published_date": null
@@ -123,14 +123,14 @@
     {
       "slug": "resume-keywords-how-to-find-them",
       "title": "How to Find the Right Keywords for Any Job Posting",
-      "description": "A step-by-step method for extracting ATS keywords from job descriptions — including which sections to prioritize, how to handle synonyms, and the keyword density mistakes that backfire.",
+      "description": "A step-by-step method for extracting ATS keywords from job descriptions \u2014 including which sections to prioritize, how to handle synonyms, and the keyword density mistakes that backfire.",
       "tag": "Keywords",
       "published": false,
       "published_date": null
     },
     {
       "slug": "ats-resume-google-jobs",
-      "title": "How Google for Jobs Uses ATS Data — and What It Means for Your Resume",
+      "title": "How Google for Jobs Uses ATS Data \u2014 and What It Means for Your Resume",
       "description": "How Google for Jobs surfaces and ranks resumes from employer ATS platforms, which structured data signals matter, and how optimizing for ATS automatically helps your Google visibility.",
       "tag": "Strategy",
       "published": false,
@@ -155,7 +155,7 @@
     {
       "slug": "ats-resume-after-layoff",
       "title": "How to Update Your Resume for ATS After a Layoff",
-      "description": "What to do with your resume immediately after a layoff — how to frame the gap, refresh your keywords, update your summary, and get back into ATS-scored applicant pools quickly.",
+      "description": "What to do with your resume immediately after a layoff \u2014 how to frame the gap, refresh your keywords, update your summary, and get back into ATS-scored applicant pools quickly.",
       "tag": "Troubleshooting",
       "published": false,
       "published_date": null
