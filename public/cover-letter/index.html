@@ -896,13 +896,21 @@
 
   function loadDocxIfNeeded() {
     if (window.docx) return Promise.resolve();
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://unpkg.com/docx@8.5.0/build/index.js';
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('Could not load the Word document library. Please check your internet connection and try again.'));
-      document.head.appendChild(s);
-    });
+    const CDNS = [
+      'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js',
+      'https://unpkg.com/docx@8.5.0/build/index.js',
+    ];
+    function tryLoad(urls) {
+      if (!urls.length) return Promise.reject(new Error('Could not load the Word document library. Please check your internet connection and try again.'));
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = urls[0];
+        s.onload = resolve;
+        s.onerror = () => tryLoad(urls.slice(1)).then(resolve, reject);
+        document.head.appendChild(s);
+      });
+    }
+    return tryLoad(CDNS);
   }
 
   function buildCoverLetterDoc(text) {
