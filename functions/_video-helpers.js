@@ -101,13 +101,14 @@ export async function heygenUploadAudio(buffer, apiKey) {
 
 /**
  * Start a HeyGen avatar video generation job.
- * @param {string} avatarId     HeyGen avatar ID (from HEYGEN_AVATAR_ID secret)
- * @param {string} audioAssetId HeyGen asset ID from heygenUploadAudio()
+ * @param {string} avatarId   HeyGen avatar ID (from HEYGEN_AVATAR_ID secret)
+ * @param {string} script     The coaching script text to speak
+ * @param {string} voiceId    HeyGen voice ID (from HEYGEN_VOICE_ID secret)
  * @param {string} apiKey
- * @returns {Promise<string>}   HeyGen video ID
+ * @returns {Promise<string>} HeyGen video ID
  * @throws {Error}
  */
-export async function heygenStartJob(avatarId, audioAssetId, apiKey) {
+export async function heygenStartJob(avatarId, script, voiceId, apiKey) {
   const body = {
     video_inputs: [
       {
@@ -117,16 +118,17 @@ export async function heygenStartJob(avatarId, audioAssetId, apiKey) {
           avatar_style: 'normal',
         },
         voice: {
-          type: 'audio',
-          audio_asset_id: audioAssetId,
+          type: 'text',
+          input_text: script,
+          voice_id: voiceId,
         },
         background: {
-          type: 'color',
-          value: '#1a1a2e',
+          type: 'image',
+          url: 'https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=1280&h=720&fit=crop',
         },
       },
     ],
-    dimension: { width: 720, height: 1280 },
+    dimension: { width: 1280, height: 720 },
   };
 
   let response;

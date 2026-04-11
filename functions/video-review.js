@@ -5,7 +5,7 @@
  */
 
 import mammoth from 'mammoth';
-import { callElevenLabs, heygenUploadAudio, heygenStartJob } from './_video-helpers.js';
+import { heygenStartJob } from './_video-helpers.js';
 import { acquireScanMutex, releaseScanMutex } from './_shared.js';
 
 export async function onRequestPost(context) {
@@ -166,18 +166,14 @@ export async function onRequestPost(context) {
   // script — the user gets text coaching at minimum.
   let jobId = null;
   let _pipelineError = null;
-  const elevenlabsKey = env.ELEVENLABS_API_KEY;
-  const heygenKey     = env.HEYGEN_API_KEY;
-  const avatarId      = env.HEYGEN_AVATAR_ID;
+  const heygenKey = env.HEYGEN_API_KEY;
+  const avatarId  = env.HEYGEN_AVATAR_ID;
+  const voiceId   = env.HEYGEN_VOICE_ID;
 
-  if (elevenlabsKey && heygenKey && avatarId) {
+  if (heygenKey && avatarId && voiceId) {
     try {
-      // 1. TTS — script text → MP3 buffer
-      const audioBuffer = await callElevenLabs(result.script, elevenlabsKey);
-      // 2. Upload audio to HeyGen
-      const audioAssetId = await heygenUploadAudio(audioBuffer, heygenKey);
-      // 3. Start HeyGen avatar video job
-      const heygenVideoId = await heygenStartJob(avatarId, audioAssetId, heygenKey);
+      // Start HeyGen avatar video job with text + voice directly
+      const heygenVideoId = await heygenStartJob(avatarId, result.script, voiceId, heygenKey);
       // 4. Write job record to KV; frontend polls /video-status?jobId=X
       jobId = crypto.randomUUID();
       const email = formData.get('email') || tokenData.email || '';
