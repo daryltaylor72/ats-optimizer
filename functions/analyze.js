@@ -427,6 +427,7 @@ async function sendDiscordNotification(webhookUrl, { email, plan, score, grade, 
 
   const embed = {
     title: `${gradeEmoji} New Scan — Grade ${grade} | Score ${score}/100`,
+    url: airtableUrl,
     color: score >= 80 ? 0x22c55e : score >= 60 ? 0xf59e0b : 0xef4444,
     fields: [
       { name: 'Plan',        value: plan || 'free',                        inline: true },
@@ -436,7 +437,6 @@ async function sendDiscordNotification(webhookUrl, { email, plan, score, grade, 
       { name: 'Repeat User', value: isRepeat ? '✅ yes' : '🆕 first scan', inline: true },
       { name: 'Time (ET)',   value: timestamp,                             inline: true },
     ],
-    footer: { text: `View in Airtable → ${airtableUrl}` },
   };
 
   const res = await fetch(webhookUrl, {
