@@ -397,6 +397,7 @@
     /* ── Light Mode ── */
     [data-theme="light"] .header { border-bottom-color: rgba(0,0,0,0.08); }
   </style>
+  <script src="/js/posthog-init.js"></script>
 </head>
 <body>
 
@@ -726,6 +727,8 @@
       }
 
       clearInterval(stepInterval);
+      posthog.identify(email);
+      posthog.capture('cover_letter_generated');
       renderResults(data);
     } catch (err) {
       clearInterval(stepInterval);
@@ -734,6 +737,7 @@
       const errorBox = document.getElementById('errorBox');
       errorBox.textContent = `Error: ${err.message}`;
       errorBox.classList.add('active');
+      posthog.captureException(err, { event: 'cover_letter_generated' });
     }
   }
 
@@ -885,6 +889,7 @@
       a.href = url; a.download = 'cover_letter.docx'; a.click();
       URL.revokeObjectURL(url);
       btn.textContent = '✅ Downloaded';
+      posthog.capture('cover_letter_downloaded');
       setTimeout(() => { btn.textContent = '⬇ Download as Word'; btn.disabled = false; }, 3000);
     } catch (err) {
       btn.textContent = '⬇ Download as Word';

@@ -11,6 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Inject PostHog config
+        env:
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+        run: |
+          sed -i "s|__POSTHOG_PROJECT_TOKEN__|${POSTHOG_PROJECT_TOKEN}|g" public/js/posthog-init.js
+          sed -i "s|__POSTHOG_HOST__|${POSTHOG_HOST}|g" public/js/posthog-init.js
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
