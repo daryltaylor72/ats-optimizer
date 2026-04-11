@@ -979,6 +979,7 @@
       border-radius: 10px;
     }
   </style>
+  <script src="/js/posthog-init.js"></script>
 </head>
 <body>
 
@@ -1350,6 +1351,10 @@
     dropText.textContent = file.name;
     dropSub.textContent = `${(file.size / 1024).toFixed(0)} KB — ready to analyze`;
     updateAnalyzeBtn();
+    posthog.capture('resume_file_selected', {
+      file_type: file.type,
+      file_size_kb: Math.round(file.size / 1024),
+    });
   }
 
   jdInput.addEventListener('input', () => {
@@ -1404,6 +1409,11 @@
       const storedToken = localStorage.getItem('ats_token');
       if (storedToken) fd.append('token', storedToken);
 
+      posthog.capture('scan_submitted', {
+        has_job_description: !!jdInput.value.trim(),
+        file_type: selectedFile ? selectedFile.name.split('.').pop().toLowerCase() : 'unknown',
+        plan: localStorage.getItem('ats_token') ? 'paid' : 'free',
+      });
       const res = await fetch('/analyze', { method: 'POST', body: fd });
       const data = await res.json();
 
@@ -1412,6 +1422,12 @@
       }
 
       clearInterval(stepInterval);
+      posthog.identify(emailInput.value.trim());
+      posthog.capture('resume_analyzed', {
+        score: data.score,
+        grade: data.grade,
+        has_job_description: !!jdInput.value.trim(),
+      });
       renderResults(data);
     } catch (err) {
       clearInterval(stepInterval);
@@ -1420,6 +1436,7 @@
       const errorBox = document.getElementById('errorBox');
       errorBox.textContent = `Error: ${err.message}`;
       errorBox.classList.add('active');
+      posthog.captureException(err, { event: 'resume_analyzed' });
     }
   }
 
@@ -1623,6 +1640,7 @@
     const btn = document.getElementById('downloadBtn');
     btn.textContent = '⏳ Generating…';
     btn.disabled = true;
+    posthog.capture('rewrite_requested');
     try {
       const fd = new FormData();
       fd.append('resume', selectedFile);
@@ -1664,6 +1682,7 @@
       URL.revokeObjectURL(wordUrl);
       btn.textContent = '✅ Downloaded as Word';
       btn.disabled = false;
+      posthog.capture('rewrite_downloaded', { format: 'word' });
       // Show placeholder tip if the resume contains bracketed placeholders
       if (lastResumeText && lastResumeText.includes('[')) {
         const tip = document.getElementById('placeholderTip');
@@ -1683,10 +1702,12 @@
     const a = document.createElement('a');
     a.href = url; a.download = 'optimized_resume.txt'; a.click();
     URL.revokeObjectURL(url);
+    posthog.capture('rewrite_downloaded', { format: 'text' });
   }
 
   function showPaywall() {
     document.getElementById('paywallOverlay').classList.add('active');
+    posthog.capture('paywall_viewed');
   }
 
   function closePaywall() {
@@ -1776,6 +1797,7 @@
   }
 
   async function checkout(plan) {
+    posthog.capture('checkout_started', { plan });
     try {
       const res = await fetch('/create-checkout', {
         method: 'POST',
@@ -1850,6 +1872,7 @@
       document.getElementById('recoveryMsg').textContent = 'Check your inbox — we sent a link to restore your scans.';
       document.getElementById('recoveryMsg').style.color = 'var(--green)';
       btn.textContent = 'Sent ✓';
+      posthog.capture('recovery_email_sent');
     } catch {
       document.getElementById('recoveryMsg').textContent = 'Something went wrong. Please try again.';
       document.getElementById('recoveryMsg').style.color = 'var(--red)';
@@ -1990,6 +2013,7 @@
       // Success — store token and refresh status
       localStorage.setItem('ats_token', data.token);
       fetchTokenStatus(data.token);
+      posthog.capture('coupon_redeemed', { location: 'tool_page' });
 
       msgEl.className = 'coupon-msg success';
       msgEl.textContent = data.message || 'Your free trial is ready!';
@@ -2162,6 +2186,7 @@
         }
         throw new Error(data.detail || 'Video review failed');
       }
+      posthog.capture('video_review_requested');
     } catch (e) {
       btn.disabled = false;
       btn.textContent = 'Generate Video Review';
