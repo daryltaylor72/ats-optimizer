@@ -5,7 +5,7 @@
  */
 
 import mammoth from 'mammoth';
-import { callElevenLabs, hedraUploadAsset, hedraStartJob } from './_video-helpers.js';
+import { callElevenLabs, heygenUploadAudio, heygenStartJob } from './_video-helpers.js';
 import { acquireScanMutex, releaseScanMutex } from './_shared.js';
 
 export async function onRequestPost(context) {
@@ -167,23 +167,23 @@ export async function onRequestPost(context) {
   let jobId = null;
   let _pipelineError = null;
   const elevenlabsKey = env.ELEVENLABS_API_KEY;
-  const hedraKey      = env.HEDRA_API_KEY;
-  const portraitId    = env.HEDRA_COACH_PORTRAIT_ID;
+  const heygenKey     = env.HEYGEN_API_KEY;
+  const avatarId      = env.HEYGEN_AVATAR_ID;
 
-  if (elevenlabsKey && hedraKey && portraitId) {
+  if (elevenlabsKey && heygenKey && avatarId) {
     try {
       // 1. TTS — script text → MP3 buffer
       const audioBuffer = await callElevenLabs(result.script, elevenlabsKey);
-      // 2. Upload audio to Hedra
-      const audioAssetId = await hedraUploadAsset(audioBuffer, 'audio/mpeg', 'coaching.mp3', 'audio', hedraKey);
-      // 3. Start Hedra lip-sync job
-      const hedraJobId = await hedraStartJob(portraitId, audioAssetId, hedraKey);
+      // 2. Upload audio to HeyGen
+      const audioAssetId = await heygenUploadAudio(audioBuffer, heygenKey);
+      // 3. Start HeyGen avatar video job
+      const heygenVideoId = await heygenStartJob(avatarId, audioAssetId, heygenKey);
       // 4. Write job record to KV; frontend polls /video-status?jobId=X
       jobId = crypto.randomUUID();
       const email = formData.get('email') || tokenData.email || '';
       await kv.put(`video:${jobId}`, JSON.stringify({
         status: 'processing',
-        hedraJobId,
+        heygenVideoId,
         videoUrl: null,
         createdAt: new Date().toISOString(),
         token,

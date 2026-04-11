@@ -10,7 +10,7 @@
  *   { status: 'failed' }
  */
 
-import { hedraGetStatus } from './_video-helpers.js';
+import { heygenGetStatus } from './_video-helpers.js';
 
 const TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes — mark as failed if exceeded
 
@@ -23,11 +23,11 @@ export async function onRequestGet(context) {
   if (!jobId || !token) return json({ detail: 'Missing jobId or token' }, 400);
 
   const kv           = env.TOKENS_KV;
-  const hedraKey     = env.HEDRA_API_KEY;
+  const heygenKey    = env.HEYGEN_API_KEY;
   const bucket       = env.VIDEO_BUCKET;
   const r2PublicUrl  = env.R2_VIDEOS_PUBLIC_URL;
 
-  if (!kv || !hedraKey || !bucket || !r2PublicUrl) {
+  if (!kv || !heygenKey || !bucket || !r2PublicUrl) {
     return json({ detail: 'Service not configured' }, 500);
   }
 
@@ -58,25 +58,25 @@ export async function onRequestGet(context) {
     return json({ status: 'failed' });
   }
 
-  // Poll Hedra
-  let hedraResult;
+  // Poll HeyGen
+  let heygenResult;
   try {
-    hedraResult = await hedraGetStatus(record.hedraJobId, hedraKey);
+    heygenResult = await heygenGetStatus(record.heygenVideoId, heygenKey);
   } catch (_e) {
-    // Transient Hedra error — don't fail the job, let client retry
+    // Transient HeyGen error — don't fail the job, let client retry
     return json({ status: 'processing' });
   }
 
-  if (hedraResult.status === 'failed' || hedraResult.status === 'error') {
+  if (heygenResult.status === 'failed') {
     await kv.put(`video:${jobId}`, JSON.stringify({ ...record, status: 'failed' }), { expirationTtl: 86400 });
     return json({ status: 'failed' });
   }
-  if (hedraResult.status !== 'complete') {
+  if (heygenResult.status !== 'completed') {
     return json({ status: 'processing' });
   }
 
-  // Hedra completed — download video, upload to R2
-  let videoUrl = hedraResult.videoUrl; // fallback: Hedra CDN URL (~24h expiry)
+  // HeyGen completed — download video, upload to R2
+  let videoUrl = heygenResult.videoUrl; // fallback: HeyGen CDN URL (7-day expiry)
   try {
     const videoResp = await fetch(hedraResult.videoUrl);
     if (videoResp.ok) {

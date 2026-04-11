@@ -1,20 +1,20 @@
 /**
- * _video-helpers.js — ElevenLabs TTS + Hedra API helpers
+ * _video-helpers.js — ElevenLabs TTS + HeyGen API helpers
  * Underscore prefix prevents this file from being treated as a route by Cloudflare Pages.
  *
  * Exports:
  *  - callElevenLabs()       : Generate TTS audio using ElevenLabs
- *  - hedraUploadAsset()     : Upload binary asset (audio or image) to Hedra (two-step)
- *  - hedraStartJob()        : Start a Hedra lip-sync generation job
- *  - hedraGetStatus()       : Get current status of a Hedra generation job
+ *  - heygenUploadAudio()    : Upload MP3 audio buffer to HeyGen asset storage
+ *  - heygenStartJob()       : Start a HeyGen avatar video generation job
+ *  - heygenGetStatus()      : Get current status of a HeyGen video generation job
  *
  * Used by:
- *  - video-review.js       : Kick off TTS + Hedra job after script generation
- *  - video-status.js       : Poll Hedra status and retrieve final video URL
+ *  - video-review.js       : Kick off TTS + HeyGen job after script generation
+ *  - video-status.js       : Poll HeyGen status and retrieve final video URL
  */
 
-const HEDRA_BASE = 'https://api.hedra.com/web-app/public';
-const HEDRA_CHARACTER_3 = 'd1dd37a3-e39a-4854-a298-6510289f9cf2'; // Auto-duration lip-sync, requires audio
+const HEYGEN_API_BASE    = 'https://api.heygen.com';
+const HEYGEN_UPLOAD_BASE = 'https://upload.heygen.com';
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io/v1';
 const ELEVENLABS_VOICE_ID = 'pMsXgVXv3BLzUgSXRplE'; // Serena
 const ELEVENLABS_MODEL = 'eleven_turbo_v2';
@@ -67,148 +67,121 @@ export async function callElevenLabs(text, apiKey) {
 }
 
 /**
- * Upload a binary asset (audio or image) to Hedra (two-step: create record then upload file).
- * @param {ArrayBuffer} buffer
- * @param {string} contentType  e.g. 'audio/mpeg' or 'image/png'
- * @param {string} fileName     e.g. 'coaching.mp3'
- * @param {string} assetType    'audio' or 'image'
+ * Upload MP3 audio buffer to HeyGen asset storage.
+ * @param {ArrayBuffer} buffer    Raw MP3 audio bytes
  * @param {string} apiKey
- * @returns {Promise<string>}   Hedra asset ID
- * @throws {Error}  Hedra upload error with status and response preview
+ * @returns {Promise<string>}     HeyGen asset ID
+ * @throws {Error}
  */
-export async function hedraUploadAsset(buffer, contentType, fileName, assetType, apiKey) {
-  const jsonHeaders = { 'X-API-Key': apiKey, 'Content-Type': 'application/json' };
-
-  // Step 1: Create asset record
-  let createResp;
+export async function heygenUploadAudio(buffer, apiKey) {
+  let response;
   try {
-    createResp = await fetch(`${HEDRA_BASE}/assets`, {
+    response = await fetch(`${HEYGEN_UPLOAD_BASE}/v1/asset`, {
       method: 'POST',
-      headers: jsonHeaders,
-      body: JSON.stringify({ name: fileName, type: assetType }),
+      headers: {
+        'X-API-KEY': apiKey,
+        'Content-Type': 'audio/mpeg',
+      },
+      body: buffer,
     });
   } catch (e) {
-    throw new Error(`Hedra create asset request failed: ${e.message}`);
+    throw new Error(`HeyGen upload request failed: ${e.message}`);
   }
 
-  if (!createResp.ok) {
-    const err = await createResp.text().catch(() => '');
-    throw new Error(`Hedra create asset error ${createResp.status}: ${err.substring(0, 200)}`);
+  if (!response.ok) {
+    const err = await response.text().catch(() => '');
+    throw new Error(`HeyGen upload error ${response.status}: ${err.substring(0, 200)}`);
   }
 
-  const createData = await createResp.json();
-  if (!createData.id) {
-    throw new Error('Hedra create asset succeeded but no ID returned');
-  }
-  const assetId = createData.id;
-
-  // Step 2: Upload file bytes
-  const formData = new FormData();
-  formData.append('file', new Blob([buffer], { type: contentType }), fileName);
-
-  let uploadResp;
-  try {
-    uploadResp = await fetch(`${HEDRA_BASE}/assets/${assetId}/upload`, {
-      method: 'POST',
-      headers: { 'X-API-Key': apiKey },
-      // Note: no Content-Type — FormData sets it automatically with boundary
-      body: formData,
-    });
-  } catch (e) {
-    throw new Error(`Hedra upload file request failed: ${e.message}`);
-  }
-
-  if (!uploadResp.ok) {
-    const err = await uploadResp.text().catch(() => '');
-    throw new Error(`Hedra upload file error ${uploadResp.status}: ${err.substring(0, 200)}`);
-  }
-
+  const data = await response.json();
+  const assetId = data?.data?.id;
+  if (!assetId) throw new Error('HeyGen upload succeeded but no asset ID returned');
   return assetId;
 }
 
 /**
- * Start a Hedra lip-sync generation job.
- * @param {string} portraitAssetId  Pre-uploaded portrait asset ID (from HEDRA_COACH_PORTRAIT_ID secret)
- * @param {string} audioAssetId     Freshly uploaded audio asset ID
+ * Start a HeyGen avatar video generation job.
+ * @param {string} avatarId     HeyGen avatar ID (from HEYGEN_AVATAR_ID secret)
+ * @param {string} audioAssetId HeyGen asset ID from heygenUploadAudio()
  * @param {string} apiKey
- * @returns {Promise<string>}       Hedra generation job ID
- * @throws {Error}  Hedra start job error with status and response preview
+ * @returns {Promise<string>}   HeyGen video ID
+ * @throws {Error}
  */
-export async function hedraStartJob(portraitAssetId, audioAssetId, apiKey) {
+export async function heygenStartJob(avatarId, audioAssetId, apiKey) {
   const body = {
-    type: 'video',
-    ai_model_id: HEDRA_CHARACTER_3,
-    start_keyframe_id: portraitAssetId,
-    audio_id: audioAssetId,
-    generated_video_inputs: {
-      text_prompt: 'Natural speaking movement, professional career coaching, subtle hand gestures',
-      ai_model_id: HEDRA_CHARACTER_3,
-      resolution: '540p',
-      aspect_ratio: '9:16',
-    },
+    video_inputs: [
+      {
+        character: {
+          type: 'avatar',
+          avatar_id: avatarId,
+          avatar_style: 'normal',
+        },
+        voice: {
+          type: 'audio',
+          audio_asset_id: audioAssetId,
+        },
+        background: {
+          type: 'color',
+          value: '#1a1a2e',
+        },
+      },
+    ],
+    dimension: { width: 720, height: 1280 },
   };
 
   let response;
   try {
-    response = await fetch(`${HEDRA_BASE}/generations`, {
+    response = await fetch(`${HEYGEN_API_BASE}/v2/video/generate`, {
       method: 'POST',
       headers: {
-        'X-API-Key': apiKey,
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
     });
   } catch (e) {
-    throw new Error(`Hedra start job request failed: ${e.message}`);
+    throw new Error(`HeyGen start job request failed: ${e.message}`);
   }
 
   if (!response.ok) {
     const err = await response.text().catch(() => '');
-    throw new Error(`Hedra start job error ${response.status}: ${err.substring(0, 200)}`);
+    throw new Error(`HeyGen start job error ${response.status}: ${err.substring(0, 200)}`);
   }
 
   const data = await response.json();
-  if (!data.id) {
-    throw new Error('Hedra start job succeeded but no generation ID returned');
-  }
-
-  return data.id;
+  const videoId = data?.data?.video_id;
+  if (!videoId) throw new Error('HeyGen start job succeeded but no video ID returned');
+  return videoId;
 }
 
 /**
- * Get the current status of a Hedra generation job.
- * @param {string} hedraJobId
+ * Get the current status of a HeyGen video generation job.
+ * @param {string} videoId
  * @param {string} apiKey
  * @returns {Promise<{status: string, videoUrl: string|null}>}
- *   status: 'complete' | 'error' | 'pending' | 'processing' (or other Hedra status strings)
- *   videoUrl: URL when status is 'complete', null otherwise
- * @throws {Error}  Hedra status error with status and response preview
+ *   status: 'completed' | 'failed' | 'pending' | 'processing'
+ *   videoUrl: URL when status is 'completed', null otherwise
+ * @throws {Error}
  */
-export async function hedraGetStatus(hedraJobId, apiKey) {
+export async function heygenGetStatus(videoId, apiKey) {
   let response;
   try {
-    response = await fetch(`${HEDRA_BASE}/generations/${hedraJobId}/status`, {
-      headers: { 'X-API-Key': apiKey },
+    response = await fetch(`${HEYGEN_API_BASE}/v1/video_status.get?video_id=${encodeURIComponent(videoId)}`, {
+      headers: { 'x-api-key': apiKey },
     });
   } catch (e) {
-    throw new Error(`Hedra status request failed: ${e.message}`);
+    throw new Error(`HeyGen status request failed: ${e.message}`);
   }
 
   if (!response.ok) {
     const err = await response.text().catch(() => '');
-    throw new Error(`Hedra status error ${response.status}: ${err.substring(0, 200)}`);
+    throw new Error(`HeyGen status error ${response.status}: ${err.substring(0, 200)}`);
   }
 
   const data = await response.json();
-  if (!data.status) {
-    throw new Error('Hedra status response missing status field');
-  }
+  const status   = data?.data?.status;
+  const videoUrl = data?.data?.video_url || null;
 
-  // Video URL can appear at the top level or nested in batch_results
-  const videoUrl = data.url || data.video_url
-    || data.batch_results?.[0]?.url
-    || data.batch_results?.[0]?.video_url
-    || null;
-
-  return { status: data.status, videoUrl };
+  if (!status) throw new Error('HeyGen status response missing status field');
+  return { status, videoUrl };
 }
