@@ -1,0 +1,56 @@
+[
+  {
+    "event": "resume_uploaded",
+    "description": "User selects or drops a resume file on the tool page",
+    "file": "public/tool/index.html",
+    "properties": ["file_type"]
+  },
+  {
+    "event": "scan_submitted",
+    "description": "User clicks Analyze Resume to start a scan",
+    "file": "public/tool/index.html",
+    "properties": ["has_job_description", "plan"]
+  },
+  {
+    "event": "scan_completed",
+    "description": "Scan results rendered successfully on the tool page",
+    "file": "public/tool/index.html",
+    "properties": ["score", "grade", "plan"]
+  },
+  {
+    "event": "paywall_shown",
+    "description": "Paywall modal opened (user hit a gated feature)",
+    "file": "public/tool/index.html",
+    "properties": ["trigger"]
+  },
+  {
+    "event": "upgrade_clicked",
+    "description": "User selects a paid plan in the paywall modal",
+    "file": "public/tool/index.html",
+    "properties": ["plan"]
+  },
+  {
+    "event": "rewrite_requested",
+    "description": "Paid user clicks Download Optimized Resume",
+    "file": "public/tool/index.html",
+    "properties": ["plan"]
+  },
+  {
+    "event": "video_coaching_clicked",
+    "description": "User clicks the AI Video Coaching CTA",
+    "file": "public/tool/index.html",
+    "properties": []
+  },
+  {
+    "event": "payment_completed",
+    "description": "Stripe checkout.session.completed webhook received and token issued",
+    "file": "functions/stripe-webhook.js",
+    "properties": ["plan", "amount_cents"]
+  },
+  {
+    "event": "subscription_cancelled",
+    "description": "Stripe customer.subscription.deleted webhook received",
+    "file": "functions/stripe-webhook.js",
+    "properties": []
+  }
+]
