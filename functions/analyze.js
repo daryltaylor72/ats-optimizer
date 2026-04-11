@@ -103,6 +103,7 @@ export async function onRequestPost(context) {
 
   // ── Provider cascade: Anthropic (Opus→Sonnet→Haiku) then Gemini ─────────────
   let rawText = null;
+  let usedModel = 'unknown';
 
   // 1. Try Anthropic models in sequence
   const ANTHROPIC_MODELS = [
@@ -146,6 +147,7 @@ export async function onRequestPost(context) {
       // Success
       const claudeData = await claudeResponse.json();
       rawText = claudeData.content?.[0]?.text || '';
+      usedModel = model;
       break;
     }
     if (rawText !== null) break; // got a result — stop trying models
@@ -201,6 +203,7 @@ export async function onRequestPost(context) {
         if (!geminiResponse.ok) { geminiOverloaded = true; break; }
         const geminiData = await geminiResponse.json();
         rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        usedModel = geminiModel;
         break;
       }
       if (rawText !== null) break;
@@ -237,6 +240,8 @@ export async function onRequestPost(context) {
     }
   }
 
+  result.model = usedModel;
+
   // Send results email + capture lead
   const isPaidUser = userPlan !== 'free';
   if (email) {
@@ -252,6 +257,23 @@ export async function onRequestPost(context) {
       catch (e) { console.error('[analyze] Failed to capture Airtable lead:', e); }
     } else {
       console.error('[analyze] AIRTABLE_ATS_SECRET_KEY not set');
+    }
+    // Discord scan notification (best-effort)
+    if (env.DISCORD_WEBHOOK_URL) {
+      try {
+        const repeat = await isRepeatUser(kv, email);
+        await sendDiscordNotification(env.DISCORD_WEBHOOK_URL, {
+          email,
+          plan: userPlan,
+          score: result.score,
+          grade: result.grade,
+          jobMatch: isJobMatch,
+          model: result.model,
+          isRepeat: repeat,
+        });
+      } catch (e) {
+        console.warn('[analyze] Discord notification failed:', e.message);
+      }
     }
   }
 
@@ -372,6 +394,57 @@ async function captureAirtableLead(apiKey, { email, plan, score, grade, source, 
     const err = await atRes.text();
     throw new Error(`Airtable ${atRes.status}: ${err}`);
   }
+}
+
+async function hashEmail(email) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(email.toLowerCase().trim());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function isRepeatUser(kv, email) {
+  if (!kv || !email) return false;
+  const hash = await hashEmail(email);
+  const key = `seen:${hash}`;
+  const existing = await kv.get(key);
+  if (!existing) {
+    await kv.put(key, '1', { expirationTtl: 90 * 24 * 3600 });
+    return false;
+  }
+  return true;
+}
+
+async function sendDiscordNotification(webhookUrl, { email, plan, score, grade, jobMatch, model, isRepeat }) {
+  const gradeEmoji = { A: '🟢', B: '🔵', C: '🟡', D: '🟠', F: '🔴' }[grade] || '⚪';
+  const timestamp = new Date().toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+  const airtableUrl = 'https://airtable.com/appJkfL4EoaSxq8GC/tblxDbnavxmdWozc5';
+
+  const embed = {
+    title: `${gradeEmoji} New Scan — Grade ${grade} | Score ${score}/100`,
+    color: score >= 80 ? 0x22c55e : score >= 60 ? 0xf59e0b : 0xef4444,
+    fields: [
+      { name: 'Plan',        value: plan || 'free',                        inline: true },
+      { name: 'Email',       value: email || 'anonymous',                  inline: true },
+      { name: 'Job Match',   value: jobMatch ? '✅ yes' : '❌ no',          inline: true },
+      { name: 'Model',       value: model || 'unknown',                    inline: true },
+      { name: 'Repeat User', value: isRepeat ? '✅ yes' : '🆕 first scan', inline: true },
+      { name: 'Time (ET)',   value: timestamp,                             inline: true },
+    ],
+    footer: { text: `View in Airtable → ${airtableUrl}` },
+  };
+
+  const res = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ embeds: [embed] }),
+  });
+  if (!res.ok) throw new Error(`Discord webhook ${res.status}: ${await res.text()}`);
 }
 
 function buildSystemPrompt() {
