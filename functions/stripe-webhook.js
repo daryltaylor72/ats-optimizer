@@ -87,7 +87,7 @@ export async function onRequestPost(context) {
         break;
 
       case 'customer.subscription.deleted':
-        response = await handleSubscriptionDeleted(event.data.object, kv);
+        response = await handleSubscriptionDeleted(event.data.object, kv, env);
         break;
 
       default:
@@ -166,6 +166,7 @@ async function handleCheckoutCompleted(session, kv, env) {
   }
 
   console.log('[stripe-webhook] Token issued via webhook:', tokenData.token, 'plan:', planKey);
+  await postHogCapture(env, 'payment_completed', { plan: planKey, amount_cents: session.amount_total || 0 });
   return json({ received: true, token_issued: tokenData.token, plan: planKey }, 200);
 }
 
@@ -232,7 +233,7 @@ async function handleInvoicePaid(invoice, kv, env) {
  * Fires when a subscription is cancelled (by user, failed payment, or admin).
  * Marks the token as cancelled and reduces scans to 0 so further rewrites are blocked.
  */
-async function handleSubscriptionDeleted(subscription, kv) {
+async function handleSubscriptionDeleted(subscription, kv, env) {
   const customerEmail = subscription.customer_email ||
     subscription.metadata?.customer_email || null;
 
@@ -263,6 +264,7 @@ async function handleSubscriptionDeleted(subscription, kv) {
   await kv.put(`token:${tokenRef}`, JSON.stringify(tokenData), { expirationTtl: auditTtl });
 
   console.log('[stripe-webhook] Pro token cancelled:', tokenRef, 'subscription:', subscription.id);
+  await postHogCapture(env, 'subscription_cancelled', {});
   return json({ received: true, cancelled: true, token: tokenRef }, 200);
 }
 
@@ -411,4 +413,25 @@ function isMutatingStripeEvent(eventType) {
 
 function getProcessedEventKey(eventId) {
   return `stripe:event:${eventId}`;
+}
+
+async function postHogCapture(env, event, properties = {}) {
+  const apiKey = env.POSTHOG_PROJECT_TOKEN;
+  const host   = env.POSTHOG_HOST;
+  if (!apiKey || !host) return;
+  try {
+    await fetch(`${host}/capture/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        event,
+        distinct_id: 'server',
+        properties: { ...properties, $lib: 'cloudflare-function' },
+        timestamp: new Date().toISOString(),
+      }),
+    });
+  } catch (e) {
+    console.warn('[stripe-webhook] PostHog capture failed:', e.message);
+  }
 }
