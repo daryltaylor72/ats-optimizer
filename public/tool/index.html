@@ -512,6 +512,7 @@
       .paywall-card {
         padding: 24px 20px;
         border-radius: 16px;
+        max-height: calc(100vh - 32px);
       }
       .paywall-icon {
         font-size: 32px;
@@ -609,14 +610,19 @@
     .paywall-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
-      z-index: 200; align-items: center; justify-content: center;
+      z-index: 200; align-items: flex-start; justify-content: center;
       padding: 24px;
+      overflow-y: auto;
     }
     .paywall-overlay.active { display: flex; }
     .paywall-card {
       background: var(--surface); border: 1px solid var(--border2);
       border-radius: 20px; padding: 40px;
       max-width: 420px; width: 100%;
+      max-height: calc(100vh - 48px);
+      margin: auto 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       text-align: center; position: relative;
     }
     .paywall-card::before {
