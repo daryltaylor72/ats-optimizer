@@ -139,12 +139,6 @@
     }
     .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
     .nav-links { display: flex; align-items: center; gap: 8px; }
-    .theme-toggle { cursor: pointer; font-size: 16px; line-height: 1; border: 1px solid var(--border2); background: transparent; color: var(--text2); border-radius: 8px; padding: 7px 12px; }
-    .theme-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
-    [data-theme="light"] .theme-toggle:hover { border-color: rgba(0,0,0,0.25); }
-    .theme-icon-light { display: none; }
-    [data-theme="light"] .theme-icon-dark { display: none; }
-    [data-theme="light"] .theme-icon-light { display: inline; }
 
     /* Light theme overrides */
     [data-theme="light"] body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
@@ -578,10 +572,6 @@
       <span class="nav-logo-text">ATScore</span>
     </a>
     <div class="nav-links">
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-        <span class="theme-icon-dark">&#9790;</span>
-        <span class="theme-icon-light">&#9788;</span>
-      </button>
       <a href="/tool" class="nav-cta">Try Free Scan</a>
     </div>
   </nav>
@@ -727,24 +717,13 @@
   </footer>
 
   <script>
-    // Theme toggle
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-    }
+    // Theme: follow system preference
     (function() {
-      const saved = localStorage.getItem('theme');
-      if (saved) {
-        document.documentElement.setAttribute('data-theme', saved);
-      } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      if (window.matchMedia('(prefers-color-scheme: light)').matches) {
         document.documentElement.setAttribute('data-theme', 'light');
       }
       window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
-        if (!localStorage.getItem('theme')) {
-          document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
-        }
+        document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
       });
     })();
 

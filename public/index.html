@@ -568,7 +568,7 @@
       font-family: var(--serif); font-size: 18px; color: var(--text2);
       text-decoration: none;
     }
-    .footer-links { display: flex; gap: 24px; }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
     .footer-links a {
       font-size: 13px; color: var(--text3); text-decoration: none;
       transition: color 0.2s;
@@ -577,12 +577,6 @@
     .footer-copy { font-size: 12px; color: var(--text3); }
 
     /* ── Theme Toggle ── */
-    .theme-toggle { cursor: pointer; font-size: 16px; line-height: 1; border: 1px solid var(--border2); background: transparent; color: var(--text2); border-radius: 8px; padding: 7px 12px; }
-    .theme-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
-    [data-theme="light"] .theme-toggle:hover { border-color: rgba(0,0,0,0.25); }
-    .theme-icon-light { display: none; }
-    [data-theme="light"] .theme-icon-dark { display: none; }
-    [data-theme="light"] .theme-icon-light { display: inline; }
 
     /* ── Light Mode Overrides ── */
     [data-theme="light"] body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
@@ -634,6 +628,12 @@
       nav { padding: 12px 16px; }
       .nav-logo-text { font-size: 18px; }
       .btn-accent { font-size: 12px; padding: 7px 14px; white-space: nowrap; }
+
+      /* Footer mobile */
+      .footer-inner { flex-direction: column; align-items: center; text-align: center; gap: 20px; }
+      .footer-links { justify-content: center; gap: 16px 20px; }
+      .footer-links a { font-size: 13px; }
+      footer { padding: 32px 16px; }
     }
   </style>
 
@@ -767,10 +767,6 @@
       <span class="nav-logo-text">ATScore</span>
     </a>
     <div class="nav-links">
-      <button class="btn-ghost nav-keep theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-        <span class="theme-icon-dark">&#9790;</span>
-        <span class="theme-icon-light">&#9728;</span>
-      </button>
       <div class="nav-dropdown">
         <button class="nav-dropdown-toggle btn-ghost" type="button">Tools</button>
         <div class="nav-dropdown-menu">
@@ -1277,23 +1273,12 @@
 
   <script>
     // Theme toggle
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-    }
     (function() {
-      const saved = localStorage.getItem('theme');
-      if (saved) {
-        document.documentElement.setAttribute('data-theme', saved);
-      } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      if (window.matchMedia('(prefers-color-scheme: light)').matches) {
         document.documentElement.setAttribute('data-theme', 'light');
       }
       window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
-        if (!localStorage.getItem('theme')) {
-          document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
-        }
+        document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
       });
     })();
 

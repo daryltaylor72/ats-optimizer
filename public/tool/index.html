@@ -951,12 +951,6 @@
       transition: all 0.2s;
     }
     .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
-    .theme-toggle { cursor: pointer; font-size: 16px; line-height: 1; border: 1px solid var(--border2); background: transparent; color: var(--text2); border-radius: 8px; padding: 7px 12px; }
-    .theme-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
-    [data-theme="light"] .theme-toggle:hover { border-color: rgba(0,0,0,0.25); }
-    .theme-icon-light { display: none; }
-    [data-theme="light"] .theme-icon-dark { display: none; }
-    [data-theme="light"] .theme-icon-light { display: inline; }
 
     /* ── Light Mode Overrides ── */
     [data-theme="light"] .header { border-bottom-color: rgba(0,0,0,0.08); }
@@ -1141,10 +1135,6 @@
     <h1>ATScore Scanner</h1>
     <p>Score, diagnose, and rewrite your resume for applicant tracking systems</p>
   </div>
-  <button class="btn-ghost theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" style="margin-left:auto;margin-right:8px;">
-    <span class="theme-icon-dark">&#9790;</span>
-    <span class="theme-icon-light">&#9728;</span>
-  </button>
   <a href="/account/" class="home-link" id="toolAccountLink" style="margin-left:0;margin-right:8px;">Account</a>
   <a href="/" class="home-link" style="margin-left:0;">← Home</a>
 </div>
@@ -1491,23 +1481,12 @@
 
 <script>
   // Theme toggle
-  function toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-  }
   (function() {
-    const saved = localStorage.getItem('theme');
-    if (saved) {
-      document.documentElement.setAttribute('data-theme', saved);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    if (window.matchMedia('(prefers-color-scheme: light)').matches) {
       document.documentElement.setAttribute('data-theme', 'light');
     }
     window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
-      if (!localStorage.getItem('theme')) {
-        document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
-      }
+      document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
     });
   })();
 
