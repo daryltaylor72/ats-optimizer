@@ -43,32 +43,90 @@ export function generateToken() {
 export async function issueToken(kv, planKey, sessionId, customerEmail) {
   const scans        = PLAN_SCANS[planKey] ?? 1;
   const videoReviews = PLAN_VIDEO_REVIEWS[planKey] ?? 0;
-  const token        = generateToken();
   const ttlDays      = planKey === 'pro' ? 30 : 365;
-  const expiresAt    = new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000).toISOString();
-  const ttlSecs      = ttlDays * 24 * 3600;
+  const nextExpiresAt = new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000).toISOString();
+  const nextTtlSecs   = ttlDays * 24 * 3600;
+  const normalizedEmail = customerEmail ? customerEmail.toLowerCase() : null;
 
+  // If this email already has an active token, merge new entitlements into it so
+  // returning buyers don't lose access to unused scans by overwriting email->token.
+  if (normalizedEmail) {
+    const existingToken = await kv.get(`email:${normalizedEmail}`);
+    if (existingToken) {
+      const raw = await kv.get(`token:${existingToken}`);
+      if (raw) {
+        try {
+          const existing = JSON.parse(raw);
+          const merged = mergeTokenEntitlements(existing, planKey, scans, videoReviews, sessionId, nextExpiresAt);
+          const mergedTtl = ttlSecondsUntil(merged.expires_at);
+          await Promise.all([
+            kv.put(`token:${existingToken}`, JSON.stringify(merged), { expirationTtl: mergedTtl }),
+            kv.put(`session:${sessionId}`, JSON.stringify(merged), { expirationTtl: mergedTtl }),
+            kv.put(`email:${normalizedEmail}`, existingToken, { expirationTtl: mergedTtl }),
+          ]);
+          return merged;
+        } catch {
+          // Fall through to issuing a new token if the existing record is corrupt.
+        }
+      }
+    }
+  }
+
+  const token = generateToken();
   const tokenData = {
     token,
     plan:                    planKey,
     scans_remaining:         scans,
     video_reviews_remaining: videoReviews,
     created_at:              new Date().toISOString(),
-    expires_at:              expiresAt,
+    expires_at:              nextExpiresAt,
     session_id:              sessionId,
-    email:                   customerEmail || null,
+    email:                   normalizedEmail,
   };
 
   const writes = [
-    kv.put(`token:${token}`,        JSON.stringify(tokenData), { expirationTtl: ttlSecs }),
-    kv.put(`session:${sessionId}`,  JSON.stringify(tokenData), { expirationTtl: ttlSecs }),
+    kv.put(`token:${token}`, JSON.stringify(tokenData), { expirationTtl: nextTtlSecs }),
+    kv.put(`session:${sessionId}`, JSON.stringify(tokenData), { expirationTtl: nextTtlSecs }),
   ];
-  if (customerEmail) {
-    writes.push(kv.put(`email:${customerEmail.toLowerCase()}`, token, { expirationTtl: ttlSecs }));
+  if (normalizedEmail) {
+    writes.push(kv.put(`email:${normalizedEmail}`, token, { expirationTtl: nextTtlSecs }));
   }
   await Promise.all(writes);
-
   return tokenData;
+}
+
+function mergeTokenEntitlements(existing, newPlan, scans, videoReviews, sessionId, nextExpiresAt) {
+  const merged = { ...existing };
+  const existingExp = Date.parse(existing.expires_at || 0);
+  const nextExp = Date.parse(nextExpiresAt);
+  const effectiveExp = Number.isFinite(existingExp) && existingExp > nextExp ? existing.expires_at : nextExpiresAt;
+
+  merged.plan = mergedPlanKey(existing.plan, newPlan, existing.scans_remaining, scans);
+  merged.scans_remaining = mergeScanCount(existing.scans_remaining || 0, newPlan, scans);
+  merged.video_reviews_remaining = (existing.video_reviews_remaining || 0) + videoReviews;
+  merged.expires_at = effectiveExp;
+  merged.session_id = sessionId;
+  merged.email = existing.email || null;
+  merged.last_purchase_at = new Date().toISOString();
+
+  return merged;
+}
+
+function mergeScanCount(existingCount, newPlan, scansToAdd) {
+  if (existingCount >= 9000 || newPlan === 'pro') return 9999;
+  return existingCount + scansToAdd;
+}
+
+function mergedPlanKey(existingPlan, newPlan, existingCount, scansToAdd) {
+  if (existingPlan === 'pro' || newPlan === 'pro') return 'pro';
+  if (newPlan === 'video') return existingPlan || 'video';
+  if ((existingCount || 0) + scansToAdd > 1) return 'starter';
+  return 'single';
+}
+
+function ttlSecondsUntil(isoString) {
+  const ms = Date.parse(isoString) - Date.now();
+  return Math.max(60, Math.ceil(ms / 1000));
 }
 
 /**

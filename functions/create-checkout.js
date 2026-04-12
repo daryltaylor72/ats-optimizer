@@ -22,6 +22,7 @@ export async function onRequestPost(context) {
 
   const plan = PLANS[body.plan];
   if (!plan) return json({ error: 'Invalid plan' }, 400);
+  const email = (body.email || '').trim().toLowerCase();
 
   const origin = new URL(request.url).origin;
   const successUrl = `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${body.plan}`;
@@ -44,6 +45,9 @@ export async function onRequestPost(context) {
 
   if (plan.mode === 'subscription') {
     params.set('line_items[0][price_data][recurring][interval]', 'month');
+  }
+  if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    params.set('customer_email', email);
   }
 
   const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {

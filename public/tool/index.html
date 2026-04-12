@@ -1097,16 +1097,45 @@
     </div>
   </div>
 
+  <div style="text-align:center;margin-bottom:16px;">
+    <button onclick="showAuthPanel()" style="background:none;border:none;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;">Sign in to view saved scans</button>
+  </div>
+  <div id="authPanel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="font-size:14px;font-weight:600;margin:0;">Sign In</h3>
+      <button onclick="hideAuthPanel()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0;line-height:1;">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 16px;">No password required. Enter your email and we'll send you a sign-in link to view any scans or credits tied to that address.</p>
+    <div style="display:flex;gap:10px;">
+      <input type="email" id="authEmail" placeholder="your@email.com" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font:13px/1.5 -apple-system,sans-serif;padding:10px 12px;" />
+      <button id="authBtn" onclick="sendSignInLink()" style="padding:10px 20px;white-space:nowrap;">Email Sign-In Link</button>
+    </div>
+    <p id="authMsg" style="font-size:12px;margin:10px 0 0;min-height:18px;"></p>
+  </div>
+
+  <div id="accountPanel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <p style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Account</p>
+        <h3 style="font-size:16px;font-weight:600;margin:0;" id="accountEmail">Signed in</h3>
+      </div>
+      <button onclick="signOutAccount()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;font-weight:600;padding:8px 14px;cursor:pointer;">Sign Out</button>
+    </div>
+    <p id="accountSummary" style="font-size:13px;color:var(--text2);margin:0 0 14px;"></p>
+    <div id="accountEntitlements" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;"></div>
+    <p id="accountHelp" style="font-size:12px;color:var(--text3);margin:8px 0 0;"></p>
+  </div>
+
   <!-- Recovery Panel -->
   <div style="text-align:center;margin-bottom:16px;">
-    <button onclick="showRecovery()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">Already purchased? Recover your scans</button>
+    <button onclick="showRecovery()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">Need a direct recovery link instead?</button>
   </div>
   <div id="recoveryPanel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <h3 style="font-size:14px;font-weight:600;margin:0;">Recover Access</h3>
       <button onclick="hideRecovery()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0;line-height:1;">✕</button>
     </div>
-    <p style="font-size:13px;color:var(--text2);margin:0 0 16px;">Enter the email you used when you purchased and we'll send you a link to restore your scans.</p>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 16px;">Enter the email you used when you purchased and we'll send you a one-click link to restore your scans on this device.</p>
     <div style="display:flex;gap:10px;">
       <input type="email" id="recoveryEmail" placeholder="your@email.com" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font:13px/1.5 -apple-system,sans-serif;padding:10px 12px;" />
       <button id="recoveryBtn" onclick="sendRecovery()" style="padding:10px 20px;white-space:nowrap;">Send Recovery Link</button>
@@ -1312,14 +1341,17 @@
   const modeBadge = document.getElementById('modeBadge');
   const jdInput = document.getElementById('jdInput');
   const emailInput = document.getElementById('emailInput');
+  const authEmail = document.getElementById('authEmail');
 
   let selectedFile = null;
   let lastResumeText = null;  // stored after successful rewrite for Word/plain-text download
   let currentToken = localStorage.getItem('ats_token');
+  let signedInEmail = null;
 
   // Restore saved email
   const savedEmail = localStorage.getItem('ats_email');
   if (savedEmail) emailInput.value = savedEmail;
+  if (savedEmail && authEmail) authEmail.value = savedEmail;
 
   function updateAnalyzeBtn() {
     analyzeBtn.disabled = !selectedFile;
@@ -1327,6 +1359,7 @@
 
   emailInput.addEventListener('input', () => {
     localStorage.setItem('ats_email', emailInput.value.trim());
+    if (authEmail && !authEmail.value) authEmail.value = emailInput.value.trim();
     updateAnalyzeBtn();
   });
 
@@ -1801,10 +1834,11 @@
   async function checkout(plan) {
     posthog.capture('checkout_started', { plan });
     try {
+      const checkoutEmail = emailInput.value.trim() || localStorage.getItem('ats_email') || '';
       const res = await fetch('/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, email: checkoutEmail }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || 'Checkout failed');
@@ -1828,27 +1862,160 @@
     // Restore token from URL param (magic link from receipt/recovery email)
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
+    const signedIn = urlParams.get('signed_in');
+    const signInState = urlParams.get('signin');
     if (urlToken) {
       localStorage.setItem('ats_token', urlToken);
-      // Clean the token out of the URL without reloading
-      window.history.replaceState({}, '', window.location.pathname);
     }
 
     updateAnalyzeBtn();
-    // Fetch live token status from server — overrides any stale localStorage values
-    const storedToken = localStorage.getItem('ats_token');
-    if (storedToken) fetchTokenStatus(storedToken);
-    else {
-      const scans = localStorage.getItem('ats_scans');
-      if (scans !== null) updateScansDisplay(parseInt(scans));
-    }
+    fetchAccountSession().finally(() => {
+      const storedToken = localStorage.getItem('ats_token');
+      if (storedToken) fetchTokenStatus(storedToken);
+      else {
+        const scans = localStorage.getItem('ats_scans');
+        if (scans !== null) updateScansDisplay(parseInt(scans));
+      }
+    });
 
     // Auto-open recovery panel if linked from "Restore Access"
     if (window.location.hash === '#recover') {
-      window.history.replaceState({}, '', window.location.pathname);
       showRecovery();
     }
+
+    if (signedIn === '1') {
+      document.getElementById('authMsg').textContent = 'Signed in. Any scans tied to this email will appear below automatically.';
+      document.getElementById('authMsg').style.color = 'var(--green)';
+    } else if (signInState === 'expired') {
+      document.getElementById('authMsg').textContent = 'That sign-in link expired. Request a new one below.';
+      document.getElementById('authMsg').style.color = 'var(--red)';
+      showAuthPanel();
+    } else if (signInState === 'invalid' || signInState === 'unavailable') {
+      document.getElementById('authMsg').textContent = 'Sign-in is unavailable right now. Please try again or use the recovery link below.';
+      document.getElementById('authMsg').style.color = 'var(--red)';
+      showAuthPanel();
+    }
+
+    if (urlToken || signedIn || signInState) {
+      window.history.replaceState({}, '', `${window.location.pathname}${window.location.hash}`);
+    }
   });
+
+  function showAuthPanel() {
+    document.getElementById('authPanel').style.display = 'block';
+    document.getElementById('authEmail').focus();
+  }
+  function hideAuthPanel() {
+    document.getElementById('authPanel').style.display = 'none';
+  }
+
+  async function sendSignInLink() {
+    const email = authEmail.value.trim() || emailInput.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('authMsg').textContent = 'Please enter a valid email.';
+      document.getElementById('authMsg').style.color = 'var(--red)';
+      return;
+    }
+
+    const btn = document.getElementById('authBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    try {
+      await fetch('/auth-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      localStorage.setItem('ats_email', email);
+      emailInput.value = email;
+      authEmail.value = email;
+      document.getElementById('authMsg').textContent = 'Check your inbox — we sent a sign-in link.';
+      document.getElementById('authMsg').style.color = 'var(--green)';
+      btn.textContent = 'Sent ✓';
+    } catch {
+      document.getElementById('authMsg').textContent = 'Something went wrong. Please try again.';
+      document.getElementById('authMsg').style.color = 'var(--red)';
+      btn.disabled = false;
+      btn.textContent = 'Email Sign-In Link';
+    }
+  }
+
+  async function fetchAccountSession() {
+    try {
+      const res = await fetch('/auth-session');
+      const data = await res.json();
+      if (!res.ok || !data.authenticated) {
+        renderSignedOutAccount();
+        return null;
+      }
+
+      signedInEmail = data.email;
+      localStorage.setItem('ats_email', data.email);
+      emailInput.value = data.email;
+      authEmail.value = data.email;
+
+      if (data.token) {
+        currentToken = data.token;
+        localStorage.setItem('ats_token', data.token);
+        localStorage.setItem('ats_scans', data.scans_remaining);
+      } else {
+        currentToken = null;
+        localStorage.removeItem('ats_token');
+        localStorage.removeItem('ats_scans');
+      }
+
+      renderSignedInAccount(data);
+      return data;
+    } catch {
+      renderSignedOutAccount();
+      return null;
+    }
+  }
+
+  function renderSignedOutAccount() {
+    signedInEmail = null;
+    document.getElementById('accountPanel').style.display = 'none';
+  }
+
+  function renderSignedInAccount(data) {
+    const panel = document.getElementById('accountPanel');
+    const entitlements = document.getElementById('accountEntitlements');
+    const summary = document.getElementById('accountSummary');
+    const help = document.getElementById('accountHelp');
+    document.getElementById('accountEmail').textContent = data.email;
+
+    if (data.has_token) {
+      const scansText = data.is_unlimited ? 'Unlimited scans' : `${data.scans_remaining} scan${data.scans_remaining === 1 ? '' : 's'} remaining`;
+      const expiresText = data.expires_at ? new Date(data.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+      summary.textContent = `${data.plan_label} linked to this email. ${scansText}${expiresText ? ` · expires ${expiresText}` : ''}`;
+      entitlements.innerHTML = `
+        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-size:12px;color:var(--text2);"><strong style="color:var(--text);display:block;margin-bottom:4px;">Plan</strong>${data.plan_label}</div>
+        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-size:12px;color:var(--text2);"><strong style="color:var(--text);display:block;margin-bottom:4px;">Scans</strong>${scansText}</div>
+        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-size:12px;color:var(--text2);"><strong style="color:var(--text);display:block;margin-bottom:4px;">Video Reviews</strong>${data.video_reviews_remaining || 0} remaining</div>
+      `;
+      help.textContent = 'Any new purchases made with this email will show up here automatically.';
+    } else {
+      summary.textContent = 'Signed in, but we did not find an active paid scan balance for this email yet.';
+      entitlements.innerHTML = '';
+      help.textContent = 'If you bought scans before, use the direct recovery link below or make sure you sign in with the same purchase email.';
+    }
+
+    panel.style.display = 'block';
+    hideAuthPanel();
+  }
+
+  async function signOutAccount() {
+    try { await fetch('/auth-logout', { method: 'POST' }); } catch {}
+    localStorage.removeItem('ats_token');
+    localStorage.removeItem('ats_scans');
+    currentToken = null;
+    renderSignedOutAccount();
+    document.getElementById('tokenStatus').classList.remove('show');
+    document.getElementById('authMsg').textContent = 'Signed out.';
+    document.getElementById('authMsg').style.color = 'var(--text3)';
+    showAuthPanel();
+  }
 
   // ── Access Recovery ──
   function showRecovery() {
