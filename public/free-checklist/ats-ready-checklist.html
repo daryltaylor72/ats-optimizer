@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATS-Ready Resume Checklist — 23 Items | ATScore</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --surface: #f5f6fa;
+      --surface2: #ecedf3;
+      --border: rgba(0,0,0,0.08);
+      --border2: rgba(0,0,0,0.12);
+      --text: #1a1b2e;
+      --text2: #5a6080;
+      --text3: #8892aa;
+      --accent: #6c63ff;
+      --accent-dim: rgba(108,99,255,0.08);
+      --red: #dc2626;
+      --red-dim: rgba(220,38,38,0.06);
+      --amber: #d97706;
+      --amber-dim: rgba(217,119,6,0.06);
+      --green: #16a34a;
+      --green-dim: rgba(22,163,74,0.06);
+      --serif: 'DM Serif Display', Georgia, serif;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Nunito Sans', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      text-align: center;
+      padding-bottom: 40px;
+      margin-bottom: 40px;
+      border-bottom: 2px solid var(--border);
+    }
+    .header-logo {
+      display: inline-flex; align-items: center; gap: 10px;
+      margin-bottom: 28px;
+    }
+    .header-logo-mark {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 16px; font-weight: 700; color: #fff;
+    }
+    .header-logo-text {
+      font-family: var(--serif); font-size: 22px; color: var(--text);
+    }
+    .header h1 {
+      font-family: var(--serif);
+      font-size: 36px; line-height: 1.15;
+      margin-bottom: 12px;
+    }
+    .header h1 em { font-style: italic; color: var(--accent); }
+    .header p {
+      font-size: 16px; color: var(--text2);
+      max-width: 520px; margin: 0 auto;
+      line-height: 1.7;
+    }
+    .header-meta {
+      margin-top: 20px;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text3); letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      margin-bottom: 48px;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 24px;
+    }
+    .section-num {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: #fff; background: var(--accent);
+      border-radius: 6px; padding: 4px 10px;
+      letter-spacing: 1px;
+    }
+    .section-title {
+      font-family: var(--serif); font-size: 24px;
+    }
+    .section-desc {
+      font-size: 14px; color: var(--text2);
+      margin-bottom: 20px; line-height: 1.7;
+      padding-left: 2px;
+    }
+
+    /* ── CHECKLIST ITEMS ── */
+    .checklist {
+      list-style: none;
+      display: flex; flex-direction: column;
+      gap: 2px;
+    }
+    .check-item {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 14px;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      align-items: start;
+    }
+    .check-box {
+      width: 22px; height: 22px;
+      border: 2px solid var(--border2);
+      border-radius: 5px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .check-content {}
+    .check-title {
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .check-detail {
+      font-size: 13px; color: var(--text2);
+      line-height: 1.6;
+    }
+    .check-tag {
+      display: inline-block;
+      font-family: var(--mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      border-radius: 4px; padding: 2px 7px;
+      margin-right: 6px;
+      position: relative; top: -1px;
+    }
+    .tag-critical { color: var(--red); background: var(--red-dim); }
+    .tag-important { color: var(--amber); background: var(--amber-dim); }
+    .tag-recommended { color: var(--green); background: var(--green-dim); }
+
+    /* ── CTA FOOTER ── */
+    .cta-footer {
+      background: var(--surface);
+      border: 2px solid var(--accent-dim);
+      border-radius: 16px;
+      padding: 36px;
+      text-align: center;
+      margin-top: 48px;
+    }
+    .cta-footer h2 {
+      font-family: var(--serif); font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .cta-footer h2 em { font-style: italic; color: var(--accent); }
+    .cta-footer p {
+      font-size: 14px; color: var(--text2);
+      margin-bottom: 20px; line-height: 1.7;
+    }
+    .cta-btn {
+      display: inline-block;
+      font-family: var(--sans); font-size: 15px; font-weight: 700;
+      color: #fff; background: var(--accent);
+      border-radius: 8px; padding: 14px 32px;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .cta-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .page-footer {
+      text-align: center;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text3);
+    }
+    .page-footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── PRINT ── */
+    @media print {
+      body { background: #fff; }
+      .page { padding: 24px 16px; max-width: 100%; }
+      .cta-footer, .page-footer { display: none; }
+      .check-item { break-inside: avoid; }
+      .section { break-inside: avoid; }
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 28px 18px 60px; }
+      .header h1 { font-size: 28px; }
+      .check-item { grid-template-columns: 26px 1fr; gap: 10px; padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">
+      <div class="header-logo-mark">A</div>
+      <span class="header-logo-text">ATScore</span>
+    </div>
+    <h1>ATS-Ready Resume Checklist<br><em>23 Items That Matter</em></h1>
+    <p>Every item on this list comes from analyzing thousands of real resume scans. These are the actual reasons applicant tracking systems filter out resumes before a human ever sees them.</p>
+    <div class="header-meta">atscore.ai &middot; 2026 edition &middot; print or save as PDF</div>
+  </div>
+
+  <!-- SECTION 1: FORMATTING & FILE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Formatting &amp; File Type</h2>
+    </div>
+    <p class="section-desc">ATS parsers read your resume as structured text, not as a visual document. Layout choices that look good to humans often break machine parsing entirely.</p>
+
+    <ul class="checklist">
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-critical">Critical</span> Use a single-column layout</div>
+          <div class="check-detail">Multi-column layouts, text boxes, and tables cause ATS parsers to scramble your content. Sections end up interleaved or missing entirely. Use a clean, top-to-bottom single-column format.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-critical">Critical</span> Submit as .docx or .pdf</div>
+          <div class="check-detail">DOCX is the safest format for ATS parsing. PDF works for most modern systems but can cause issues with older ones. Never submit .doc, .pages, .jpg, or .png files.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-critical">Critical</span> No images, graphics, or icons</div>
+          <div class="check-detail">ATS cannot read text embedded in images. This includes headshots, skill-level bar charts, star ratings, custom icons, and infographic elements. All of that content is invisible to the parser.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-important">Important</span> Use standard fonts</div>
+          <div class="check-detail">Stick to widely-supported fonts: Arial, Calibri, Cambria, Georgia, Helvetica, Times New Roman. Creative or decorative fonts can render as garbled characters in some parsers.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-important">Important</span> No headers or footers</div>
+          <div class="check-detail">Content placed in Word/PDF header and footer regions is frequently skipped by ATS parsers. Your name, contact info, and page numbers should be in the main body, not in the header/footer.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-recommended">Recommended</span> Keep it under 2 pages</div>
+          <div class="check-detail">Most ATS systems handle multi-page documents fine, but recruiters spend 6-8 seconds on initial review. Concise resumes score better on content density metrics.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-recommended">Recommended</span> Use 10-12pt font size</div>
+          <div class="check-detail">Smaller fonts don't save space in ATS parsing (it ignores visual size), but they make human review harder. Stick to 10-12pt for body text, 14-16pt for section headings.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-recommended">Recommended</span> Save with a professional filename</div>
+          <div class="check-detail">Use "FirstName-LastName-Resume.pdf" — not "resume_final_v3 (1).docx". Some ATS display the filename to recruiters. It's a small detail that signals professionalism.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- SECTION 2: KEYWORDS & MATCHING -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Keywords &amp; Job Matching</h2>
+    </div>
+    <p class="section-desc">ATS systems score your resume by comparing your content against the job description. Missing the right keywords — even when you have the right experience — means automatic rejection.</p>
+
+    <ul class="checklist">
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-critical">Critical</span> Mirror exact keywords from the job posting</div>
+          <div class="check-detail">If the posting says "project management," don't write "managed projects." ATS keyword matching is often literal. Extract the specific terms, titles, and tools from the job description and use them verbatim.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-critical">Critical</span> Include both acronyms and full terms</div>
+          <div class="check-detail">Write "Search Engine Optimization (SEO)" the first time, then "SEO" afterward. Some systems search for the acronym, others for the full phrase. Cover both.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-critical">Critical</span> Use a dedicated Skills section</div>
+          <div class="check-detail">List your technical skills, tools, and certifications in a clearly labeled "Skills" or "Technical Skills" section. ATS parsers look for this section specifically when matching requirements.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-important">Important</span> Tailor for each application</div>
+          <div class="check-detail">A generic resume that doesn't reflect the specific job's language will score low on keyword match. Adjust your skills section and bullet points for each role. Even 15 minutes of tailoring makes a measurable difference.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-important">Important</span> Use standard job titles</div>
+          <div class="check-detail">Creative titles like "Growth Ninja" or "Chief Happiness Officer" don't match ATS keyword databases. Use the industry-standard equivalent, then clarify in the description if needed.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-recommended">Recommended</span> Don't keyword-stuff</div>
+          <div class="check-detail">Repeating the same keyword 15 times doesn't help — modern ATS and recruiters both flag this. Use keywords naturally in context. 2-3 mentions of important terms across different sections is the sweet spot.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-recommended">Recommended</span> Include industry-specific certifications</div>
+          <div class="check-detail">Certifications (PMP, AWS, CPA, Google Analytics, etc.) are high-weight keywords in many ATS systems. If you have them, list them prominently — they're often used as hard filters.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- SECTION 3: STRUCTURE & CONTENT -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Structure &amp; Content Quality</h2>
+    </div>
+    <p class="section-desc">Even with the right format and keywords, poor structure or weak content will tank your score. ATS systems increasingly evaluate content quality, not just keyword presence.</p>
+
+    <ul class="checklist">
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-critical">Critical</span> Use standard section headings</div>
+          <div class="check-detail">Use exactly: "Experience" or "Work Experience," "Education," "Skills," "Summary" or "Professional Summary." Creative headings like "Where I've Made an Impact" confuse the parser — it won't map your content to the right fields.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-critical">Critical</span> Include complete contact information</div>
+          <div class="check-detail">Full name, email, phone number, city/state, and LinkedIn URL. Missing contact info means a recruiter can't reach you even if you score well. Put this at the top of the document body, not in a header.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-important">Important</span> Quantify your achievements</div>
+          <div class="check-detail">"Increased sales by 34%" beats "Responsible for increasing sales." Numbers signal impact and are easy for both ATS and humans to parse. Add metrics to at least 50% of your bullet points.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-important">Important</span> Use reverse chronological order</div>
+          <div class="check-detail">List your most recent role first. ATS systems expect this format and parse dates to calculate tenure. Functional or skills-based formats often confuse the parser's timeline extraction.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-important">Important</span> Include dates for every role</div>
+          <div class="check-detail">Use a consistent format: "Jan 2022 – Present" or "2022 – 2024." Missing dates cause ATS to flag gaps or fail to calculate your years of experience, which many systems use as a hard filter.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-important">Important</span> Start bullet points with strong action verbs</div>
+          <div class="check-detail">Lead with verbs like "Developed," "Managed," "Implemented," "Reduced," "Launched." Avoid starting with "Responsible for" or "Duties included" — these are passive and add no signal for ATS or recruiters.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-recommended">Recommended</span> Write a targeted professional summary</div>
+          <div class="check-detail">A 2-3 sentence summary at the top gives the ATS another opportunity to match keywords and gives the recruiter immediate context. Tailor it to each role. Skip the "Objective" statement — it's outdated.</div>
+        </div>
+      </li>
+      <li class="check-item">
+        <div class="check-box"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="check-tag tag-recommended">Recommended</span> Remove "References available upon request"</div>
+          <div class="check-detail">This wastes space and is assumed. Use that line for another keyword-rich bullet point or skill instead. Every line should earn its place on the page.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-footer">
+    <h2>Ready to see <em>your</em> score?</h2>
+    <p>Upload your resume for a free ATS scan. You'll get a detailed score across 6 categories with specific recommendations for what to fix.</p>
+    <a href="https://atscore.ai/tool" class="cta-btn">Scan My Resume Free</a>
+  </div>
+
+  <div class="page-footer">
+    <a href="https://atscore.ai">ATScore</a> &middot; <a href="https://atscore.ai/tool">Free Scan</a> &middot; <a href="mailto:support@atscore.ai">support@atscore.ai</a>
+    <br>&copy; 2026 DeepTier Labs. For personal use only.
+  </div>
+
+</div>
+
+</body>
+</html>

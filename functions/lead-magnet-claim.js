@@ -151,20 +151,25 @@ async function sendLeadMagnetEmail(apiKey, to, code, expiresAt, origin) {
       </tr>
     </table>
 
-    <h1 style="color:#e8eaf0;font-size:22px;margin:0 0 8px;">Your free premium unlock is ready</h1>
-    <p style="color:#9299b0;font-size:14px;line-height:1.6;margin:0 0 24px;">Use this one-time code on the results page to unlock one full premium report, including the rewrite guidance behind your score.</p>
+    <h1 style=”color:#e8eaf0;font-size:22px;margin:0 0 8px;”>Your checklist &amp; free unlock are ready</h1>
+    <p style=”color:#9299b0;font-size:14px;line-height:1.6;margin:0 0 24px;”>Here's your ATS-Ready Resume Checklist and a one-time code to unlock a free premium scan.</p>
 
-    <div style="background:#111318;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin-bottom:24px;text-align:center;">
-      <p style="color:#9299b0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px;">Your Unlock Code</p>
-      <div style="color:#e8eaf0;font-size:28px;font-weight:700;letter-spacing:2px;">${code}</div>
-      <p style="color:#5a6080;font-size:12px;margin:12px 0 0;">Expires ${expiresText}</p>
+    <div style=”text-align:center;margin-bottom:24px;”>
+      <a href=”${origin}/free-checklist/ats-ready-checklist.html” style=”display:inline-block;background:#22c55e;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;”>&#128196; Download the Checklist</a>
+    </div>
+    <p style=”color:#9299b0;font-size:12px;line-height:1.6;margin:0 0 28px;text-align:center;”>Open the link, then save as PDF (Ctrl+P / Cmd+P &rarr; Save as PDF) for a printable copy.</p>
+
+    <div style=”background:#111318;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin-bottom:24px;text-align:center;”>
+      <p style=”color:#9299b0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px;”>Your Premium Unlock Code</p>
+      <div style=”color:#e8eaf0;font-size:28px;font-weight:700;letter-spacing:2px;”>${code}</div>
+      <p style=”color:#5a6080;font-size:12px;margin:12px 0 0;”>Expires ${expiresText}</p>
     </div>
 
-    <div style="text-align:center;margin-bottom:32px;">
-      <a href="${toolUrl}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">Use My Free Unlock</a>
+    <div style=”text-align:center;margin-bottom:32px;”>
+      <a href=”${toolUrl}” style=”display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;”>Scan My Resume Free</a>
     </div>
 
-    <p style="color:#9299b0;font-size:13px;line-height:1.7;margin:0 0 28px;">Paste the code into the “Have a free unlock code?” field on the results screen. One code per email. If you have questions, just reply to this email.</p>
+    <p style=”color:#9299b0;font-size:13px;line-height:1.7;margin:0 0 28px;”>Use the unlock code on the results page to get your full premium report. One code per email. If you have questions, just reply to this email.</p>
 
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
       <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">ATScore · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a> · <a href="mailto:support@atscore.ai" style="color:#6c63ff;text-decoration:none;">support@atscore.ai</a></p>
@@ -184,7 +189,7 @@ async function sendLeadMagnetEmail(apiKey, to, code, expiresAt, origin) {
       from: 'ATScore <results@atscore.ai>',
       reply_to: ['support@atscore.ai'],
       to: [to],
-      subject: 'Your free ATScore premium unlock is ready',
+      subject: 'Your ATS-Ready Checklist + free premium unlock',
       html,
     }),
   });
