@@ -36,9 +36,9 @@ export async function onRequestGet({ env, request }) {
   }
 
   const PLAN_LABELS = {
-    single:  { name: 'Single Scan',     price: '$5'     },
-    starter: { name: 'Starter Pack',    price: '$19'    },
-    pro:     { name: 'Pro — Unlimited', price: '$39/mo' },
+    single:  { name: 'Single Scan',     price: '$12'    },
+    starter: { name: 'Starter Pack',    price: '$39'    },
+    pro:     { name: 'Pro — Unlimited', price: '$49/mo' },
   };
 
   const planMeta    = PLAN_LABELS[data.plan] || { name: data.plan, price: '' };

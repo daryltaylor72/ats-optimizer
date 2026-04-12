@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ats.deeptierlabs.com/sitemap.xml
+Sitemap: https://atscore.ai/sitemap.xml

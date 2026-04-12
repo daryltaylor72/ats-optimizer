@@ -620,7 +620,7 @@
         "name": "Is my resume data stored or shared?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Your resume is processed in real time and not stored on our servers after analysis. We don't sell, share, or retain your personal data. The optimized version is generated on-demand and delivered directly to your browser."
+          "text": "Your resume is processed only to generate the analysis and requested outputs. We do not sell your personal data. Limited data may be retained when needed to deliver purchased results, recover access, prevent abuse, or resolve support issues. See the Privacy Policy for details."
         }
       },
       {
@@ -636,7 +636,7 @@
         "name": "How do I cancel my Pro subscription?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Email us at support@atscore.ai and we'll cancel your subscription immediately — no questions asked. Cancellations take effect at the end of your current billing period, so you keep access until then."
+          "text": "Email support@atscore.ai from the address tied to your account and we'll cancel your Pro plan with no phone calls, forms, or retention runaround. Your access stays active through the end of your current billing period."
         }
       }
     ]
@@ -739,7 +739,7 @@
             <a href="/tool" class="btn-hero btn-hero-primary">Get Your Free Score →</a>
             <a href="#how-it-works" class="btn-hero btn-hero-secondary">See How It Works</a>
           </div>
-          <p class="hero-note">No sign-up required — just your email. Score is free. Full rewrite from $5.</p>
+          <p class="hero-note">No account to create. Enter your email, get your free ATS score, and unlock the full rewrite from $12.</p>
         </div>
 
         <!-- Score Widget Demo -->
@@ -827,8 +827,8 @@
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <div class="stat-num accent" id="scanCounter">—</div>
-          <div class="stat-label"><strong>resumes analyzed</strong> and counting</div>
+          <div class="stat-num accent">6 checks</div>
+          <div class="stat-label">scored on every resume — <strong>formatting, keywords, structure, content, contact info, and length</strong></div>
         </div>
       </div>
     </div>
@@ -912,6 +912,36 @@
           <div class="feature-icon">🎤</div>
           <h3 class="feature-title"><a href="/interview-prep" style="color:inherit;text-decoration:none;">Interview Prep Q&amp;A</a></h3>
           <p class="feature-desc">Get 8–10 tailored interview questions based on your resume and the job — with strong sample answers drawn from your actual experience. <a href="/interview-prep" style="color:var(--accent);text-decoration:none;font-weight:600;">Try it →</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROOF / SAMPLE OUTPUT -->
+  <section class="features">
+    <div class="container">
+      <div class="reveal">
+        <span class="section-tag">See The Output</span>
+        <h2 class="section-headline">Not just a score.<br><em>A fix you can use.</em></h2>
+        <p class="section-sub" style="max-width:760px">ATScore shows the problem, the reason it hurts your ATS score, and the improved version you can actually submit.</p>
+      </div>
+      <div class="features-grid reveal">
+        <div class="feature-card">
+          <div class="feature-icon">🧾</div>
+          <h3 class="feature-title">Before</h3>
+          <p class="feature-desc"><strong>Professional Summary:</strong> “Experienced operations leader with a track record of success.”</p>
+          <p class="feature-desc" style="margin-top:10px">Too generic, light on keywords, and missing the specific tools and scope ATS filters look for.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✨</div>
+          <h3 class="feature-title">After</h3>
+          <p class="feature-desc"><strong>Rewritten:</strong> “Operations Manager with 8+ years leading multi-site teams, workforce planning, KPI reporting, and cross-functional process improvement in high-volume environments.”</p>
+          <p class="feature-desc" style="margin-top:10px">More specific role language, stronger keyword alignment, and clearer proof of scope.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <h3 class="feature-title">What You Learn</h3>
+          <p class="feature-desc">You don’t just get a rewritten line. You see which categories dragged your score down, which keywords were missing, and what changed in the rewrite.</p>
         </div>
       </div>
     </div>
@@ -1039,7 +1069,7 @@
             Is my resume data stored or shared?
             <span class="faq-icon">+</span>
           </button>
-          <div class="faq-a"><p>Your resume is processed in real time and not stored on our servers after analysis. We don't sell, share, or retain your personal data. The optimized version is generated on-demand and delivered directly to your browser.</p></div>
+          <div class="faq-a"><p>Your resume is processed only to generate the analysis and requested outputs. We do not sell your personal data. Limited data may be retained when needed to deliver purchased results, recover access, prevent abuse, or resolve support issues. See our <a href="/privacy" style="color:var(--accent);text-decoration:none;font-weight:600;">Privacy Policy</a> for details.</p></div>
         </div>
 
         <div class="faq-item">
@@ -1055,7 +1085,7 @@
             How do I cancel my Pro subscription?
             <span class="faq-icon">+</span>
           </button>
-          <div class="faq-a"><p>Email us at <a href="mailto:support@atscore.ai" style="color:var(--accent);text-decoration:none;font-weight:600;">support@atscore.ai</a> and we'll cancel your subscription immediately — no questions asked. Cancellations take effect at the end of your current billing period, so you keep access until then.</p></div>
+          <div class="faq-a"><p>Email <a href="mailto:support@atscore.ai?subject=Cancel%20ATScore%20Pro" style="color:var(--accent);text-decoration:none;font-weight:600;">support@atscore.ai</a> from the address tied to your account and we'll cancel your Pro plan with no phone calls, forms, or retention runaround. Your access stays active through the end of your current billing period.</p></div>
         </div>
 
         <div class="faq-item">
@@ -1136,6 +1166,8 @@
         <a href="/blog">Blog</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
       </div>
       <span class="footer-copy">© 2026 DeepTier Labs. All rights reserved.</span>
     </div>
@@ -1584,27 +1616,6 @@
         }
       }
       window.chatKeydown = chatKeydown;
-    })();
-  </script>
-  <script>
-    // Scan counter — fetches real count from /stats and animates it
-    (function() {
-      const el = document.getElementById('scanCounter');
-      if (!el) return;
-      fetch('/stats').then(r => r.json()).then(data => {
-        const target = data.total_scans || 0;
-        if (target < 1) { el.textContent = '0'; return; }
-        const duration = 1200;
-        const start = performance.now();
-        function step(now) {
-          const t = Math.min((now - start) / duration, 1);
-          const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-          el.textContent = Math.floor(eased * target).toLocaleString();
-          if (t < 1) requestAnimationFrame(step);
-          else el.textContent = target.toLocaleString() + '+';
-        }
-        requestAnimationFrame(step);
-      }).catch(() => { el.textContent = '—'; });
     })();
   </script>
 </body>
