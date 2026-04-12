@@ -184,12 +184,19 @@ def derive_primary_keyword(slug: str, title: str) -> str:
 
 def generate_article_html(topic: dict) -> str:
     """Call Claude Sonnet to generate the article body HTML."""
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    if base_url:
+        # Anthropic SDK expects the base URL without the /v1 suffix (it adds it)
+        if base_url.endswith("/v1"):
+            base_url = base_url[:-3]
+        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], base_url=base_url)
+    else:
+        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
     primary_kw = derive_primary_keyword(topic["slug"], topic["title"])
 
     msg = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="anthropic/claude-sonnet-4.6",
         max_tokens=4096,
         system=ARTICLE_SYSTEM,
         messages=[{
@@ -204,138 +211,3 @@ def generate_article_html(topic: dict) -> str:
     )
     return msg.content[0].text.strip()
 
-
-def build_page(topic: dict, article_body: str, pub_date_iso: str, pub_date_display: str) -> str:
-    """Assemble the full HTML page from the template."""
-    slug        = topic["slug"]
-    title       = topic["title"]
-    description = topic["description"]
-    tag         = topic["tag"]
-    canonical   = f"{SITE_DOMAIN}/blog/{slug}/"
-    read_time   = estimate_read_time(article_body)
-
-    # Breadcrumb label: last meaningful word(s) from title, capped at ~40 chars
-    breadcrumb_label = title if len(title) <= 40 else title[:37] + "..."
-
-    return PAGE_TEMPLATE.format(
-        page_title=title,
-        meta_description=description[:155],
-        canonical_url=canonical,
-        site_domain=SITE_DOMAIN,
-        pub_date_iso=pub_date_iso,
-        pub_date_display=pub_date_display,
-        breadcrumb_label=breadcrumb_label,
-        h1_title=title,
-        read_time=read_time,
-        article_body=article_body,
-    )
-
-
-def update_blog_index(topic: dict) -> None:
-    """Prepend the new article card to the articles section in blog/index.html."""
-    index_path = BLOG_DIR / "index.html"
-    content    = index_path.read_text()
-
-    # The card description: first sentence of the topic description
-    card_desc = topic["description"].split("--")[0].strip()
-    if len(card_desc) > 150:
-        card_desc = card_desc[:147] + "..."
-
-    new_card = INDEX_CARD.format(
-        slug=topic["slug"],
-        tag=topic["tag"],
-        title=topic["title"],
-        card_description=card_desc,
-    )
-
-    # Insert after the opening <section class="articles"> tag
-    marker = '<section class="articles">\n'
-    if marker not in content:
-        print("WARNING: Could not find articles section marker in blog/index.html — skipping index update")
-        return
-
-    updated = content.replace(marker, marker + "\n" + new_card, 1)
-    index_path.write_text(updated)
-    print(f"  Updated blog/index.html with card for '{topic['title']}'")
-
-
-def git_commit_and_push(slug: str, title: str) -> None:
-    """Stage the new blog post files and push to GitHub."""
-    run = lambda cmd: subprocess.run(
-        cmd, cwd=str(REPO_DIR), check=True, capture_output=True, text=True
-    )
-
-    # Stage the new post directory, updated index, and topics file
-    run(["git", "add",
-         f"public/blog/{slug}/",
-         "public/blog/index.html",
-         "blog-topics.json"])
-
-    commit_msg = f"content: add blog post — {title}"
-    run(["git", "commit", "-m", commit_msg])
-    run(["git", "push", "origin", "main"])
-    print(f"  Committed and pushed: {commit_msg}")
-
-
-def main() -> None:
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("ERROR: ANTHROPIC_API_KEY not set in environment")
-        sys.exit(1)
-
-    # Load topics
-    with open(TOPICS_FILE) as f:
-        data = json.load(f)
-
-    # Find next unpublished topic that doesn't already have a directory (safety check)
-    topic = next(
-        (t for t in data["topics"]
-         if not t.get("published") and not (BLOG_DIR / t["slug"]).exists()),
-        None
-    )
-    if not topic:
-        print("No unpublished topics remaining (or all pending slugs already exist on disk). Add more to blog-topics.json.")
-        sys.exit(0)
-
-    slug  = topic["slug"]
-    title = topic["title"]
-    print(f"Generating: {title}")
-
-    # Dates
-    now              = datetime.now()
-    pub_date_iso     = now.strftime("%Y-%m-%d")
-    pub_date_display = now.strftime("%B %-d, %Y")   # e.g. April 1, 2026
-
-    # Generate article HTML via Claude
-    print("  Calling Claude Sonnet...")
-    article_body = generate_article_html(topic)
-    print(f"  Generated {len(article_body)} characters")
-
-    # Build full page
-    page_html = build_page(topic, article_body, pub_date_iso, pub_date_display)
-
-    # Write to disk
-    post_dir = BLOG_DIR / slug
-    post_dir.mkdir(parents=True, exist_ok=True)
-    (post_dir / "index.html").write_text(page_html)
-    print(f"  Wrote public/blog/{slug}/index.html")
-
-    # Update blog index
-    update_blog_index(topic)
-
-    # Mark as published in topics file
-    topic["published"]      = True
-    topic["published_date"] = pub_date_iso
-    with open(TOPICS_FILE, "w") as f:
-        json.dump(data, f, indent=2)
-    print("  Marked topic as published in blog-topics.json")
-
-    # Commit and push
-    print("  Committing and pushing...")
-    git_commit_and_push(slug, title)
-
-    print(f"\nDone. Live at: {SITE_DOMAIN}/blog/{slug}/")
-
-
-if __name__ == "__main__":
-    main()
