@@ -997,10 +997,10 @@
 
   <!-- Paywall Modal -->
   <div class="paywall-overlay" id="paywallOverlay">
-    <div class="paywall-card">
+    <div class="paywall-card" role="dialog" aria-modal="true" aria-labelledby="paywallTitle">
       <button class="paywall-close" onclick="closePaywall()">✕</button>
       <div class="paywall-icon">🔒</div>
-      <h2>Unlock the version you can actually send</h2>
+      <h2 id="paywallTitle">Unlock the version you can actually send</h2>
       <p>Your free score is ready. Paid access unlocks the job-ready rewrite, missing-keyword fixes, and the full breakdown of what is holding your resume back.</p>
       <div class="paywall-plans">
         <a href="#" onclick="checkout('single');return false;" class="paywall-plan">
@@ -1047,6 +1047,7 @@
           <div id="paywallCouponMsg" style="font-size:12px;margin-top:6px;"></div>
         </div>
       </div>
+      <button onclick="closePaywall()" style="margin-top:14px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:13px;font-weight:600;padding:12px 16px;cursor:pointer;width:100%;">Keep free results</button>
     </div>
   </div>
 
@@ -1792,6 +1793,21 @@
   function closePaywall() {
     document.getElementById('paywallOverlay').classList.remove('active');
   }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const paywallOverlay = document.getElementById('paywallOverlay');
+    if (paywallOverlay) {
+      paywallOverlay.addEventListener('click', e => {
+        if (e.target === paywallOverlay) closePaywall();
+      });
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && paywallOverlay?.classList.contains('active')) {
+        closePaywall();
+      }
+    });
+  });
 
   function togglePaywallCoupon() {
     const body = document.getElementById('paywallCouponBody');
