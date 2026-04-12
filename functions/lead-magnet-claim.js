@@ -171,7 +171,12 @@ async function sendLeadMagnetEmail(apiKey, to, code, expiresAt, origin) {
 
     <p style=”color:#9299b0;font-size:13px;line-height:1.7;margin:0 0 28px;”>Use the unlock code on the results page to get your full premium report. One code per email. If you have questions, just reply to this email.</p>
 
-    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
+    <div style=”background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.15);border-radius:10px;padding:20px 24px;margin-bottom:28px;”>
+      <p style=”color:#e8eaf0;font-size:14px;font-weight:600;margin:0 0 6px;”>What comes after the checklist?</p>
+      <p style=”color:#9299b0;font-size:13px;line-height:1.6;margin:0;”>The checklist fixes the basics. For everything else — weak bullet points, missing impact statements, better positioning — ATScore's AI coach analyzes your specific resume and walks you through exactly what to change, step by step.</p>
+    </div>
+
+    <div style=”border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;”>
       <p style="color:#5a6080;font-size:12px;margin:0 0 6px;">ATScore · <a href="https://atscore.ai" style="color:#6c63ff;text-decoration:none;">atscore.ai</a> · <a href="mailto:support@atscore.ai" style="color:#6c63ff;text-decoration:none;">support@atscore.ai</a></p>
       <p style="color:#5a6080;font-size:11px;margin:0;">If you didn't request this, you can safely ignore it.</p>
     </div>
