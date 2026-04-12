@@ -6,6 +6,7 @@
 
 import mammoth from 'mammoth';
 import { acquireScanMutex, releaseScanMutex } from './_shared.js';
+import { applyRateLimit, sanitizePlainText, validateMultipartSize, validateResumeUpload } from './_upload-security.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -13,6 +14,18 @@ export async function onRequestPost(context) {
   const sizeGuard = validateMultipartSize(request);
   if (sizeGuard) {
     return sizeGuard;
+  }
+
+  const rateLimitResponse = await applyRateLimit(
+    env.TOKENS_KV,
+    request,
+    'rewrite',
+    20,
+    3600,
+    'Too many rewrite requests. Please try again in an hour.'
+  );
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   let formData;
@@ -79,10 +92,11 @@ export async function onRequestPost(context) {
   }
 
   const bytes = await resumeFile.arrayBuffer();
-  if (bytes.byteLength > 10 * 1024 * 1024) {
-    return json({ detail: 'File too large (max 10MB)' }, 400);
+  const uploadValidation = validateResumeUpload(resumeFile, bytes);
+  if (!uploadValidation.ok) {
+    return uploadValidation.response;
   }
-  const ext   = (resumeFile.name || '').split('.').pop().toLowerCase();
+  const ext = uploadValidation.type;
 
   const apiKey = env.ANTHROPIC_API_KEY;
   if (!apiKey) return json({ detail: 'AI not configured' }, 500);
@@ -126,7 +140,7 @@ export async function onRequestPost(context) {
   }
 
   const claudeData = await claudeRes.json();
-  const optimized  = claudeData.content?.[0]?.text?.trim() || '';
+  const optimized  = sanitizePlainText(claudeData.content?.[0]?.text?.trim() || '', 20000);
 
   // Send optimized resume email + capture lead
   const sendTo = email || tokenData.email;
@@ -146,14 +160,6 @@ export async function onRequestPost(context) {
   }
 
   return json({ optimized_resume: optimized, scans_remaining: tokenData.scans_remaining });
-}
-
-function validateMultipartSize(request) {
-  const contentLength = Number.parseInt(request.headers.get('content-length') || '', 10);
-  if (Number.isFinite(contentLength) && contentLength > 10 * 1024 * 1024) {
-    return json({ detail: 'File too large (max 10MB)' }, 400);
-  }
-  return null;
 }
 
 /**

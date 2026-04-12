@@ -422,7 +422,7 @@
 
     <!-- Resume Upload -->
     <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".pdf,.doc,.docx" />
+      <input type="file" id="fileInput" accept=".pdf,.docx" />
       <div class="drop-icon" id="dropIcon">📎</div>
       <div class="drop-text" id="dropText">Drop your resume here or click to browse</div>
       <div class="drop-sub" id="dropSub">PDF or DOCX — up to 10MB</div>
@@ -626,7 +626,7 @@
 
     statusEl.classList.add('show');
     dotEl.className = 'ts-dot';
-    textEl.innerHTML = 'Checking key...';
+    textEl.textContent = 'Checking key...';
     linkEl.style.display = 'none';
 
     try {
@@ -635,7 +635,7 @@
 
       if (!res.ok || data.code) {
         dotEl.classList.add('red');
-        textEl.innerHTML = data.detail || 'Invalid access key.';
+        textEl.textContent = data.detail || 'Invalid access key.';
         linkEl.style.display = 'inline';
         linkEl.href = '/#pricing';
         linkEl.textContent = 'Get a key →';
@@ -645,20 +645,32 @@
       const scans = data.scans_remaining;
       if (scans >= 9000) {
         dotEl.classList.add('green');
-        textEl.innerHTML = '<strong>Unlimited scans</strong> — Pro plan active';
+        setStatusText(textEl, 'Unlimited scans', ' — Pro plan active');
       } else if (scans > 0) {
         dotEl.classList.add('green');
-        textEl.innerHTML = `<strong>${scans} scan${scans !== 1 ? 's' : ''} remaining</strong>`;
+        setStatusText(textEl, `${scans} scan${scans !== 1 ? 's' : ''} remaining`);
       } else {
         dotEl.classList.add('red');
-        textEl.innerHTML = 'No scans remaining.';
+        textEl.textContent = 'No scans remaining.';
         linkEl.style.display = 'inline';
         linkEl.href = '/#pricing';
         linkEl.textContent = 'Get more scans →';
       }
     } catch {
       dotEl.classList.add('yellow');
-      textEl.innerHTML = 'Could not verify token.';
+      textEl.textContent = 'Could not verify token.';
+    }
+  }
+
+  function setStatusText(target, strongText, suffix = '') {
+    target.replaceChildren();
+    if (strongText) {
+      const strong = document.createElement('strong');
+      strong.textContent = strongText;
+      target.appendChild(strong);
+    }
+    if (suffix) {
+      target.appendChild(document.createTextNode(suffix));
     }
   }
 

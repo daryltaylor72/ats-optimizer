@@ -1212,7 +1212,7 @@
     <h2>Upload Your Resume</h2>
 
     <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Resume file upload area">
-      <input type="file" id="fileInput" accept=".pdf,.doc,.docx" aria-label="Select resume file" />
+      <input type="file" id="fileInput" accept=".pdf,.docx" aria-label="Select resume file" />
       <div class="drop-icon" id="dropIcon">📎</div>
       <div class="drop-text" id="dropText">Drop your resume here or click to browse</div>
       <div class="drop-sub" id="dropSub">PDF or DOCX — up to 10MB</div>
@@ -1684,19 +1684,31 @@
 
     // Categories
     const catEl = document.getElementById('categories');
-    catEl.innerHTML = '';
+    catEl.replaceChildren();
     (data.categories || []).forEach(cat => {
       const c = scoreColor(cat.score);
-      catEl.innerHTML += `
-        <div class="cat-item">
-          <div class="cat-header">
-            <span class="cat-name">${cat.name}</span>
-            <span class="cat-score" style="color:${c}">${cat.score}</span>
-          </div>
-          <div class="bar-track">
-            <div class="bar-fill" style="width:0%;background:${c}" data-width="${cat.score}%"></div>
-          </div>
-        </div>`;
+      const item = document.createElement('div');
+      item.className = 'cat-item';
+      const header = document.createElement('div');
+      header.className = 'cat-header';
+      const name = document.createElement('span');
+      name.className = 'cat-name';
+      name.textContent = cat.name || '';
+      const scoreLabel = document.createElement('span');
+      scoreLabel.className = 'cat-score';
+      scoreLabel.style.color = c;
+      scoreLabel.textContent = String(cat.score ?? 0);
+      header.append(name, scoreLabel);
+      const track = document.createElement('div');
+      track.className = 'bar-track';
+      const fill = document.createElement('div');
+      fill.className = 'bar-fill';
+      fill.style.width = '0%';
+      fill.style.background = c;
+      fill.dataset.width = `${cat.score}%`;
+      track.appendChild(fill);
+      item.append(header, track);
+      catEl.appendChild(item);
     });
     // Animate bars
     setTimeout(() => {
@@ -1707,32 +1719,39 @@
 
     // Critical issues
     const ciEl = document.getElementById('criticalIssues');
-    ciEl.innerHTML = '';
+    ciEl.replaceChildren();
     const issues = data.critical_issues || [];
     if (issues.length === 0) {
-      ciEl.innerHTML = '<li><span class="dot dot-green"></span>No critical issues found</li>';
+      appendDotListItem(ciEl, 'dot-green', 'No critical issues found');
     } else {
       issues.forEach(issue => {
-        ciEl.innerHTML += `<li><span class="dot dot-red"></span>${issue}</li>`;
+        appendDotListItem(ciEl, 'dot-red', issue);
       });
     }
 
     // Recommendations
     const recEl = document.getElementById('recommendations');
-    recEl.innerHTML = '';
+    recEl.replaceChildren();
     (data.recommendations || []).forEach(rec => {
-      recEl.innerHTML += `<li><span class="dot dot-accent"></span>${rec}</li>`;
+      appendDotListItem(recEl, 'dot-accent', rec);
     });
 
     // Keywords
     const kwEl = document.getElementById('keywords');
-    kwEl.innerHTML = '';
+    kwEl.replaceChildren();
     const kws = data.keyword_gaps || [];
     if (kws.length === 0) {
-      kwEl.innerHTML = '<span style="font-size:13px;color:var(--text2)">No major keyword gaps detected</span>';
+      const empty = document.createElement('span');
+      empty.style.fontSize = '13px';
+      empty.style.color = 'var(--text2)';
+      empty.textContent = 'No major keyword gaps detected';
+      kwEl.appendChild(empty);
     } else {
       kws.forEach(kw => {
-        kwEl.innerHTML += `<span class="pill missing">${kw}</span>`;
+        const pill = document.createElement('span');
+        pill.className = 'pill missing';
+        pill.textContent = kw;
+        kwEl.appendChild(pill);
       });
     }
 
@@ -1753,7 +1772,20 @@
       ciItems.forEach((li, i) => { if (i >= 2) { li.style.display = 'none'; hiddenCount++; } });
       if (hiddenCount > 0) {
         const more = document.createElement('li');
-        more.innerHTML = `<span class="dot dot-red"></span><span style="color:var(--text3);cursor:pointer;text-decoration:underline" onclick="showPaywall()">${hiddenCount} more issue${hiddenCount > 1 ? 's' : ''} — unlock to see all</span>`;
+        const dot = document.createElement('span');
+        dot.className = 'dot dot-red';
+        const moreLink = document.createElement('button');
+        moreLink.type = 'button';
+        moreLink.style.color = 'var(--text3)';
+        moreLink.style.cursor = 'pointer';
+        moreLink.style.textDecoration = 'underline';
+        moreLink.style.background = 'none';
+        moreLink.style.border = '0';
+        moreLink.style.padding = '0';
+        moreLink.style.font = 'inherit';
+        moreLink.textContent = `${hiddenCount} more issue${hiddenCount > 1 ? 's' : ''} — unlock to see all`;
+        moreLink.addEventListener('click', showPaywall);
+        more.append(dot, moreLink);
         document.getElementById('criticalIssues').appendChild(more);
       }
       // Blur category breakdown, recommendations, and keywords cards
@@ -1816,7 +1848,7 @@
     const fixes = [];
     const kws = (data.keyword_gaps || []).slice(0, 3);
     if (kws.length > 0) {
-      fixes.push(`Add missing keywords your target roles require: <strong>${kws.join(', ')}</strong>`);
+      fixes.push(`Add missing keywords your target roles require: ${kws.join(', ')}`);
     }
     const issues = (data.critical_issues || []).slice(0, 2);
     issues.forEach(issue => {
@@ -1832,16 +1864,31 @@
     const teaser = document.createElement('div');
     teaser.id = 'rewriteTeaser';
     teaser.className = 'rewrite-teaser';
-    teaser.innerHTML = `
-      <div class="rewrite-teaser-header">
-        <span class="rewrite-teaser-badge">AI Preview</span>
-        <span class="rewrite-teaser-title">Your optimized resume would fix these issues</span>
-      </div>
-      <ul class="rewrite-teaser-items">
-        ${fixes.map(f => `<li>${f}</li>`).join('')}
-      </ul>
-      <button class="rewrite-teaser-cta" onclick="showPaywall()">Unlock the fix-ready version — from $12 →</button>
-    `;
+    const header = document.createElement('div');
+    header.className = 'rewrite-teaser-header';
+    const badge = document.createElement('span');
+    badge.className = 'rewrite-teaser-badge';
+    badge.textContent = 'AI Preview';
+    const title = document.createElement('span');
+    title.className = 'rewrite-teaser-title';
+    title.textContent = 'Your optimized resume would fix these issues';
+    header.append(badge, title);
+
+    const list = document.createElement('ul');
+    list.className = 'rewrite-teaser-items';
+    fixes.forEach(fix => {
+      const li = document.createElement('li');
+      li.textContent = fix;
+      list.appendChild(li);
+    });
+
+    const cta = document.createElement('button');
+    cta.className = 'rewrite-teaser-cta';
+    cta.type = 'button';
+    cta.textContent = 'Unlock the fix-ready version — from $12 →';
+    cta.addEventListener('click', showPaywall);
+
+    teaser.append(header, list, cta);
     resultsEl.appendChild(teaser);
   }
 
@@ -1867,7 +1914,11 @@
       items.push('Convert the score and feedback into a downloadable, ATS-ready rewrite.');
     }
 
-    list.innerHTML = items.map(item => `<li>${item}</li>`).join('');
+    list.replaceChildren(...items.map(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      return li;
+    }));
     box.style.display = 'block';
   }
 
@@ -2521,15 +2572,15 @@
       const scansText = data.is_unlimited ? 'Unlimited scans' : `${data.scans_remaining} scan${data.scans_remaining === 1 ? '' : 's'} remaining`;
       const expiresText = data.expires_at ? new Date(data.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
       summary.textContent = `${data.plan_label} linked to this email. ${scansText}${expiresText ? ` · expires ${expiresText}` : ''}`;
-      entitlements.innerHTML = `
-        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-size:12px;color:var(--text2);"><strong style="color:var(--text);display:block;margin-bottom:4px;">Plan</strong>${data.plan_label}</div>
-        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-size:12px;color:var(--text2);"><strong style="color:var(--text);display:block;margin-bottom:4px;">Scans</strong>${scansText}</div>
-        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-size:12px;color:var(--text2);"><strong style="color:var(--text);display:block;margin-bottom:4px;">Video Reviews</strong>${data.video_reviews_remaining || 0} remaining</div>
-      `;
+      entitlements.replaceChildren(
+        createAccountTile('Plan', data.plan_label),
+        createAccountTile('Scans', scansText),
+        createAccountTile('Video Reviews', `${data.video_reviews_remaining || 0} remaining`)
+      );
       help.textContent = 'Any new purchases made with this email will show up here automatically.';
     } else {
       summary.textContent = 'Signed in, but we did not find an active paid scan balance for this email yet.';
-      entitlements.innerHTML = '';
+      entitlements.replaceChildren();
       help.textContent = 'If you bought scans before, use the direct recovery link below or make sure you sign in with the same purchase email.';
     }
 
@@ -2595,7 +2646,7 @@
     // Show a brief loading state
     strip.className = 'show loading';
     dot.className   = 'ts-dot';
-    text.innerHTML  = 'Checking token…';
+    text.textContent = 'Checking token…';
     link.style.display = 'none';
 
     try {
@@ -2607,7 +2658,7 @@
       if (!res.ok) {
         // Token not found or expired
         dot.className  = 'ts-dot red';
-        text.innerHTML = '<strong>Token invalid or expired.</strong> Purchase a new plan to continue.';
+        setTextWithStrong(text, 'Token invalid or expired.', ' Purchase a new plan to continue.');
         link.textContent   = 'View plans →';
         link.href          = '/';
         link.style.display = 'inline';
@@ -2625,21 +2676,21 @@
       if (data.scans_remaining === 0) {
         // Exhausted
         dot.className  = 'ts-dot red';
-        text.innerHTML = `<strong>${data.plan_label}</strong> · 0 scans remaining · expires ${expiresDate}`;
+        setTextWithStrong(text, data.plan_label, ` · 0 scans remaining · expires ${expiresDate}`);
         link.textContent   = 'Upgrade →';
         link.href          = '/#pricing';
         link.style.display = 'inline';
       } else if (data.is_unlimited) {
         // Pro plan
         dot.className  = 'ts-dot green';
-        text.innerHTML = `<strong>${data.plan_label}</strong> · Unlimited scans · expires ${expiresDate}`;
+        setTextWithStrong(text, data.plan_label, ` · Unlimited scans · expires ${expiresDate}`);
         link.style.display = 'none';
       } else {
         // Finite scans remaining
         const scanWord = data.scans_remaining === 1 ? 'scan' : 'scans';
         const dotClass = data.scans_remaining <= 1 ? 'yellow' : 'green';
         dot.className  = `ts-dot ${dotClass}`;
-        text.innerHTML = `<strong>${data.plan_label}</strong> · ${data.scans_remaining} ${scanWord} remaining · expires ${expiresDate}`;
+        setTextWithStrong(text, data.plan_label, ` · ${data.scans_remaining} ${scanWord} remaining · expires ${expiresDate}`);
         link.style.display = 'none';
       }
 
@@ -2684,6 +2735,44 @@
       ? 'Have a promo code? Click to redeem'
       : 'Hide promo code';
     if (!isOpen) document.getElementById('couponInput').focus();
+  }
+
+  function appendDotListItem(listEl, dotClass, text) {
+    const li = document.createElement('li');
+    const dot = document.createElement('span');
+    dot.className = `dot ${dotClass}`;
+    li.append(dot, document.createTextNode(text || ''));
+    listEl.appendChild(li);
+  }
+
+  function setTextWithStrong(target, strongText, suffix = '') {
+    target.replaceChildren();
+    if (strongText) {
+      const strong = document.createElement('strong');
+      strong.textContent = strongText;
+      target.appendChild(strong);
+    }
+    if (suffix) {
+      target.appendChild(document.createTextNode(suffix));
+    }
+  }
+
+  function createAccountTile(label, value) {
+    const tile = document.createElement('div');
+    tile.style.padding = '10px 12px';
+    tile.style.border = '1px solid var(--border)';
+    tile.style.borderRadius = '10px';
+    tile.style.background = 'var(--surface2)';
+    tile.style.fontSize = '12px';
+    tile.style.color = 'var(--text2)';
+
+    const strong = document.createElement('strong');
+    strong.style.color = 'var(--text)';
+    strong.style.display = 'block';
+    strong.style.marginBottom = '4px';
+    strong.textContent = label;
+    tile.append(strong, document.createTextNode(value || ''));
+    return tile;
   }
 
   async function redeemCoupon() {

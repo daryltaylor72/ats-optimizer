@@ -7,9 +7,32 @@
 import mammoth from 'mammoth';
 import { heygenStartJob } from './_video-helpers.js';
 import { acquireScanMutex, releaseScanMutex } from './_shared.js';
+import {
+  applyRateLimit,
+  sanitizeVideoReviewResult,
+  validateMultipartSize,
+  validateResumeUpload,
+} from './_upload-security.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  const sizeGuard = validateMultipartSize(request);
+  if (sizeGuard) {
+    return sizeGuard;
+  }
+
+  const rateLimitResponse = await applyRateLimit(
+    env.TOKENS_KV,
+    request,
+    'video-review',
+    10,
+    3600,
+    'Too many video review requests. Please try again in an hour.'
+  );
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   let formData;
   try { formData = await request.formData(); }
@@ -72,11 +95,11 @@ export async function onRequestPost(context) {
   }
 
   const bytes = await resumeFile.arrayBuffer();
-  const ext   = (resumeFile.name || '').split('.').pop().toLowerCase();
-
-  if (bytes.byteLength > 10 * 1024 * 1024) {
-    return json({ detail: 'File too large (max 10MB)' }, 400);
+  const uploadValidation = validateResumeUpload(resumeFile, bytes);
+  if (!uploadValidation.ok) {
+    return uploadValidation.response;
   }
+  const ext = uploadValidation.type;
 
   const apiKey = env.ANTHROPIC_API_KEY;
   if (!apiKey) return json({ detail: 'AI not configured' }, 500);
@@ -91,7 +114,7 @@ export async function onRequestPost(context) {
         { type: 'text', text: buildVideoReviewPrompt(null, jobDesc) }
       ]
     }];
-  } else if (ext === 'docx' || ext === 'doc') {
+  } else if (ext === 'docx') {
     let resumeText;
     try {
       const result = await mammoth.extractRawText({ arrayBuffer: bytes });
@@ -160,6 +183,8 @@ export async function onRequestPost(context) {
       return json({ detail: 'Failed to parse AI response as JSON', raw: cleaned.substring(0, 200) }, 500);
     }
   }
+
+  result = sanitizeVideoReviewResult(result);
 
   // ── Video pipeline kickoff ────────────────────────────────────────────
   // Runs after script generation. If any step fails, we still return the

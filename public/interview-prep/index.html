@@ -432,7 +432,7 @@
     <h2>Upload Your Resume</h2>
 
     <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".pdf,.doc,.docx" />
+      <input type="file" id="fileInput" accept=".pdf,.docx" />
       <div class="drop-icon" id="dropIcon">📎</div>
       <div class="drop-text" id="dropText">Drop your resume here or click to browse</div>
       <div class="drop-sub" id="dropSub">PDF or DOCX — up to 10MB</div>
@@ -672,37 +672,50 @@
       if (scans >= 9000) {
         scansEl.textContent = 'Unlimited scans';
       } else if (scans === 0) {
-        scansEl.innerHTML = 'No scans remaining — <a href="/#pricing">get more</a>';
+        setScansBadge(scansEl, 'No scans remaining', true);
       } else {
-        scansEl.innerHTML = `${scans} scan${scans !== 1 ? 's' : ''} remaining — <a href="/#pricing">get more</a>`;
+        setScansBadge(scansEl, `${scans} scan${scans !== 1 ? 's' : ''} remaining`, true);
       }
       scansEl.style.display = 'inline-block';
     }
 
     // Parse and render Q&A
     const qaList = document.getElementById('qaList');
-    qaList.innerHTML = '';
+    qaList.replaceChildren();
     const parsed = parseQA(rawPrepText);
 
     if (parsed.length === 0) {
       // Fallback: display raw text in a single card
-      qaList.innerHTML = `
-        <div class="qa-card">
-          <div class="qa-answer" style="color:var(--text);white-space:pre-wrap;">${escHtml(rawPrepText)}</div>
-        </div>`;
+      const card = document.createElement('div');
+      card.className = 'qa-card';
+      const answer = document.createElement('div');
+      answer.className = 'qa-answer';
+      answer.style.color = 'var(--text)';
+      answer.style.whiteSpace = 'pre-wrap';
+      answer.textContent = rawPrepText;
+      card.appendChild(answer);
+      qaList.appendChild(card);
       return;
     }
 
     parsed.forEach((item, idx) => {
       const card = document.createElement('div');
       card.className = 'qa-card';
-      card.innerHTML = `
-        <div class="qa-number">Question ${idx + 1}</div>
-        <div class="qa-question">${escHtml(item.question)}</div>
-        <div class="qa-divider"></div>
-        <div class="qa-answer-label">Sample Answer</div>
-        <div class="qa-answer">${escHtml(item.answer)}</div>
-      `;
+      const number = document.createElement('div');
+      number.className = 'qa-number';
+      number.textContent = `Question ${idx + 1}`;
+      const question = document.createElement('div');
+      question.className = 'qa-question';
+      question.textContent = item.question;
+      const divider = document.createElement('div');
+      divider.className = 'qa-divider';
+      const answerLabel = document.createElement('div');
+      answerLabel.className = 'qa-answer-label';
+      answerLabel.textContent = 'Sample Answer';
+      const answer = document.createElement('div');
+      answer.className = 'qa-answer';
+      answer.textContent = item.answer;
+      card.append(number, question, divider, answerLabel, answer);
       qaList.appendChild(card);
     });
 
@@ -750,6 +763,18 @@
     return results;
   }
 
+  function setScansBadge(target, prefixText, includeLink = false) {
+    target.replaceChildren();
+    target.appendChild(document.createTextNode(prefixText));
+    if (includeLink) {
+      target.appendChild(document.createTextNode(' — '));
+      const link = document.createElement('a');
+      link.href = '/#pricing';
+      link.textContent = 'get more';
+      target.appendChild(link);
+    }
+  }
+
   // ── Copy all as text ──
   function copyAll() {
     if (!rawPrepText) return;
@@ -794,7 +819,7 @@
     document.getElementById('results').style.display = 'none';
     document.getElementById('uploadCard').style.display = 'block';
     document.getElementById('errorBox').classList.remove('active');
-    document.getElementById('qaList').innerHTML = '';
+    document.getElementById('qaList').replaceChildren();
     updateSubmitBtn();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }

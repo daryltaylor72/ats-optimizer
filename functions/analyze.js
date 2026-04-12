@@ -5,6 +5,12 @@
  */
 
 import mammoth from 'mammoth';
+import {
+  applyRateLimit,
+  sanitizeAnalysisResult,
+  validateMultipartSize,
+  validateResumeUpload,
+} from './_upload-security.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -19,16 +25,19 @@ export async function onRequestPost(context) {
     return sizeGuard;
   }
 
-  // Rate limiting: 5 free analyses per IP per hour
-  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const rateKey = `ratelimit:analyze:${ip}:${Math.floor(Date.now() / 3_600_000)}`;
   const kv = env.TOKENS_KV;
+  const rateLimitResponse = await applyRateLimit(
+    kv,
+    request,
+    'analyze',
+    15,
+    3600,
+    'Too many requests. Please try again in an hour, or purchase a plan for unlimited access.'
+  );
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
   if (kv) {
-    const count = parseInt(await kv.get(rateKey) || '0');
-    if (count >= 15) {
-      return json({ detail: 'Too many requests. Please try again in an hour, or purchase a plan for unlimited access.' }, 429);
-    }
-    await kv.put(rateKey, String(count + 1), { expirationTtl: 3600 });
     // Increment global scan counter (fire-and-forget)
     kv.get('stats:total_scans').then(v => kv.put('stats:total_scans', String((parseInt(v) || 0) + 1)));
   }
@@ -57,13 +66,12 @@ export async function onRequestPost(context) {
     return json({ detail: 'No resume file uploaded' }, 400);
   }
 
-  const filename = resumeFile.name || 'resume';
-  const ext = filename.split('.').pop().toLowerCase();
   const bytes = await resumeFile.arrayBuffer();
-
-  if (bytes.byteLength > 10 * 1024 * 1024) {
-    return json({ detail: 'File too large (max 10MB)' }, 400);
+  const uploadValidation = validateResumeUpload(resumeFile, bytes);
+  if (!uploadValidation.ok) {
+    return uploadValidation.response;
   }
+  const ext = uploadValidation.type;
 
   // Build Claude messages
   let messages;
@@ -81,7 +89,7 @@ export async function onRequestPost(context) {
         { type: 'text', text: buildPrompt(null, jobDescription, includeRewrite) }
       ]
     }];
-  } else if (ext === 'docx' || ext === 'doc') {
+  } else if (ext === 'docx') {
     // Extract text from DOCX with mammoth
     let resumeText;
     try {
@@ -240,6 +248,7 @@ export async function onRequestPost(context) {
     }
   }
 
+  result = sanitizeAnalysisResult(result);
   result.model = usedModel;
 
   // Send results email + capture lead
@@ -278,14 +287,6 @@ export async function onRequestPost(context) {
   }
 
   return json(result, 200);
-}
-
-function validateMultipartSize(request) {
-  const contentLength = Number.parseInt(request.headers.get('content-length') || '', 10);
-  if (Number.isFinite(contentLength) && contentLength > 10 * 1024 * 1024) {
-    return json({ detail: 'File too large (max 10MB)' }, 400);
-  }
-  return null;
 }
 
 async function sendAnalysisEmail(apiKey, to, result, isPaidUser = false, token = '') {
@@ -344,7 +345,7 @@ async function sendAnalysisEmail(apiKey, to, result, isPaidUser = false, token =
 
     <div style="text-align:center;margin-bottom:32px;">
       <a href="https://atscore.ai/#pricing" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
-        Unlock Full Analysis \u2014 Starting at $5
+        Unlock Full Analysis \u2014 Starting at $12
       </a>
       <p style="color:#5a6080;font-size:12px;margin-top:12px;">Secure payment via Stripe \u00b7 Pro plan billed monthly, cancel anytime</p>
     </div>`}
