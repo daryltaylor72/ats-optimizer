@@ -157,6 +157,45 @@
     }
     .btn-accent:hover { opacity: 0.88; transform: translateY(-1px); }
 
+    /* ── NAV DROPDOWN ── */
+    .nav-dropdown {
+      position: relative;
+    }
+    .nav-dropdown-toggle {
+      font-family: var(--sans); font-size: 13px; font-weight: 600;
+      color: var(--text2); background: transparent;
+      border: 1px solid var(--border2); border-radius: 8px;
+      padding: 8px 16px; cursor: pointer; text-decoration: none;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .nav-dropdown-toggle:hover { color: var(--text); border-color: var(--accent); }
+    .nav-dropdown-toggle::after {
+      content: '▾'; font-size: 10px; opacity: 0.6;
+    }
+    .nav-dropdown-menu {
+      position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 6px; min-width: 170px;
+      opacity: 0; visibility: hidden; transition: all 0.2s;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .nav-dropdown:hover .nav-dropdown-menu,
+    .nav-dropdown:focus-within .nav-dropdown-menu {
+      opacity: 1; visibility: visible;
+    }
+    .nav-dropdown-menu a {
+      display: block; padding: 8px 14px; border-radius: 6px;
+      font-family: var(--sans); font-size: 13px; font-weight: 500;
+      color: var(--text2); text-decoration: none; transition: all 0.15s;
+    }
+    .nav-dropdown-menu a:hover {
+      background: var(--accent-dim); color: var(--text);
+    }
+    [data-theme="light"] .nav-dropdown-menu {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+
     /* ── HERO ── */
     .hero {
       min-height: 100vh;
@@ -567,7 +606,8 @@
     }
     @media (max-width: 768px) {
       .nav-links a.btn-ghost:not(.nav-keep),
-      .nav-links button.btn-ghost:not(.nav-keep) { display: none; }
+      .nav-links button.btn-ghost:not(.nav-keep),
+      .nav-dropdown { display: none; }
       .nav-links .btn-accent { display: flex; }
     }
     @media (max-width: 600px) {
@@ -711,12 +751,16 @@
         <span class="theme-icon-dark">&#9790;</span>
         <span class="theme-icon-light">&#9728;</span>
       </button>
-      <a href="/tool/" class="btn-ghost">ATS Scanner</a>
-      <a href="/cover-letter/" class="btn-ghost">Cover Letter</a>
-      <a href="/interview-prep/" class="btn-ghost">Interview Prep</a>
-      <a href="/account/" class="btn-ghost" id="navAccountLink">Account</a>
+      <div class="nav-dropdown">
+        <span class="nav-dropdown-toggle btn-ghost">Tools</span>
+        <div class="nav-dropdown-menu">
+          <a href="/tool/">ATS Scanner</a>
+          <a href="/cover-letter/">Cover Letter</a>
+          <a href="/interview-prep/">Interview Prep</a>
+        </div>
+      </div>
       <a href="#pricing" class="btn-ghost">Pricing</a>
-      <a href="/tool/#recover" class="btn-ghost" id="navRecoverLink">Already Purchased?</a>
+      <a href="/account/" class="btn-ghost" id="navAccountLink" style="display:none">Account</a>
       <a href="#pricing" class="btn-accent">Get Started</a>
     </div>
   </nav>
@@ -1181,6 +1225,7 @@
         <a href="/cover-letter/">Cover Letter</a>
         <a href="/interview-prep/">Interview Prep</a>
         <a href="/account/" id="footerAccountLink">Account</a>
+        <a href="/tool/#recover">Already Purchased?</a>
         <a href="/blog/">Blog</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
@@ -1200,14 +1245,9 @@
 
         const navAccountLink = document.getElementById('navAccountLink');
         const footerAccountLink = document.getElementById('footerAccountLink');
-        const navRecoverLink = document.getElementById('navRecoverLink');
 
-        if (navAccountLink) navAccountLink.textContent = 'My Account';
+        if (navAccountLink) { navAccountLink.textContent = 'My Account'; navAccountLink.style.display = ''; }
         if (footerAccountLink) footerAccountLink.textContent = 'My Account';
-        if (navRecoverLink && data.has_token) {
-          navRecoverLink.textContent = 'My Scans';
-          navRecoverLink.href = '/account/';
-        }
       } catch {}
     })();
   </script>
