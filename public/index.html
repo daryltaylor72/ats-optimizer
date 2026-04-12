@@ -169,7 +169,8 @@
       transition: all 0.2s;
       display: flex; align-items: center; gap: 5px;
     }
-    .nav-dropdown-toggle:hover { color: var(--text); border-color: var(--accent); }
+    .nav-dropdown-toggle:hover,
+    .nav-dropdown-toggle:focus { color: var(--text); border-color: var(--accent); outline: none; }
     .nav-dropdown-toggle::after {
       content: '▾'; font-size: 10px; opacity: 0.6;
     }
@@ -668,7 +669,7 @@
         "name": "I already purchased — how do I get back to my scans?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Check your purchase confirmation email — it contains a direct link that restores your access instantly on any device. Bookmark that link so you always have it handy. If you've lost the email, click Already Purchased? in the navigation, enter the email you used at checkout, and we'll send you a fresh access link."
+          "text": "Check your purchase confirmation email — it contains a direct link that restores your access instantly on any device. Bookmark that link so you always have it handy. If you've lost the email, click Already Purchased? in the footer at the bottom of the page, enter the email you used at checkout, and we'll send you a fresh access link."
         }
       },
       {
@@ -696,20 +697,20 @@
     "offers": [
       {
         "@type": "Offer",
-        "name": "Single Scan",
-        "price": "5.00",
+        "name": "Single Credit",
+        "price": "12.00",
         "priceCurrency": "USD"
       },
       {
         "@type": "Offer",
-        "name": "Starter Pack",
-        "price": "19.00",
-        "priceCurrency": "USD"
-      },
-      {
-        "@type": "Offer",
-        "name": "Pro",
+        "name": "Starter Pack (5 Credits)",
         "price": "39.00",
+        "priceCurrency": "USD"
+      },
+      {
+        "@type": "Offer",
+        "name": "Pro Unlimited",
+        "price": "49.00",
         "priceCurrency": "USD",
         "priceSpecification": {
           "@type": "UnitPriceSpecification",
@@ -752,7 +753,7 @@
         <span class="theme-icon-light">&#9728;</span>
       </button>
       <div class="nav-dropdown">
-        <span class="nav-dropdown-toggle btn-ghost">Tools</span>
+        <button class="nav-dropdown-toggle btn-ghost" type="button">Tools</button>
         <div class="nav-dropdown-menu">
           <a href="/tool/">ATS Scanner</a>
           <a href="/cover-letter/">Cover Letter</a>
@@ -760,6 +761,7 @@
         </div>
       </div>
       <a href="#pricing" class="btn-ghost">Pricing</a>
+      <a href="/tool/#recover" class="btn-ghost" id="navRecoverLink">Already Purchased?</a>
       <a href="/account/" class="btn-ghost" id="navAccountLink" style="display:none">Account</a>
       <a href="#pricing" class="btn-accent">Get Started</a>
     </div>
@@ -1138,7 +1140,7 @@
             I already purchased — how do I get back to my scans?
             <span class="faq-icon">+</span>
           </button>
-          <div class="faq-a"><p>There are three ways. First, check your purchase confirmation email — it contains a direct link that restores your access instantly on any device. Second, bookmark that link so you always have it handy. Third, if you've lost the email, click <a href="/tool/#recover" style="color:var(--accent);text-decoration:none;font-weight:600;">Already Purchased?</a> in the navigation, enter the email you used at checkout, and we'll send you a fresh access link.</p></div>
+          <div class="faq-a"><p>There are three ways. First, check your purchase confirmation email — it contains a direct link that restores your access instantly on any device. Second, bookmark that link so you always have it handy. Third, if you've lost the email, click <a href="/tool/#recover" style="color:var(--accent);text-decoration:none;font-weight:600;">Already Purchased?</a> in the footer at the bottom of the page, enter the email you used at checkout, and we'll send you a fresh access link.</p></div>
         </div>
 
         <div class="faq-item">
@@ -1246,6 +1248,8 @@
         const navAccountLink = document.getElementById('navAccountLink');
         const footerAccountLink = document.getElementById('footerAccountLink');
 
+        const navRecoverLink = document.getElementById('navRecoverLink');
+        if (navRecoverLink) navRecoverLink.style.display = 'none';
         if (navAccountLink) { navAccountLink.textContent = 'My Account'; navAccountLink.style.display = ''; }
         if (footerAccountLink) footerAccountLink.textContent = 'My Account';
       } catch {}
