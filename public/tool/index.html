@@ -1000,37 +1000,42 @@
     <div class="paywall-card">
       <button class="paywall-close" onclick="closePaywall()">✕</button>
       <div class="paywall-icon">🔒</div>
-      <h2>Unlock Your Optimized Resume</h2>
-      <p>Your ATS score is ready. Purchase a scan to download your AI-rewritten resume, optimized to get past screening systems.</p>
+      <h2>Unlock the version you can actually send</h2>
+      <p>Your free score is ready. Paid access unlocks the job-ready rewrite, missing-keyword fixes, and the full breakdown of what is holding your resume back.</p>
       <div class="paywall-plans">
         <a href="#" onclick="checkout('single');return false;" class="paywall-plan">
           <div>
             <div class="plan-name">Single Scan</div>
-            <div class="plan-detail">1 rewrite download</div>
+            <div class="plan-detail">1 full unlock for one resume</div>
           </div>
           <div class="plan-price">$12</div>
         </a>
         <a href="#" onclick="checkout('starter');return false;" class="paywall-plan featured">
           <div>
             <div class="plan-name">Starter Pack ⭐</div>
-            <div class="plan-detail">5 credits — $7.80 each (save 35%)</div>
+            <div class="plan-detail">5 full unlocks — best if you're applying to multiple roles</div>
           </div>
           <div class="plan-price">$39</div>
         </a>
         <a href="#" onclick="checkout('pro');return false;" class="paywall-plan">
           <div>
             <div class="plan-name">Pro — Unlimited</div>
-            <div class="plan-detail">Unlimited rewrites · Cancel anytime</div>
+            <div class="plan-detail">Unlimited scans, rewrites, cover letters, and interview prep</div>
           </div>
           <div class="plan-price">$49/mo</div>
         </a>
       </div>
       <div style="margin-top:14px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);">
-        <p style="font-size:12px;color:var(--text2);margin:0 0 8px;font-weight:700;">What you unlock</p>
-        <p style="font-size:12px;color:var(--text3);margin:0 0 6px;">Your score and issue breakdown stay visible. Purchase unlocks the downloadable rewrite, full keyword gap analysis, and the fix-ready version of your resume.</p>
-        <p style="font-size:12px;color:var(--text3);margin:0;">You can review the results first, then decide.</p>
+        <p style="font-size:12px;color:var(--text2);margin:0 0 8px;font-weight:700;">Free vs paid</p>
+        <p style="font-size:12px;color:var(--text3);margin:0 0 6px;"><strong style="color:var(--text);">Free:</strong> ATS score, grade, summary, and a preview of key issues.</p>
+        <p style="font-size:12px;color:var(--text3);margin:0 0 6px;"><strong style="color:var(--text);">Paid:</strong> downloadable rewrite, full keyword gap analysis, full issue list, and the fix-ready version of your resume.</p>
+        <p style="font-size:12px;color:var(--text3);margin:0;">You can review the score first, then decide if the unlock is worth it.</p>
       </div>
-      <p style="font-size:12px;color:var(--text3);margin-top:12px">Secure payment via Stripe · Pro plan billed monthly, cancel anytime</p>
+      <div style="margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:rgba(108,99,255,0.08);">
+        <p style="font-size:12px;color:var(--text2);margin:0 0 6px;font-weight:700;">Why people buy</p>
+        <p style="font-size:12px;color:var(--text3);margin:0;">You keep the free score. The paid unlock is for turning that diagnosis into a resume you can send immediately.</p>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:12px">Secure payment via Stripe · 7-day satisfaction guarantee · Pro plan billed monthly, cancel anytime</p>
       <p style="font-size:12px;color:var(--text3);margin-top:6px;"><a href="/privacy/" style="color:inherit;">Privacy</a> · <a href="/terms/" style="color:inherit;">Terms</a> · <a href="mailto:support@atscore.ai" style="color:inherit;">support@atscore.ai</a></p>
       <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
         <button onclick="togglePaywallCoupon()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:0;" id="paywallCouponToggle">Have a promo code?</button>
@@ -1176,12 +1181,17 @@
         <button class="download-btn" id="downloadBtn" onclick="getRewrite()" aria-label="Download optimized resume as Word document">
           ⬇ Download as Word (.docx)
         </button>
+        <p id="downloadHelper" style="font-size:12px;color:var(--text3);margin-top:10px;">Free includes your score and summary. Paid access unlocks the downloadable rewrite.</p>
         <div style="margin-top:8px;">
           <button id="downloadTxtBtn" onclick="downloadPlainText()" style="display:none;background:none;border:none;padding:0;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;text-underline-offset:2px;">Download as plain text instead</button>
         </div>
         <div id="placeholderTip" style="display:none;margin-top:14px;padding:12px 14px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.6;">
           <strong style="color:var(--text);">Tip — fill in the brackets to boost your score.</strong><br>
           Your resume contains <code style="font-size:11px;color:#a78bfa;">[placeholders]</code> where real metrics will make a big difference. Open the Word doc, search for <code style="font-size:11px;color:#a78bfa;">[</code>, and replace each one with your actual number. Then re-upload to see your new score.
+        </div>
+        <div id="upgradeSummary" style="display:none;margin-top:14px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;">
+          <p style="font-size:12px;color:var(--text2);margin:0 0 8px;font-weight:700;">What the paid unlock will fix</p>
+          <ul id="upgradeSummaryList" style="margin:0;padding-left:18px;font-size:12px;color:var(--text3);line-height:1.7;"></ul>
         </div>
         <div class="scans-badge" id="scansBadge"></div>
         <div id="cancelLink" style="display:none;margin-top:8px;">
@@ -1568,6 +1578,8 @@
     const scans = localStorage.getItem('ats_scans');
     const hasAccess = token && (scans === null || parseInt(scans) > 0);
     if (!hasAccess) {
+      document.getElementById('downloadBtn').textContent = '🔓 Unlock optimized resume';
+      document.getElementById('downloadHelper').textContent = 'Your free score stays visible. Unlock to download the rewritten version and full fix list.';
       // Truncate critical issues to 2, add "more" hint
       const ciItems = document.querySelectorAll('#criticalIssues li');
       let hiddenCount = 0;
@@ -1584,6 +1596,11 @@
 
       // Show rewrite teaser — specific fixes the AI would make
       showRewriteTeaser(data);
+      showUpgradeSummary(data);
+    } else {
+      document.getElementById('downloadBtn').textContent = '⬇ Download as Word (.docx)';
+      document.getElementById('downloadHelper').textContent = 'Your paid access is active. Download the rewritten version whenever you are ready.';
+      document.getElementById('upgradeSummary').style.display = 'none';
     }
   }
 
@@ -1648,9 +1665,35 @@
       <ul class="rewrite-teaser-items">
         ${fixes.map(f => `<li>${f}</li>`).join('')}
       </ul>
-      <button class="rewrite-teaser-cta" onclick="showPaywall()">Get Your Optimized Resume — from $12 →</button>
+      <button class="rewrite-teaser-cta" onclick="showPaywall()">Unlock the fix-ready version — from $12 →</button>
     `;
     resultsEl.appendChild(teaser);
+  }
+
+  function showUpgradeSummary(data) {
+    const box = document.getElementById('upgradeSummary');
+    const list = document.getElementById('upgradeSummaryList');
+    if (!box || !list) return;
+
+    const items = [];
+    const keywordCount = (data.keyword_gaps || []).length;
+    if (keywordCount > 0) {
+      items.push(`Add ${keywordCount} missing keyword${keywordCount === 1 ? '' : 's'} that matter for ATS matching.`);
+    }
+    const issues = data.critical_issues || [];
+    if (issues.length > 0) {
+      items.push(`Fix ${Math.min(issues.length, 3)} high-impact issue${issues.length === 1 ? '' : 's'} that are reducing your score.`);
+    }
+    const recs = data.recommendations || [];
+    if (recs.length > 0) {
+      items.push(`Turn the recommendations into a resume rewrite you can actually download and send.`);
+    }
+    if (items.length === 0) {
+      items.push('Convert the score and feedback into a downloadable, ATS-ready rewrite.');
+    }
+
+    list.innerHTML = items.map(item => `<li>${item}</li>`).join('');
+    box.style.display = 'block';
   }
 
   function lockCard(card) {
