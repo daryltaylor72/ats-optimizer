@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Calendar — ATScore Internal</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0B0D11; --surface: #141820; --surface2: #1A1F2B; --surface3: #1E293B;
+      --text: #E2E8F0; --text2: #94A3B8; --text3: #64748B; --text4: #475569;
+      --purple: #6C63FF; --purple-bg: rgba(108,99,255,0.1); --purple-border: rgba(108,99,255,0.3);
+      --green: #22C55E; --green-bg: rgba(34,197,94,0.1);
+      --radius: 12px; --radius-sm: 8px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+    /* Auth gate */
+    .auth-gate { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .auth-box { background: var(--surface); border: 1px solid var(--surface3); border-radius: 16px; padding: 40px; max-width: 380px; width: 100%; text-align: center; }
+    .auth-box .lock { font-size: 32px; margin-bottom: 16px; }
+    .auth-box h2 { font-size: 18px; font-weight: 700; color: #F1F5F9; margin-bottom: 6px; }
+    .auth-box p { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+    .auth-box input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--surface3); background: var(--bg); color: var(--text); font-size: 16px; font-family: inherit; text-align: center; letter-spacing: 4px; outline: none; transition: border-color 0.15s; }
+    .auth-box input:focus { border-color: var(--purple); }
+    .auth-box input.error { border-color: #EF4444; animation: shake 0.3s ease; }
+    .auth-box button { width: 100%; margin-top: 12px; padding: 12px; border-radius: 10px; border: none; background: var(--purple); color: #fff; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity 0.15s; }
+    .auth-box button:hover { opacity: 0.9; }
+    .auth-error { color: #EF4444; font-size: 12px; margin-top: 8px; min-height: 18px; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    /* Header */
+    .header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+    .header-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--purple); text-transform: uppercase; margin-bottom: 4px; }
+    .header h1 { font-size: 24px; font-weight: 700; color: #F1F5F9; }
+    .header-sub { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+    /* View toggle */
+    .view-toggle { display: flex; gap: 6px; }
+    .view-btn { padding: 6px 16px; border-radius: var(--radius-sm); border: 1px solid var(--surface3); background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .view-btn.active { border-color: var(--purple); background: var(--purple-bg); color: #A5B4FC; }
+
+    /* Progress */
+    .progress-track { background: var(--surface3); border-radius: var(--radius-sm); height: 8px; margin: 20px 0 8px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #6C63FF, #A78BFA); border-radius: var(--radius-sm); transition: width 0.4s ease; }
+    .progress-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text3); margin-bottom: 20px; }
+    .clear-filter { cursor: pointer; color: #EF4444; }
+    .clear-filter:hover { text-decoration: underline; }
+
+    /* Channel chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
+    .chip { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--surface3); background: transparent; color: var(--text2); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .chip .count { opacity: 0.6; }
+    .chip.active { background: var(--_chip-bg); border-color: var(--_chip-color); color: var(--_chip-color); }
+
+    /* Calendar grid */
+    .cal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    @media (max-width: 900px) { .cal-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .cal-grid { grid-template-columns: 1fr; } }
+    .week-card { background: var(--surface); border: 1px solid var(--surface3); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
+    .week-card:hover { border-color: var(--surface3); background: var(--surface2); }
+    .week-card.selected { background: var(--surface2); }
+    .week-card.phase1 .phase-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--purple); }
+    .week-card.phase2 .phase-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #22C55E; }
+    .week-card.phase3 .phase-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #F59E0B; }
+    .week-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .week-num { font-size: 16px; font-weight: 700; color: #F1F5F9; }
+    .week-dates { font-size: 11px; color: var(--text3); margin-left: 8px; }
+    .week-count { font-size: 11px; font-weight: 600; }
+    .week-count.done { color: var(--green); }
+    .week-count.partial { color: var(--text3); }
+    .task-dots { display: flex; flex-wrap: wrap; gap: 4px; }
+    .task-dot { width: 10px; height: 10px; border-radius: 3px; transition: all 0.15s; }
+    .task-dot.completed { opacity: 0.4; background: var(--green) !important; }
+
+    /* Detail panel */
+    .detail { margin-top: 16px; background: var(--surface); border: 1px solid var(--surface3); border-radius: 14px; padding: 20px; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .detail-head h2 { font-size: 18px; font-weight: 700; color: #F1F5F9; }
+    .detail-phase { font-size: 12px; font-weight: 600; }
+    .close-btn { background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer; padding: 4px; }
+    .close-btn:hover { color: var(--text); }
+    .empty-msg { color: var(--text4); font-size: 14px; font-style: italic; }
+
+    /* Task items */
+    .task-list { display: flex; flex-direction: column; gap: 8px; }
+    .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--surface2); border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: all 0.15s; }
+    .task-item:hover { background: var(--surface3); }
+    .task-item.done { background: #0F1318; opacity: 0.55; }
+    .checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--text4); background: transparent; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; transition: all 0.15s; font-size: 13px; font-weight: 700; color: #fff; }
+    .task-item.done .checkbox { border-color: var(--green); background: var(--green); }
+    .task-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+    .task-item.done .task-text { color: var(--text3); text-decoration: line-through; }
+    .task-meta { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .badge-ch { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+    .badge-ch .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .badge-pr { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+
+    /* List view */
+    .list-view { display: flex; flex-direction: column; gap: 28px; }
+    .phase-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .phase-bar-v { width: 4px; height: 22px; border-radius: 2px; }
+    .phase-header h2 { font-size: 16px; font-weight: 700; }
+    .week-group { margin-bottom: 16px; margin-left: 14px; }
+    .week-group-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .week-group-head .wk { font-size: 13px; font-weight: 700; color: #F1F5F9; }
+    .week-group-head .dt { font-size: 11px; color: var(--text3); }
+    .week-group-head .ct { font-size: 11px; color: var(--text4); margin-left: auto; }
+    .list-task { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--surface3); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; }
+    .list-task:hover { background: var(--surface2); }
+    .list-task.done { opacity: 0.5; background: #0F1318; }
+    .list-task .checkbox { width: 18px; height: 18px; border-radius: 4px; font-size: 11px; margin-top: 2px; }
+    .list-task .task-text { font-size: 13px; color: #CBD5E1; flex: 1; }
+    .list-task.done .task-text { color: var(--text3); text-decoration: line-through; }
+    .list-task .badge-pr { flex-shrink: 0; }
+
+    /* Phase overview */
+    .phase-overview { margin-top: 32px; padding: 16px; background: var(--surface); border: 1px solid var(--surface3); border-radius: var(--radius); }
+    .phase-overview-title { font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .phase-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    @media (max-width: 600px) { .phase-grid { grid-template-columns: 1fr; } }
+    .phase-card { padding: 12px; background: var(--surface2); border-radius: var(--radius-sm); }
+    .phase-card-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .phase-card-info { font-size: 12px; color: var(--text2); }
+    .phase-card-count { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+    /* Funnel reminder */
+    .funnel-box { margin-top: 16px; padding: 16px; background: var(--purple-bg); border: 1px solid var(--purple-border); border-radius: var(--radius); }
+    .funnel-label { font-size: 12px; font-weight: 700; color: var(--purple); margin-bottom: 6px; }
+    .funnel-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .funnel-text span { color: #CBD5E1; }
+  </style>
+</head>
+<body>
+<!-- Auth gate -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-box">
+    <div class="lock">🔒</div>
+    <h2>Internal Dashboard</h2>
+    <p>Enter your access code to continue.</p>
+    <form id="auth-form" onsubmit="return checkAuth(event)">
+      <input type="password" id="auth-input" placeholder="••••••" autocomplete="off" autofocus>
+      <button type="submit">Unlock</button>
+      <div class="auth-error" id="auth-error"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Calendar (hidden until auth) -->
+<div class="wrap" id="app" style="display:none"></div>
+
+<script>
+// ── Auth ──────────────────────────────────────────────────────────────────────
+const AUTH_KEY = "atscore_campaign_auth";
+const AUTH_HASH = "b8f686154b94daf6cc327780030012305916a9be66b220e87b36969b75d3e560"; // SHA-256 of passphrase
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function checkAuth(e) {
+  e.preventDefault();
+  const input = document.getElementById("auth-input");
+  const hash = await sha256(input.value.trim());
+  if (hash === AUTH_HASH) {
+    sessionStorage.setItem(AUTH_KEY, "1");
+    showApp();
+  } else {
+    input.classList.add("error");
+    document.getElementById("auth-error").textContent = "Incorrect code.";
+    setTimeout(() => input.classList.remove("error"), 400);
+    input.value = "";
+    input.focus();
+  }
+  return false;
+}
+
+function showApp() {
+  document.getElementById("auth-gate").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  render();
+}
+
+// Check if already authed this session
+if (sessionStorage.getItem(AUTH_KEY) === "1") { showApp(); }
+</script>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const CHANNELS = {
+  funnel: { label: "Funnel / Analytics", color: "#6C63FF", bg: "rgba(108,99,255,0.1)" },
+  video:  { label: "Short-Form Video",  color: "#F59E0B", bg: "rgba(245,158,11,0.1)" },
+  coach:  { label: "Coach Partnerships", color: "#22C55E", bg: "rgba(34,197,94,0.1)" },
+  email:  { label: "Email Nurture",      color: "#EC4899", bg: "rgba(236,72,153,0.1)" },
+  site:   { label: "Site / Homepage",    color: "#06B6D4", bg: "rgba(6,182,212,0.1)" },
+  seo:    { label: "SEO / Blog",         color: "#8B5CF6", bg: "rgba(139,92,246,0.1)" },
+  linkedin: { label: "LinkedIn Organic", color: "#0A66C2", bg: "rgba(10,102,194,0.1)" },
+  ads:    { label: "Google Ads",         color: "#EF4444", bg: "rgba(239,68,68,0.1)" },
+  ph:     { label: "Product Hunt",       color: "#FF6154", bg: "rgba(255,97,84,0.1)" },
+  proof:  { label: "Proof / Testimonials", color: "#14B8A6", bg: "rgba(20,184,166,0.1)" },
+  eval:   { label: "Evaluation / Decision", color: "#64748B", bg: "rgba(100,116,139,0.1)" },
+};
+
+const PHASES = [
+  { label: "Phase 1 — First 30 Days", weeks: [1,2,3,4], color: "#6C63FF", cls: "phase1" },
+  { label: "Phase 2 — Scale What Works", weeks: [5,6,7,8], color: "#22C55E", cls: "phase2" },
+  { label: "Phase 3 — Expand & Optimize", weeks: [9,10,11,12], color: "#F59E0B", cls: "phase3" },
+];
+
+const PRIORITY = {
+  MUST: { bg: "#7F1D1D", text: "#FEE2E2", label: "MUST" },
+  HIGH: { bg: "#1E3A5F", text: "#DBEAFE", label: "HIGH" },
+  MED:  { bg: "#3B3B1F", text: "#FEF9C3", label: "MED" },
+  COND: { bg: "#4A2D17", text: "#FFEDD5", label: "CONDITIONAL" },
+  OPT:  { bg: "#2D3748", text: "#E2E8F0", label: "OPTIONAL" },
+};
+
+const tasks = [
+  {week:1,ch:"funnel",task:"Install GA4 — set up events for BOTH funnels (homepage scan + checklist email capture)",pr:"MUST"},
+  {week:1,ch:"site",task:"Optimize /free-checklist/ above-fold layout — headline, bullets, and form visible without scrolling",pr:"MUST"},
+  {week:1,ch:"site",task:"Add secondary CTA below checklist form: 'or scan your resume free now →'",pr:"HIGH"},
+  {week:1,ch:"email",task:"Verify Email 1 delivery end-to-end: checklist PDF arrives, premium code works, coaching bridge line added",pr:"MUST"},
+  {week:1,ch:"seo",task:"Audit existing content inventory — what exists, what ranks, what can improve",pr:"HIGH"},
+  {week:2,ch:"video",task:"Video 1: 'I scanned my resume on an ATS tool — here's my score' (link in bio → /free-checklist/)",pr:"MUST"},
+  {week:2,ch:"video",task:"Video 2: Before/after AI rewrite — score change on screen, checklist CTA at end",pr:"MUST"},
+  {week:2,ch:"video",task:"Video 3: '3 things ATS systems reject resumes for' — educational, checklist soft-sell at close",pr:"MUST"},
+  {week:2,ch:"site",task:"Update homepage: add 'How It Works' section (Scan → AI Coaching → Video Coaching) + hero subheadline",pr:"HIGH"},
+  {week:2,ch:"coach",task:"Build outreach list: 20 career coaches on LinkedIn (500+ followers, active resume/career content)",pr:"HIGH"},
+  {week:3,ch:"coach",task:"Send personalized outreach to first 10 coaches — offer free premium access for them + their clients",pr:"HIGH"},
+  {week:3,ch:"video",task:"Videos 4–6: Test 'Rate this resume' format using public/anonymized submissions",pr:"HIGH"},
+  {week:3,ch:"email",task:"Write Email 2 (Day 3 drip): keyword mistakes + coaching bridge language",pr:"HIGH"},
+  {week:3,ch:"proof",task:"Email first free-unlock users: 'What did you find most useful about your ATScore report?'",pr:"HIGH"},
+  {week:4,ch:"eval",task:"Pull GA4 funnel data for BOTH paths — compare homepage vs. checklist conversion rates",pr:"MUST"},
+  {week:4,ch:"eval",task:"Review video performance: which format drove actual checklist claims / scans (not just views)?",pr:"MUST"},
+  {week:4,ch:"eval",task:"Review coach outreach: response rate, agreements to share, pitch refinement needed?",pr:"MUST"},
+  {week:4,ch:"coach",task:"Send outreach to 10 more coaches (second batch, refined pitch)",pr:"HIGH"},
+  {week:4,ch:"seo",task:"Blog Post 1: Build on existing content or write 'What your ATS score actually measures'",pr:"HIGH"},
+  {week:4,ch:"eval",task:"Draft Month 2 plan: scale what worked, stop what didn't, introduce ONE new element",pr:"MUST"},
+  {week:5,ch:"video",task:"Scale video to 4–5/week — introduce 'coaching demo' format showing AI coaching walkthrough",pr:"HIGH"},
+  {week:5,ch:"coach",task:"Activate confirmed coach partners — send shareable referral links with UTM tracking",pr:"HIGH"},
+  {week:5,ch:"proof",task:"Add first testimonials to homepage below the fold (even 2–3 is enough)",pr:"HIGH"},
+  {week:6,ch:"video",task:"Continue 4–5 videos/week — double down on top-performing format from Week 4 review",pr:"HIGH"},
+  {week:6,ch:"coach",task:"Follow up with non-responding coaches from Batch 1 and 2",pr:"MED"},
+  {week:6,ch:"proof",task:"Send Day 14 follow-up email to early users: 'Applied to any jobs since your report?'",pr:"MED"},
+  {week:7,ch:"seo",task:"Blog Post 2 + improve Blog Post 1 based on Search Console data — target 'AI resume coaching' keywords",pr:"HIGH"},
+  {week:7,ch:"email",task:"Write Email 3 (Day 7 drip): introduces video coaching feature",pr:"HIGH"},
+  {week:7,ch:"email",task:"Write Email 4 (Day 14 drip): upgrade offer reflecting current live pricing",pr:"HIGH"},
+  {week:8,ch:"linkedin",task:"Launch LinkedIn organic: 3x/week using coaching positioning + before/after examples",pr:"HIGH"},
+  {week:8,ch:"video",task:"Continue video cadence — test cross-posting best performers to LinkedIn video",pr:"MED"},
+  {week:8,ch:"eval",task:"Mid-campaign review: full funnel snapshot, channel ROI, coach referral volume",pr:"MUST"},
+  {week:9,ch:"ads",task:"CONDITIONAL: Launch Google Ads only if Stage 5→8 conversion > 3%. Start $10–20/day, long-tail only.",pr:"COND"},
+  {week:9,ch:"linkedin",task:"Continue LinkedIn 3x/week — share testimonials, coaching results, score transformations",pr:"HIGH"},
+  {week:9,ch:"proof",task:"Compile proof portfolio: 5+ user quotes, 3+ score transformations, 1+ interview success story",pr:"HIGH"},
+  {week:10,ch:"ph",task:"OPTIONAL: Product Hunt launch — only if AI video coaching is live and narrative is strong",pr:"OPT"},
+  {week:10,ch:"seo",task:"Blog Post 3: guest post pitch to career blogs — '75% of resumes are auto-rejected'",pr:"MED"},
+  {week:10,ch:"ads",task:"CONDITIONAL: If ads running, review CPA — pause any ad group with CPA > $5/scan",pr:"COND"},
+  {week:11,ch:"video",task:"Video content refresh: incorporate testimonials, coach endorsements, coaching demo clips",pr:"HIGH"},
+  {week:11,ch:"email",task:"A/B test Email 1 subject line — optimize for open rate based on 30+ days of data",pr:"MED"},
+  {week:11,ch:"coach",task:"Third wave of coach outreach (10 more) — now with proof portfolio in the pitch",pr:"MED"},
+  {week:12,ch:"eval",task:"Full 12-week review: primary KPIs vs. targets, funnel conversion rates, channel ranking",pr:"MUST"},
+  {week:12,ch:"eval",task:"Build Q3 plan: which channels earned ongoing investment? What new channels to test?",pr:"MUST"},
+  {week:12,ch:"eval",task:"Update campaign brief for next quarter based on actual data",pr:"HIGH"},
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = "atscore_campaign_tasks";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch(e) {}
+function saveDone() { localStorage.setItem(STORAGE_KEY, JSON.stringify(done)); }
+
+let view = "calendar";
+let selectedWeek = null;
+let filterCh = null;
+
+// Week dates starting April 13, 2026
+const weekDates = Array.from({length:12}, (_,i) => {
+  const s = new Date(2026, 3, 13 + i*7);
+  const e = new Date(s); e.setDate(e.getDate()+6);
+  const fmt = d => d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  return { start: fmt(s), end: fmt(e) };
+});
+
+function phaseFor(w) { return PHASES.find(p => p.weeks.includes(w)); }
+function weekTasks(w) { return tasks.filter((t,i) => t.week===w && (!filterCh || t.ch===filterCh)).map((t,i) => ({...t, idx: tasks.indexOf(t)})); }
+function totalDone() { return Object.values(done).filter(Boolean).length; }
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById("app");
+  const pct = Math.round((totalDone() / tasks.length) * 100);
+
+  let html = `
+    <div class="header">
+      <div>
+        <div class="header-label">ATScore.ai — Internal</div>
+        <h1>12-Week Campaign Calendar</h1>
+        <p class="header-sub">v2.1 — Lead Magnet Update — Q2–Q3 2026</p>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn ${view==='calendar'?'active':''}" onclick="setView('calendar')">Calendar</button>
+        <button class="view-btn ${view==='list'?'active':''}" onclick="setView('list')">List</button>
+      </div>
+    </div>
+
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-info">
+      <span>${totalDone()} of ${tasks.length} tasks complete (${pct}%)</span>
+      <span>${filterCh ? '<span class="clear-filter" onclick="clearFilter()">Clear filter ✕</span>' : ''}</span>
+    </div>
+
+    <div class="chips">
+      ${Object.entries(CHANNELS).map(([key,ch]) => {
+        const count = tasks.filter(t => t.ch===key).length;
+        const active = filterCh===key;
+        return `<button class="chip ${active?'active':''}" style="--_chip-color:${ch.color};--_chip-bg:${ch.bg};${active?`border-color:${ch.color};background:${ch.bg};color:${ch.color}`:''}" onclick="toggleFilter('${key}')">
+          <span class="dot" style="background:${ch.color}"></span>${ch.label} <span class="count">(${count})</span>
+        </button>`;
+      }).join("")}
+    </div>`;
+
+  if (view === "calendar") {
+    html += `<div class="cal-grid">`;
+    for (let w = 1; w <= 12; w++) {
+      const phase = phaseFor(w);
+      const wt = weekTasks(w);
+      const wDone = wt.filter(t => done[t.idx]).length;
+      const sel = selectedWeek === w;
+      html += `<div class="week-card ${phase.cls} ${sel?'selected':''}" onclick="selectWeek(${w})" style="${sel?`border-color:${phase.color}50`:``}">
+        <div class="phase-bar"></div>
+        <div class="week-head">
+          <div><span class="week-num">Week ${w}</span><span class="week-dates">${weekDates[w-1].start}–${weekDates[w-1].end}</span></div>
+          <span class="week-count ${wDone===wt.length&&wt.length>0?'done':'partial'}">${wDone}/${wt.length}</span>
+        </div>
+        <div class="task-dots">
+          ${wt.map(t => `<span class="task-dot ${done[t.idx]?'completed':''}" style="background:${CHANNELS[t.ch].color}"></span>`).join("")}
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+
+    if (selectedWeek) {
+      const phase = phaseFor(selectedWeek);
+      const wt = weekTasks(selectedWeek);
+      html += `<div class="detail">
+        <div class="detail-head">
+          <div>
+            <h2>Week ${selectedWeek} — ${weekDates[selectedWeek-1].start} to ${weekDates[selectedWeek-1].end}</h2>
+            <span class="detail-phase" style="color:${phase.color}">${phase.label}</span>
+          </div>
+          <button class="close-btn" onclick="selectWeek(null)">✕</button>
+        </div>
+        ${wt.length === 0 ? '<p class="empty-msg">No tasks match current filter.</p>' :
+          `<div class="task-list">${wt.map(t => taskItem(t)).join("")}</div>`}
+      </div>`;
+    }
+  }
+
+  if (view === "list") {
+    html += `<div class="list-view">`;
+    for (const phase of PHASES) {
+      html += `<div>
+        <div class="phase-header">
+          <div class="phase-bar-v" style="background:${phase.color}"></div>
+          <h2 style="color:${phase.color}">${phase.label}</h2>
+        </div>`;
+      for (const w of phase.weeks) {
+        const wt = weekTasks(w);
+        if (wt.length === 0) continue;
+        const wDone = wt.filter(t => done[t.idx]).length;
+        html += `<div class="week-group">
+          <div class="week-group-head">
+            <span class="wk">Week ${w}</span>
+            <span class="dt">${weekDates[w-1].start}–${weekDates[w-1].end}</span>
+            <span class="ct">${wDone}/${wt.length}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${wt.map(t => listItem(t, phase)).join("")}
+          </div>
+        </div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Phase overview
+  html += `<div class="phase-overview">
+    <div class="phase-overview-title">Phase Overview</div>
+    <div class="phase-grid">
+      ${PHASES.map(p => {
+        const pt = tasks.filter(t => p.weeks.includes(t.week));
+        const pd = pt.filter((_,i) => done[tasks.indexOf(pt[i])]).length;
+        // Actually recalculate properly
+        const ptIdx = pt.map(t => tasks.indexOf(t));
+        const pdCount = ptIdx.filter(i => done[i]).length;
+        return `<div class="phase-card" style="border-left:3px solid ${p.color}">
+          <div class="phase-card-name" style="color:${p.color}">${p.label}</div>
+          <div class="phase-card-info">Weeks ${p.weeks[0]}–${p.weeks[p.weeks.length-1]}</div>
+          <div class="phase-card-count">${pdCount}/${pt.length} tasks</div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`;
+
+  // Funnel reminder
+  html += `<div class="funnel-box">
+    <div class="funnel-label">FUNNEL REMINDER</div>
+    <div class="funnel-text">Every task maps back to: <span>Visit → Upload / Email Capture → Completed Scan → Viewed Locked Value → Free Unlock → Paid Conversion → Repeat Use</span>. If a task does not advance a funnel stage, it gets cut.</div>
+  </div>`;
+
+  app.innerHTML = html;
+}
+
+function taskItem(t) {
+  const ch = CHANNELS[t.ch];
+  const pr = PRIORITY[t.pr];
+  const d = !!done[t.idx];
+  return `<div class="task-item ${d?'done':''}" style="${d?'':`border-color:${ch.color}20`}" onclick="event.stopPropagation();toggleTask(${t.idx})">
+    <div class="checkbox">${d?'✓':''}</div>
+    <div style="flex:1;min-width:0">
+      <div class="task-text">${t.task}</div>
+      <div class="task-meta">
+        <span class="badge-ch" style="background:${ch.bg};color:${ch.color}"><span class="dot" style="background:${ch.color}"></span>${ch.label}</span>
+        <span class="badge-pr" style="background:${pr.bg};color:${pr.text}">${pr.label}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function listItem(t, phase) {
+  const ch = CHANNELS[t.ch];
+  const pr = PRIORITY[t.pr];
+  const d = !!done[t.idx];
+  return `<div class="list-task ${d?'done':''}" style="border-left:3px solid ${ch.color}" onclick="toggleTask(${t.idx})">
+    <div class="checkbox">${d?'✓':''}</div>
+    <div class="task-text">${t.task}</div>
+    <span class="badge-pr" style="background:${pr.bg};color:${pr.text}">${pr.label}</span>
+  </div>`;
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+function setView(v) { view = v; render(); }
+function selectWeek(w) { selectedWeek = selectedWeek===w ? null : w; render(); }
+function toggleFilter(ch) { filterCh = filterCh===ch ? null : ch; render(); }
+function clearFilter() { filterCh = null; render(); }
+function toggleTask(idx) { done[idx] = !done[idx]; saveDone(); render(); }
+
+// Initial render
+render();
+</script>
+</body>
+</html>
