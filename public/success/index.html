@@ -58,6 +58,15 @@
       transition: opacity 0.2s, transform 0.2s;
     }
     .cta:hover { opacity: 0.9; transform: translateY(-1px); }
+    .secondary-cta {
+      display: block;
+      margin-top: 12px;
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .secondary-cta:hover { color: var(--text); }
     .loading-msg { font-size: 14px; color: var(--text2); }
     .spinner {
       width: 32px; height: 32px; margin: 0 auto 16px;
@@ -112,6 +121,7 @@
           <div class="scans-label">${data.scans_remaining >= 9000 ? 'scans for 30 days' : `scan${data.scans_remaining === 1 ? '' : 's'} available`}</div>
         </div>
         <a href="/tool/" class="cta">Start Analyzing →</a>
+        <a href="/account/" class="secondary-cta">View account access →</a>
       `;
     }
 

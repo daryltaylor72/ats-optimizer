@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Account | ATScore</title>
+  <meta name="description" content="Access your ATScore scans, credits, and plan details with a passwordless email sign-in link.">
+  <link rel="canonical" href="https://atscore.ai/account/">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@500&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0b0f;
+      --surface: #111318;
+      --surface2: #181b22;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.14);
+      --text: #edeef5;
+      --text2: #8892aa;
+      --text3: #484f68;
+      --accent: #6c63ff;
+      --green: #22c55e;
+      --red: #ef4444;
+      --serif: 'DM Serif Display', serif;
+      --sans: 'Nunito Sans', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      padding: 32px 20px 64px;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(108,99,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108,99,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: 700 15px/1 var(--mono);
+      color: #fff;
+    }
+    .brand-name {
+      font: 20px/1 var(--serif);
+    }
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .link-btn, button {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font: 600 13px/1 var(--sans);
+      text-decoration: none;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .link-btn:hover, button:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 20px;
+    }
+    .eyebrow {
+      display: inline-block;
+      font: 600 11px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    h1 {
+      font: 42px/1.1 var(--serif);
+      margin-bottom: 10px;
+    }
+    .sub {
+      font-size: 15px;
+      color: var(--text2);
+      max-width: 620px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text2);
+      margin-bottom: 14px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    input[type="email"] {
+      flex: 1;
+      min-width: 220px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font: 14px/1.5 var(--sans);
+      padding: 12px 14px;
+    }
+    input[type="email"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .msg {
+      font-size: 12px;
+      min-height: 18px;
+      margin-top: 10px;
+      color: var(--text3);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .stat {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .meta {
+      color: var(--text2);
+      font-size: 14px;
+    }
+    .muted {
+      color: var(--text3);
+      font-size: 12px;
+    }
+    .status-good { color: var(--green); }
+    .status-bad { color: var(--red); }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+    .primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    .primary:hover {
+      color: #fff;
+      opacity: 0.9;
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 32px; }
+      .hero, .card { padding: 20px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/" class="brand">
+        <div class="brand-mark">A</div>
+        <div class="brand-name">ATScore</div>
+      </a>
+      <div class="top-links">
+        <a href="/tool/" class="link-btn">ATS Scanner</a>
+        <a href="/" class="link-btn">Home</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="eyebrow">Account</div>
+      <h1>Access your scans and credits</h1>
+      <p class="sub">Sign in with a one-time email link to view any ATScore scans, credits, or plan access tied to your purchase email. No password required.</p>
+    </section>
+
+    <section class="card" id="signinCard">
+      <h2>Sign In</h2>
+      <p class="meta">Use the same email you used when you purchased or recovered access.</p>
+      <div class="row" style="margin-top:16px;">
+        <input type="email" id="emailInput" placeholder="your@email.com" />
+        <button id="signinBtn" class="primary" onclick="sendLink()">Email Sign-In Link</button>
+      </div>
+      <p class="msg" id="signinMsg"></p>
+    </section>
+
+    <section class="card" id="accountCard" style="display:none;">
+      <h2>Your Access</h2>
+      <p class="meta" id="accountEmail"></p>
+      <div class="grid">
+        <div class="stat">
+          <div class="stat-label">Plan</div>
+          <div class="stat-value" id="planValue">-</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Scans</div>
+          <div class="stat-value" id="scansValue">-</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Video Reviews</div>
+          <div class="stat-value" id="videoValue">-</div>
+        </div>
+      </div>
+      <p class="meta" id="accountSummary" style="margin-top:16px;"></p>
+      <p class="muted" id="accountHelp" style="margin-top:6px;"></p>
+      <div class="actions">
+        <a href="/tool/" class="link-btn primary">Open ATS Scanner</a>
+        <button onclick="signOut()">Sign Out</button>
+      </div>
+    </section>
+
+    <section class="card" id="emptyCard" style="display:none;">
+      <h2>No Active Access Found</h2>
+      <p class="meta">You're signed in, but we didn't find an active paid scan balance tied to this email.</p>
+      <div class="actions">
+        <a href="/tool/#recover" class="link-btn">Send Recovery Link</a>
+        <a href="/#pricing" class="link-btn primary">View Plans</a>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const signinCard = document.getElementById('signinCard');
+    const accountCard = document.getElementById('accountCard');
+    const emptyCard = document.getElementById('emptyCard');
+    const emailInput = document.getElementById('emailInput');
+    const signinMsg = document.getElementById('signinMsg');
+    const savedEmail = localStorage.getItem('ats_email');
+    if (savedEmail) emailInput.value = savedEmail;
+
+    async function sendLink() {
+      const email = emailInput.value.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        signinMsg.textContent = 'Please enter a valid email.';
+        signinMsg.className = 'msg status-bad';
+        return;
+      }
+      const btn = document.getElementById('signinBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      try {
+        await fetch('/auth-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        localStorage.setItem('ats_email', email);
+        signinMsg.textContent = 'Check your inbox — we sent a sign-in link.';
+        signinMsg.className = 'msg status-good';
+        btn.textContent = 'Sent ✓';
+      } catch {
+        signinMsg.textContent = 'Something went wrong. Please try again.';
+        signinMsg.className = 'msg status-bad';
+        btn.disabled = false;
+        btn.textContent = 'Email Sign-In Link';
+      }
+    }
+
+    async function signOut() {
+      try { await fetch('/auth-logout', { method: 'POST' }); } catch {}
+      accountCard.style.display = 'none';
+      emptyCard.style.display = 'none';
+      signinCard.style.display = 'block';
+      signinMsg.textContent = 'Signed out.';
+      signinMsg.className = 'msg';
+    }
+
+    function renderSignedIn(data) {
+      signinCard.style.display = 'none';
+      document.getElementById('accountEmail').textContent = data.email;
+
+      if (!data.has_token) {
+        emptyCard.style.display = 'block';
+        accountCard.style.display = 'none';
+        return;
+      }
+
+      emptyCard.style.display = 'none';
+      accountCard.style.display = 'block';
+      document.getElementById('planValue').textContent = data.plan_label;
+      document.getElementById('scansValue').textContent = data.is_unlimited ? 'Unlimited' : data.scans_remaining;
+      document.getElementById('videoValue').textContent = data.video_reviews_remaining || 0;
+
+      const expiresText = data.expires_at
+        ? new Date(data.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : null;
+      document.getElementById('accountSummary').textContent =
+        `${data.plan_label} linked to this email${expiresText ? ` · expires ${expiresText}` : ''}`;
+      document.getElementById('accountHelp').textContent =
+        'Any new purchases made with this email will show up here automatically.';
+    }
+
+    async function loadSession() {
+      const params = new URLSearchParams(location.search);
+      const signedIn = params.get('signed_in');
+      const signInState = params.get('signin');
+
+      if (signedIn === '1') {
+        signinMsg.textContent = 'Signed in successfully.';
+        signinMsg.className = 'msg status-good';
+      } else if (signInState === 'expired') {
+        signinMsg.textContent = 'That sign-in link expired. Request a new one below.';
+        signinMsg.className = 'msg status-bad';
+      } else if (signInState === 'invalid' || signInState === 'unavailable') {
+        signinMsg.textContent = 'That sign-in link is unavailable. Request a new one below.';
+        signinMsg.className = 'msg status-bad';
+      }
+
+      if (signedIn || signInState) {
+        history.replaceState({}, '', location.pathname);
+      }
+
+      try {
+        const res = await fetch('/auth-session');
+        const data = await res.json();
+        if (res.ok && data.authenticated) {
+          localStorage.setItem('ats_email', data.email);
+          renderSignedIn(data);
+        }
+      } catch {}
+    }
+
+    loadSession();
+  </script>
+</body>
+</html>
