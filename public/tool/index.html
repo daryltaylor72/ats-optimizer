@@ -989,7 +989,7 @@
     <span class="theme-icon-dark">&#9790;</span>
     <span class="theme-icon-light">&#9728;</span>
   </button>
-  <a href="/account/" class="home-link" style="margin-left:0;margin-right:8px;">Account</a>
+  <a href="/account/" class="home-link" id="toolAccountLink" style="margin-left:0;margin-right:8px;">Account</a>
   <a href="/" class="home-link" style="margin-left:0;">← Home</a>
 </div>
 
@@ -1984,9 +1984,11 @@
     const entitlements = document.getElementById('accountEntitlements');
     const summary = document.getElementById('accountSummary');
     const help = document.getElementById('accountHelp');
+    const toolAccountLink = document.getElementById('toolAccountLink');
     document.getElementById('accountEmail').textContent = data.email;
 
     if (data.has_token) {
+      if (toolAccountLink) toolAccountLink.textContent = 'My Account';
       const scansText = data.is_unlimited ? 'Unlimited scans' : `${data.scans_remaining} scan${data.scans_remaining === 1 ? '' : 's'} remaining`;
       const expiresText = data.expires_at ? new Date(data.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
       summary.textContent = `${data.plan_label} linked to this email. ${scansText}${expiresText ? ` · expires ${expiresText}` : ''}`;
@@ -2012,6 +2014,8 @@
     localStorage.removeItem('ats_scans');
     currentToken = null;
     renderSignedOutAccount();
+    const toolAccountLink = document.getElementById('toolAccountLink');
+    if (toolAccountLink) toolAccountLink.textContent = 'Account';
     document.getElementById('tokenStatus').classList.remove('show');
     document.getElementById('authMsg').textContent = 'Signed out.';
     document.getElementById('authMsg').style.color = 'var(--text3)';

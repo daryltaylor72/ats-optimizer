@@ -323,6 +323,8 @@
 
     async function signOut() {
       try { await fetch('/auth-logout', { method: 'POST' }); } catch {}
+      localStorage.removeItem('ats_token');
+      localStorage.removeItem('ats_scans');
       accountCard.style.display = 'none';
       emptyCard.style.display = 'none';
       signinCard.style.display = 'block';
@@ -380,6 +382,13 @@
         const data = await res.json();
         if (res.ok && data.authenticated) {
           localStorage.setItem('ats_email', data.email);
+          if (data.token) {
+            localStorage.setItem('ats_token', data.token);
+            localStorage.setItem('ats_scans', data.scans_remaining);
+          } else {
+            localStorage.removeItem('ats_token');
+            localStorage.removeItem('ats_scans');
+          }
           renderSignedIn(data);
         }
       } catch {}

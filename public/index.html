@@ -714,9 +714,9 @@
       <a href="/tool/" class="btn-ghost">ATS Scanner</a>
       <a href="/cover-letter/" class="btn-ghost">Cover Letter</a>
       <a href="/interview-prep/" class="btn-ghost">Interview Prep</a>
-      <a href="/account/" class="btn-ghost">Account</a>
+      <a href="/account/" class="btn-ghost" id="navAccountLink">Account</a>
       <a href="#pricing" class="btn-ghost">Pricing</a>
-      <a href="/tool/#recover" class="btn-ghost">Already Purchased?</a>
+      <a href="/tool/#recover" class="btn-ghost" id="navRecoverLink">Already Purchased?</a>
       <a href="#pricing" class="btn-accent">Get Started</a>
     </div>
   </nav>
@@ -1170,7 +1170,7 @@
         <a href="/tool/">ATS Scanner</a>
         <a href="/cover-letter/">Cover Letter</a>
         <a href="/interview-prep/">Interview Prep</a>
-        <a href="/account/">Account</a>
+        <a href="/account/" id="footerAccountLink">Account</a>
         <a href="/blog/">Blog</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
@@ -1180,6 +1180,27 @@
       <span class="footer-copy">© 2026 ATScore by DeepTier Labs. All rights reserved.</span>
     </div>
   </footer>
+
+  <script>
+    (async function syncAccountLinks() {
+      try {
+        const res = await fetch('/auth-session');
+        const data = await res.json();
+        if (!res.ok || !data.authenticated) return;
+
+        const navAccountLink = document.getElementById('navAccountLink');
+        const footerAccountLink = document.getElementById('footerAccountLink');
+        const navRecoverLink = document.getElementById('navRecoverLink');
+
+        if (navAccountLink) navAccountLink.textContent = 'My Account';
+        if (footerAccountLink) footerAccountLink.textContent = 'My Account';
+        if (navRecoverLink && data.has_token) {
+          navRecoverLink.textContent = 'My Scans';
+          navRecoverLink.href = '/account/';
+        }
+      } catch {}
+    })();
+  </script>
 
   <script>
     // Theme toggle
