@@ -1520,6 +1520,7 @@
   let signedInEmail = null;
   let latestAnalysis = null;
   let lastLeadMagnetViewKey = null;
+  let restoredAnalysisMode = false;
 
   // Restore saved email
   const savedEmail = localStorage.getItem('ats_email');
@@ -1636,6 +1637,7 @@
         grade: data.grade,
         has_job_description: !!jdInput.value.trim(),
       });
+      persistLastAnalysis(data);
       renderResults(data);
     } catch (err) {
       clearInterval(stepInterval);
@@ -1657,6 +1659,7 @@
   function renderResults(data) {
     latestAnalysis = data;
     document.getElementById('loading').classList.remove('active');
+    document.getElementById('uploadCard').style.display = 'none';
     document.getElementById('results').classList.add('active');
 
     const score = data.score || 0;
@@ -1762,8 +1765,12 @@
       showRewriteTeaser(data);
       showUpgradeSummary(data);
     } else {
-      document.getElementById('downloadBtn').textContent = '⬇ Download as Word (.docx)';
-      document.getElementById('downloadHelper').textContent = 'Your paid access is active. Download the rewritten version whenever you are ready.';
+      document.getElementById('downloadBtn').textContent = restoredAnalysisMode && !selectedFile
+        ? '⬆ Re-upload resume to download rewrite'
+        : '⬇ Download as Word (.docx)';
+      document.getElementById('downloadHelper').textContent = restoredAnalysisMode && !selectedFile
+        ? 'Your premium results are restored. Re-upload the same resume on this device to generate the downloadable rewrite.'
+        : 'Your paid access is active. Download the rewritten version whenever you are ready.';
       document.getElementById('upgradeSummary').style.display = 'none';
       unlockCard(document.getElementById('categoriesCard'));
       unlockCard(document.getElementById('recommendations').closest('.card'));
@@ -2049,20 +2056,21 @@
     }
   }
 
-  async function redeemLeadMagnetCode() {
+  async function redeemLeadMagnetCode(prefilledCode = '') {
     const variant = getLeadMagnetVariant();
     const input = document.getElementById('leadMagnetCode');
     const btn = document.getElementById('leadMagnetRedeemBtn');
     const msg = document.getElementById('leadMagnetMsg');
     if (!input || !btn || !msg) return;
 
-    const code = input.value.trim().toUpperCase();
+    const code = (prefilledCode || input.value).trim().toUpperCase();
     if (!code) {
       msg.className = 'lead-magnet-msg error';
       msg.textContent = 'Enter the unlock code from your email.';
       input.focus();
       return;
     }
+    input.value = code;
 
     btn.disabled = true;
     btn.textContent = 'Applying…';
@@ -2117,12 +2125,55 @@
       .replace(/"/g, '&quot;');
   }
 
+  function persistLastAnalysis(data) {
+    try {
+      const snapshot = {
+        saved_at: new Date().toISOString(),
+        email: (emailInput.value.trim() || localStorage.getItem('ats_email') || '').toLowerCase(),
+        job_description: jdInput.value || '',
+        data,
+      };
+      localStorage.setItem('ats_last_analysis', JSON.stringify(snapshot));
+    } catch {}
+  }
+
+  function restoreLastAnalysis() {
+    try {
+      const raw = localStorage.getItem('ats_last_analysis');
+      if (!raw) return false;
+      const snapshot = JSON.parse(raw);
+      if (!snapshot?.data) return false;
+      latestAnalysis = snapshot.data;
+      restoredAnalysisMode = true;
+      if (snapshot.email) {
+        localStorage.setItem('ats_email', snapshot.email);
+        emailInput.value = snapshot.email;
+        if (authEmail) authEmail.value = snapshot.email;
+      }
+      if (typeof snapshot.job_description === 'string') {
+        jdInput.value = snapshot.job_description;
+        modeBadge.textContent = jdInput.value.trim()
+          ? '🎯 Job-Match Mode'
+          : 'ATS Compatibility Scan';
+      }
+      renderResults(snapshot.data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function getRewrite() {
     const token = localStorage.getItem('ats_token');
     const scans = localStorage.getItem('ats_scans');
     const hasAccess = token && (scans === null || parseInt(scans) > 0);
     if (!hasAccess) { showPaywall(); return; }
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      if (restoredAnalysisMode && latestAnalysis) {
+        alert('Your results were restored from this device. Re-upload the same resume to generate the downloadable rewrite.');
+      }
+      return;
+    }
 
     const btn = document.getElementById('downloadBtn');
     btn.textContent = '⏳ Generating…';
@@ -2331,6 +2382,8 @@
     const urlToken = urlParams.get('token');
     const signedIn = urlParams.get('signed_in');
     const signInState = urlParams.get('signin');
+    const unlockCode = (urlParams.get('unlock_code') || '').trim().toUpperCase();
+    const shouldRestore = urlParams.get('restore') === '1';
     if (urlToken) {
       localStorage.setItem('ats_token', urlToken);
     }
@@ -2363,7 +2416,17 @@
       showAuthPanel();
     }
 
-    if (urlToken || signedIn || signInState) {
+    if (shouldRestore) {
+      const restored = restoreLastAnalysis();
+      if (!restored && unlockCode) {
+        document.getElementById('emailHint').textContent = 'Your free unlock link is ready. Re-upload the same resume to continue on this device.';
+      }
+      if (restored && unlockCode) {
+        setTimeout(() => redeemLeadMagnetCode(unlockCode), 250);
+      }
+    }
+
+    if (urlToken || signedIn || signInState || unlockCode || shouldRestore) {
       window.history.replaceState({}, '', `${window.location.pathname}${window.location.hash}`);
     }
   });
@@ -2593,6 +2656,7 @@
   function reset() {
     selectedFile = null;
     latestAnalysis = null;
+    restoredAnalysisMode = false;
     fileInput.value = '';
     dropZone.classList.remove('file-selected', 'drag-over');
     dropIcon.textContent = '📎';

@@ -133,7 +133,7 @@ async function sendLeadMagnetEmail(apiKey, to, code, expiresAt, origin) {
     day: 'numeric',
     year: 'numeric',
   });
-  const toolUrl = `${origin}/tool/`;
+  const toolUrl = `${origin}/tool/?unlock_code=${encodeURIComponent(code)}&restore=1`;
   const html = `
 <!DOCTYPE html>
 <html>
