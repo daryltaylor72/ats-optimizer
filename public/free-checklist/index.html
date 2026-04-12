@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>if(window.matchMedia('(prefers-color-scheme:light)').matches)document.documentElement.setAttribute('data-theme','light');</script>
+  <script>(function(){var mq=window.matchMedia('(prefers-color-scheme: light)');var theme=mq.matches?'light':'dark';document.documentElement.setAttribute('data-theme',theme);document.documentElement.style.colorScheme=theme;})();</script>
   <title>Free ATS Resume Checklist — 23 Things That Get Resumes Rejected | ATScore</title>
   <meta name="description" content="Download the free ATS-Ready Resume Checklist. 23 formatting, keyword, and structure mistakes that cause applicant tracking systems to reject resumes — and exactly how to fix each one.">
 
@@ -29,6 +29,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      color-scheme: dark;
       --bg:          #0a0b0f;
       --surface:     #111318;
       --surface2:    #181b22;
@@ -54,6 +55,7 @@
     }
 
     [data-theme="light"] {
+      color-scheme: light;
       --bg: #ffffff;
       --surface: #f5f6fa;
       --surface2: #ecedf3;
@@ -72,28 +74,6 @@
       --green: #16a34a;
       --green-dim: rgba(22,163,74,0.08);
     }
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg: #ffffff;
-        --surface: #f5f6fa;
-        --surface2: #ecedf3;
-        --surface3: #e2e4ed;
-        --border: rgba(0,0,0,0.08);
-        --border2: rgba(0,0,0,0.15);
-        --text: #1a1b2e;
-        --text2: #5a6080;
-        --text3: #8892aa;
-        --accent: #5b54e0;
-        --accent-dim: rgba(108,99,255,0.08);
-        --accent-glow: rgba(108,99,255,0.12);
-        --red: #dc2626;
-        --red-dim: rgba(220,38,38,0.08);
-        --amber: #d97706;
-        --green: #16a34a;
-        --green-dim: rgba(22,163,74,0.08);
-      }
-    }
-
     html { scroll-behavior: smooth; }
 
     body {
@@ -163,12 +143,6 @@
     .nav-links { display: flex; align-items: center; gap: 8px; }
 
     /* Light theme component overrides */
-    @media (prefers-color-scheme: light) {
-      body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
-      body::after { opacity: 0.02; }
-      nav { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
-      .hero-glow, .hero-glow-2, .bottom-cta-glow { opacity: 0.3; }
-    }
     [data-theme="light"] body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
     [data-theme="light"] body::after { opacity: 0.02; }
     [data-theme="light"] nav { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
@@ -745,12 +719,19 @@
   <script>
     // Theme: follow system preference
     (function() {
-      if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-        document.documentElement.setAttribute('data-theme', 'light');
+      const root = document.documentElement;
+      const media = window.matchMedia('(prefers-color-scheme: light)');
+      function syncTheme(event) {
+        const theme = event.matches ? 'light' : 'dark';
+        root.setAttribute('data-theme', theme);
+        root.style.colorScheme = theme;
       }
-      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
-        document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
-      });
+      syncTheme(media);
+      if (typeof media.addEventListener === 'function') {
+        media.addEventListener('change', syncTheme);
+      } else if (typeof media.addListener === 'function') {
+        media.addListener(syncTheme);
+      }
     })();
 
     // Reveal-on-scroll
