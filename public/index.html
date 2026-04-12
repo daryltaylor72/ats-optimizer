@@ -613,8 +613,27 @@
     }
     @media (max-width: 600px) {
       .hero { padding: 100px 0 60px; }
+      .container { padding: 0 16px; }
       .cta-inner { padding: 48px 24px; }
       .cta-buttons { flex-direction: column; }
+
+      /* Score widget mobile */
+      .score-widget { padding: 20px 16px; }
+      .ring-container { gap: 12px; }
+      .ring-wrap { width: 100px; height: 100px; }
+      .ring-score { font-size: 28px; }
+      .ring-label { font-size: 10px; }
+      .ring-arrow { font-size: 22px; }
+
+      /* Stats mobile */
+      .stats-inner { padding: 32px 20px; gap: 24px; }
+      .stat-num { font-size: 42px; }
+      .stat-label { font-size: 13px; }
+
+      /* Nav mobile */
+      nav { padding: 12px 16px; }
+      .nav-logo-text { font-size: 18px; }
+      .btn-accent { font-size: 12px; padding: 7px 14px; white-space: nowrap; }
     }
   </style>
 
@@ -795,7 +814,7 @@
 
           <div class="ring-container">
             <div class="ring-wrap">
-              <svg viewBox="0 0 140 140" width="140" height="140">
+              <svg viewBox="0 0 140 140" width="100%" height="100%">
                 <circle class="ring-bg" cx="70" cy="70" r="60" />
                 <circle class="ring-fill" id="ringFill" cx="70" cy="70" r="60"
                   stroke="#ef4444" stroke-dashoffset="377" />
@@ -807,7 +826,7 @@
             </div>
             <div class="ring-arrow" id="ringArrow">→</div>
             <div class="ring-wrap">
-              <svg viewBox="0 0 140 140" width="140" height="140">
+              <svg viewBox="0 0 140 140" width="100%" height="100%">
                 <circle class="ring-bg" cx="70" cy="70" r="60" />
                 <circle class="ring-fill" id="ringFill2" cx="70" cy="70" r="60"
                   stroke="#22c55e" stroke-dashoffset="377" />
@@ -1425,10 +1444,11 @@
       display: none; flex-direction: column; overflow: hidden;
     }
     #chat-window.open { display: flex; }
-    @media (max-width: 400px) {
-      #chat-window { right: 16px; max-width: calc(100vw - 32px); }
-      #chat-launcher { right: 16px; }
-      #chat-launcher-label { right: 84px; }
+    @media (max-width: 600px) {
+      #chat-window { right: 12px; bottom: 72px; max-width: calc(100vw - 24px); }
+      #chat-launcher { right: 12px; bottom: 12px; width: 48px; height: 48px; }
+      #chat-launcher svg { width: 22px; height: 22px; }
+      #chat-launcher-label { display: none; }
     }
 
     .chat-header {
