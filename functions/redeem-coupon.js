@@ -5,7 +5,7 @@
  * Returns: { token, scans_remaining, expires_at, message }
  */
 
-import { acquireScanMutex, releaseScanMutex } from './_shared.js';
+import { acquireScanMutex, grantToken, releaseScanMutex } from './_shared.js';
 
 const CORS_ORIGIN = 'https://ats-optimizer.pages.dev';
 
@@ -78,7 +78,7 @@ export async function onRequestPost(context) {
     return json({ detail: 'Another request is processing this code. Please try again in a moment.' }, 429);
   }
 
-  let tokenId, expiresAt;
+  let tokenData;
   try {
     // Re-read under lock — state may have changed
     const lockedRaw = await kv.get(`coupon:${code}`);
@@ -100,30 +100,24 @@ export async function onRequestPost(context) {
     await kv.put(`coupon:${code}`, JSON.stringify(updated));
 
     // Generate and store token
-    tokenId = crypto.randomUUID();
-    const ttlSecs = 30 * 24 * 3600;
-    expiresAt = new Date(Date.now() + ttlSecs * 1000).toISOString();
     const email = (body.email || '').trim();
-
-    const tokenData = {
-      scans_remaining: 1,
-      video_reviews_remaining: 1,
-      expires_at: expiresAt,
-      plan: 'trial',
-      email,
-      created_at: new Date().toISOString(),
+    tokenData = await grantToken(kv, {
+      planKey: 'trial',
+      scans: 1,
+      videoReviews: 1,
+      ttlDays: 30,
+      customerEmail: email || null,
       source: `coupon:${code}`,
-    };
-    await kv.put(`token:${tokenId}`, JSON.stringify(tokenData), { expirationTtl: ttlSecs });
+    });
   } finally {
     await releaseScanMutex(kv, mutexKey);
   }
 
   return json({
-    token: tokenId,
-    scans_remaining: 1,
-    video_reviews_remaining: 1,
-    expires_at: expiresAt,
+    token: tokenData.token,
+    scans_remaining: tokenData.scans_remaining,
+    video_reviews_remaining: tokenData.video_reviews_remaining || 0,
+    expires_at: tokenData.expires_at,
     message: 'Your free trial is ready!',
   });
 }

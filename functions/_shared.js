@@ -12,7 +12,7 @@
  *  - releaseScanMutex()      : releases the KV lock after decrement
  */
 
-export const PLAN_SCANS = { single: 1, starter: 5, pro: 9999, video: 0 };
+export const PLAN_SCANS = { single: 1, starter: 5, pro: 9999, video: 0, trial: 1 };
 export const PLAN_VIDEO_REVIEWS = { single: 0, starter: 0, pro: 0, video: 1 };
 
 export const PLAN_LABELS = {
@@ -20,6 +20,7 @@ export const PLAN_LABELS = {
   starter: { name: 'Starter Pack',       desc: '5 AI-optimized resume rewrites ($7.80 each)', price: '$39'    },
   pro:     { name: 'Pro — Unlimited',    desc: 'Unlimited rewrites for 30 days',              price: '$49/mo' },
   video:   { name: 'AI Video Coaching',  desc: '1 personalized AI video coaching review',     price: '$19'    },
+  trial:   { name: 'Trial Access',       desc: '1 complimentary premium resume unlock',        price: '$0'     },
 };
 
 /** Generates a 48-char hex token using the Web Crypto API. */
@@ -41,15 +42,37 @@ export function generateToken() {
  * @returns {Object} tokenData
  */
 export async function issueToken(kv, planKey, sessionId, customerEmail) {
-  const scans        = PLAN_SCANS[planKey] ?? 1;
-  const videoReviews = PLAN_VIDEO_REVIEWS[planKey] ?? 0;
-  const ttlDays      = planKey === 'pro' ? 30 : 365;
+  return grantToken(kv, { planKey, customerEmail, sessionId });
+}
+
+/**
+ * Issues a direct entitlement grant without requiring a Stripe session.
+ * Used for coupons, trial access, and other non-checkout promotions.
+ *
+ * @param {KVNamespace} kv
+ * @param {Object} options
+ * @param {string} [options.planKey='single']
+ * @param {number} [options.scans]
+ * @param {number} [options.videoReviews]
+ * @param {number} [options.ttlDays]
+ * @param {string|null} [options.customerEmail]
+ * @param {string|null} [options.sessionId]
+ * @param {string|null} [options.source]
+ * @returns {Object} tokenData
+ */
+export async function grantToken(kv, {
+  planKey = 'single',
+  scans = PLAN_SCANS[planKey] ?? 1,
+  videoReviews = PLAN_VIDEO_REVIEWS[planKey] ?? 0,
+  ttlDays = planKey === 'pro' ? 30 : 365,
+  customerEmail = null,
+  sessionId = null,
+  source = null,
+} = {}) {
   const nextExpiresAt = new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000).toISOString();
-  const nextTtlSecs   = ttlDays * 24 * 3600;
+  const nextTtlSecs = ttlDays * 24 * 3600;
   const normalizedEmail = customerEmail ? customerEmail.toLowerCase() : null;
 
-  // If this email already has an active token, merge new entitlements into it so
-  // returning buyers don't lose access to unused scans by overwriting email->token.
   if (normalizedEmail) {
     const existingToken = await kv.get(`email:${normalizedEmail}`);
     if (existingToken) {
@@ -58,15 +81,19 @@ export async function issueToken(kv, planKey, sessionId, customerEmail) {
         try {
           const existing = JSON.parse(raw);
           const merged = mergeTokenEntitlements(existing, planKey, scans, videoReviews, sessionId, nextExpiresAt);
+          if (source) merged.last_grant_source = source;
           const mergedTtl = ttlSecondsUntil(merged.expires_at);
-          await Promise.all([
+          const writes = [
             kv.put(`token:${existingToken}`, JSON.stringify(merged), { expirationTtl: mergedTtl }),
-            kv.put(`session:${sessionId}`, JSON.stringify(merged), { expirationTtl: mergedTtl }),
             kv.put(`email:${normalizedEmail}`, existingToken, { expirationTtl: mergedTtl }),
-          ]);
+          ];
+          if (sessionId) {
+            writes.push(kv.put(`session:${sessionId}`, JSON.stringify(merged), { expirationTtl: mergedTtl }));
+          }
+          await Promise.all(writes);
           return merged;
         } catch {
-          // Fall through to issuing a new token if the existing record is corrupt.
+          // Fall through to issuing a fresh token if the existing record is corrupt.
         }
       }
     }
@@ -75,19 +102,22 @@ export async function issueToken(kv, planKey, sessionId, customerEmail) {
   const token = generateToken();
   const tokenData = {
     token,
-    plan:                    planKey,
-    scans_remaining:         scans,
+    plan: planKey,
+    scans_remaining: scans,
     video_reviews_remaining: videoReviews,
-    created_at:              new Date().toISOString(),
-    expires_at:              nextExpiresAt,
-    session_id:              sessionId,
-    email:                   normalizedEmail,
+    created_at: new Date().toISOString(),
+    expires_at: nextExpiresAt,
+    session_id: sessionId,
+    email: normalizedEmail,
+    source,
   };
 
   const writes = [
     kv.put(`token:${token}`, JSON.stringify(tokenData), { expirationTtl: nextTtlSecs }),
-    kv.put(`session:${sessionId}`, JSON.stringify(tokenData), { expirationTtl: nextTtlSecs }),
   ];
+  if (sessionId) {
+    writes.push(kv.put(`session:${sessionId}`, JSON.stringify(tokenData), { expirationTtl: nextTtlSecs }));
+  }
   if (normalizedEmail) {
     writes.push(kv.put(`email:${normalizedEmail}`, token, { expirationTtl: nextTtlSecs }));
   }

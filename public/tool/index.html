@@ -514,6 +514,16 @@
         border-radius: 16px;
         max-height: calc(100vh - 32px);
       }
+      .lead-magnet-form {
+        grid-template-columns: 1fr;
+      }
+      .lead-magnet-code-row {
+        flex-direction: column;
+      }
+      .lead-magnet-btn,
+      .lead-magnet-redeem-btn {
+        width: 100%;
+      }
       .paywall-icon {
         font-size: 32px;
         margin-bottom: 12px;
@@ -815,6 +825,107 @@
       cursor: pointer; transition: opacity 0.2s;
     }
     .rewrite-teaser-cta:hover { opacity: 0.88; }
+    .lead-magnet-card {
+      display: none;
+      background: linear-gradient(135deg, rgba(108,99,255,0.12) 0%, rgba(17,19,24,0.98) 100%);
+      border: 1px solid rgba(108,99,255,0.24);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 24px;
+    }
+    .lead-magnet-card.active { display: block; }
+    .lead-magnet-eyebrow {
+      display: inline-flex;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #c7c3ff;
+      margin-bottom: 10px;
+    }
+    .lead-magnet-card h3 {
+      font-size: 20px;
+      margin: 0 0 8px;
+    }
+    .lead-magnet-card p {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+      margin: 0 0 14px;
+    }
+    .lead-magnet-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(160px, 0.9fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .lead-magnet-input,
+    .lead-magnet-select,
+    .lead-magnet-code-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font: 13px/1.5 -apple-system, sans-serif;
+      padding: 11px 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .lead-magnet-input:focus,
+    .lead-magnet-select:focus,
+    .lead-magnet-code-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .lead-magnet-btn,
+    .lead-magnet-redeem-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font: 600 13px/1 -apple-system, sans-serif;
+      padding: 12px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .lead-magnet-btn:disabled,
+    .lead-magnet-redeem-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .lead-magnet-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 12px;
+    }
+    .lead-magnet-code-box {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .lead-magnet-code-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .lead-magnet-msg {
+      min-height: 18px;
+      font-size: 12px;
+      margin-top: 10px;
+      line-height: 1.4;
+      color: var(--text3);
+    }
+    .lead-magnet-msg.success { color: var(--green); }
+    .lead-magnet-msg.error { color: var(--red); }
+    .lead-magnet-note {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 8px;
+    }
 
     /* ── Theme Toggle ── */
     .btn-ghost {
@@ -1207,6 +1318,8 @@
       </div>
     </div>
 
+    <div class="lead-magnet-card" id="leadMagnetCard" aria-live="polite"></div>
+
     <!-- Category Scores + Issues -->
     <div class="results-grid">
       <div class="card" id="categoriesCard">
@@ -1360,11 +1473,14 @@
   const jdInput = document.getElementById('jdInput');
   const emailInput = document.getElementById('emailInput');
   const authEmail = document.getElementById('authEmail');
+  const leadMagnetCard = document.getElementById('leadMagnetCard');
 
   let selectedFile = null;
   let lastResumeText = null;  // stored after successful rewrite for Word/plain-text download
   let currentToken = localStorage.getItem('ats_token');
   let signedInEmail = null;
+  let latestAnalysis = null;
+  let lastLeadMagnetViewKey = null;
 
   // Restore saved email
   const savedEmail = localStorage.getItem('ats_email');
@@ -1500,6 +1616,7 @@
   }
 
   function renderResults(data) {
+    latestAnalysis = data;
     document.getElementById('loading').classList.remove('active');
     document.getElementById('results').classList.add('active');
 
@@ -1584,6 +1701,7 @@
     const token = localStorage.getItem('ats_token');
     const scans = localStorage.getItem('ats_scans');
     const hasAccess = token && (scans === null || parseInt(scans) > 0);
+    renderLeadMagnet(data, !!hasAccess);
     if (!hasAccess) {
       document.getElementById('downloadBtn').textContent = '🔓 Unlock optimized resume';
       document.getElementById('downloadHelper').textContent = 'Your free score stays visible. Unlock to download the rewritten version and full fix list.';
@@ -1608,6 +1726,10 @@
       document.getElementById('downloadBtn').textContent = '⬇ Download as Word (.docx)';
       document.getElementById('downloadHelper').textContent = 'Your paid access is active. Download the rewritten version whenever you are ready.';
       document.getElementById('upgradeSummary').style.display = 'none';
+      unlockCard(document.getElementById('categoriesCard'));
+      unlockCard(document.getElementById('recommendations').closest('.card'));
+      unlockCard(document.getElementById('keywords').closest('.card'));
+      hideRewriteTeaser();
     }
   }
 
@@ -1714,6 +1836,246 @@
       <button class="unlock-btn" onclick="showPaywall()">Unlock Full Report</button>
     `;
     card.appendChild(overlay);
+  }
+
+  function unlockCard(card) {
+    if (!card) return;
+    card.classList.remove('card-locked');
+    const overlay = card.querySelector('.lock-overlay');
+    if (overlay) overlay.remove();
+  }
+
+  function hideRewriteTeaser() {
+    const teaser = document.getElementById('rewriteTeaser');
+    if (teaser) teaser.remove();
+  }
+
+  function getLeadMagnetVariant() {
+    let variant = localStorage.getItem('ats_lead_variant');
+    if (variant !== 'A' && variant !== 'B') {
+      variant = Math.random() < 0.5 ? 'A' : 'B';
+      localStorage.setItem('ats_lead_variant', variant);
+    }
+    return variant;
+  }
+
+  function scoreBand(score) {
+    if (score >= 80) return '80_plus';
+    if (score >= 60) return '60_79';
+    return 'under_60';
+  }
+
+  function renderLeadMagnet(data, hasAccess) {
+    if (!leadMagnetCard) return;
+    const variant = getLeadMagnetVariant();
+    const email = emailInput.value.trim() || localStorage.getItem('ats_email') || '';
+    const redeemedEmail = localStorage.getItem('ats_lead_redeemed_email') || '';
+    if (hasAccess || (email && redeemedEmail === email.toLowerCase())) {
+      leadMagnetCard.classList.remove('active');
+      leadMagnetCard.innerHTML = '';
+      return;
+    }
+
+    const claimedEmail = localStorage.getItem('ats_lead_claim_email') || '';
+    const isClaimed = email && claimedEmail && claimedEmail === email.toLowerCase();
+    const config = variant === 'B'
+      ? { headline: 'Want the full breakdown for free?', cta: 'Get my free premium unlock' }
+      : { headline: 'Get one premium report free', cta: 'Email me my free unlock' };
+
+    leadMagnetCard.innerHTML = `
+      <div class="lead-magnet-eyebrow">Early Access Offer</div>
+      <h3>${config.headline}</h3>
+      <p>Join early access and we’ll send you a one-time code to unlock the full report: full issue list, keyword gaps, and the fix-ready rewrite guidance behind your score.</p>
+      ${isClaimed ? '' : `
+        <div class="lead-magnet-form">
+          <input class="lead-magnet-input" type="email" id="leadMagnetEmail" placeholder="Enter your email for the free unlock" value="${escapeHtml(email)}" />
+          <select class="lead-magnet-select" id="leadMagnetApplying">
+            <option value="">Actively applying?</option>
+            <option value="yes">Yes</option>
+            <option value="soon">Soon</option>
+            <option value="just browsing">Just browsing</option>
+          </select>
+          <button class="lead-magnet-btn" id="leadMagnetBtn" onclick="submitLeadMagnetClaim()">${config.cta}</button>
+        </div>
+      `}
+      <div class="lead-magnet-meta">
+        <span>One free unlock per email</span>
+        <span>Limited beta spots</span>
+        <span>Expires in 7 days</span>
+      </div>
+      <div class="lead-magnet-msg${isClaimed ? ' success' : ''}" id="leadMagnetMsg">${isClaimed ? 'You already claimed a free unlock for this email. Check your inbox or enter the code below.' : ''}</div>
+      <div class="lead-magnet-code-box">
+        <div class="lead-magnet-code-row">
+          <input class="lead-magnet-code-input" type="text" id="leadMagnetCode" placeholder="Have a free unlock code?" maxlength="20" autocomplete="off" />
+          <button class="lead-magnet-redeem-btn" id="leadMagnetRedeemBtn" onclick="redeemLeadMagnetCode()">Apply code</button>
+        </div>
+        <div class="lead-magnet-note">Paste the code we emailed you to unlock one full premium report instantly.</div>
+      </div>
+    `;
+    leadMagnetCard.classList.add('active');
+
+    const viewKey = `${variant}:${scoreBand(data.score || 0)}:${!!jdInput.value.trim()}`;
+    if (lastLeadMagnetViewKey !== viewKey) {
+      lastLeadMagnetViewKey = viewKey;
+      posthog.capture('lead_magnet_viewed', {
+        variant,
+        score_band: scoreBand(data.score || 0),
+        has_job_description: !!jdInput.value.trim(),
+        source_page: 'tool_results',
+      });
+    }
+  }
+
+  async function submitLeadMagnetClaim() {
+    const variant = getLeadMagnetVariant();
+    const btn = document.getElementById('leadMagnetBtn');
+    const msg = document.getElementById('leadMagnetMsg');
+    const emailField = document.getElementById('leadMagnetEmail');
+    const applyingField = document.getElementById('leadMagnetApplying');
+    if (!emailField || !btn || !msg) return;
+
+    const email = emailField.value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg.className = 'lead-magnet-msg error';
+      msg.textContent = 'Enter a valid email to get your free unlock.';
+      emailField.focus();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    msg.className = 'lead-magnet-msg';
+    msg.textContent = 'Sending your unlock code…';
+    localStorage.setItem('ats_email', email);
+    emailInput.value = email;
+    if (authEmail) authEmail.value = email;
+
+    posthog.capture('lead_magnet_submitted', {
+      variant,
+      score_band: scoreBand((latestAnalysis?.score) || 0),
+      has_job_description: !!jdInput.value.trim(),
+      actively_applying: applyingField?.value || '',
+      source_page: 'tool_results',
+    });
+
+    try {
+      const res = await fetch('/lead-magnet-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          variant,
+          activelyApplying: applyingField?.value || '',
+          score: latestAnalysis?.score || null,
+          hasJobDescription: !!jdInput.value.trim(),
+          source: 'tool_results',
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok && data.status !== 'cap_reached') {
+        msg.className = 'lead-magnet-msg error';
+        msg.textContent = data.status === 'invalid_email'
+          ? 'Enter a valid email to continue.'
+          : 'Could not issue your free unlock. Please try again.';
+        btn.disabled = false;
+        btn.textContent = variant === 'B' ? 'Get my free premium unlock' : 'Email me my free unlock';
+        return;
+      }
+
+      if (data.status === 'cap_reached') {
+        msg.className = 'lead-magnet-msg error';
+        msg.textContent = 'Early access is currently full.';
+        btn.disabled = true;
+        btn.textContent = 'Early access full';
+        return;
+      }
+
+      localStorage.setItem('ats_lead_claim_email', email);
+      msg.className = 'lead-magnet-msg success';
+      msg.textContent = data.status === 'already_claimed'
+        ? 'You already claimed a free unlock for this email. Check your inbox or enter the code below.'
+        : 'Your free unlock is on the way. Check your inbox for the one-time code.';
+      btn.textContent = data.status === 'already_claimed' ? 'Already claimed' : 'Sent ✓';
+      posthog.capture('lead_magnet_code_sent', {
+        variant,
+        status: data.status,
+        source_page: 'tool_results',
+      });
+    } catch {
+      msg.className = 'lead-magnet-msg error';
+      msg.textContent = 'Network error. Please try again.';
+      btn.disabled = false;
+      btn.textContent = variant === 'B' ? 'Get my free premium unlock' : 'Email me my free unlock';
+    }
+  }
+
+  async function redeemLeadMagnetCode() {
+    const variant = getLeadMagnetVariant();
+    const input = document.getElementById('leadMagnetCode');
+    const btn = document.getElementById('leadMagnetRedeemBtn');
+    const msg = document.getElementById('leadMagnetMsg');
+    if (!input || !btn || !msg) return;
+
+    const code = input.value.trim().toUpperCase();
+    if (!code) {
+      msg.className = 'lead-magnet-msg error';
+      msg.textContent = 'Enter the unlock code from your email.';
+      input.focus();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Applying…';
+    msg.className = 'lead-magnet-msg';
+    msg.textContent = 'Applying your free unlock…';
+
+    try {
+      const res = await fetch('/lead-magnet-redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.className = 'lead-magnet-msg error';
+        msg.textContent = data.detail || 'That code is invalid or expired.';
+        btn.disabled = false;
+        btn.textContent = 'Apply code';
+        return;
+      }
+
+      currentToken = data.token;
+      localStorage.setItem('ats_token', data.token);
+      localStorage.setItem('ats_scans', data.scans_remaining);
+      localStorage.setItem('ats_lead_redeemed_email', (emailInput.value.trim() || localStorage.getItem('ats_email') || '').toLowerCase());
+      fetchTokenStatus(data.token);
+      msg.className = 'lead-magnet-msg success';
+      msg.textContent = data.message || 'Your premium report is unlocked.';
+      btn.textContent = 'Applied ✓';
+      posthog.capture('lead_magnet_code_redeemed', {
+        variant,
+        source_page: 'tool_results',
+      });
+      posthog.capture('lead_magnet_unlock_applied', {
+        variant,
+        source_page: 'tool_results',
+      });
+      if (latestAnalysis) renderResults(latestAnalysis);
+    } catch {
+      msg.className = 'lead-magnet-msg error';
+      msg.textContent = 'Network error. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Apply code';
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   async function getRewrite() {
@@ -1833,7 +2195,7 @@
       const res = await fetch('/redeem-coupon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, email: emailInput.value.trim() || localStorage.getItem('ats_email') || '' }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -1871,7 +2233,7 @@
       const res  = await fetch('/redeem-coupon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, email: emailInput.value.trim() || localStorage.getItem('ats_email') || '' }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -2191,6 +2553,7 @@
 
   function reset() {
     selectedFile = null;
+    latestAnalysis = null;
     fileInput.value = '';
     dropZone.classList.remove('file-selected', 'drag-over');
     dropIcon.textContent = '📎';
@@ -2202,6 +2565,10 @@
     document.getElementById('uploadCard').style.display = 'block';
     document.getElementById('results').classList.remove('active');
     document.getElementById('errorBox').classList.remove('active');
+    if (leadMagnetCard) {
+      leadMagnetCard.classList.remove('active');
+      leadMagnetCard.innerHTML = '';
+    }
   }
 
   // ── Coupon Redemption ─────────────────────────────────────────────────────
@@ -2237,7 +2604,7 @@
       const res  = await fetch('/redeem-coupon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, email: emailInput.value.trim() || localStorage.getItem('ats_email') || '' }),
       });
       const data = await res.json();
 
@@ -2281,6 +2648,12 @@
         if (e.key === 'Enter') redeemCoupon();
       });
     }
+    document.addEventListener('keydown', e => {
+      const leadMagnetCode = document.getElementById('leadMagnetCode');
+      if (e.key === 'Enter' && document.activeElement === leadMagnetCode) {
+        redeemLeadMagnetCode();
+      }
+    });
   });
 
   // ── Word Download ─────────────────────────────────────────────────────────
