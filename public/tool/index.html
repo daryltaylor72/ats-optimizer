@@ -827,13 +827,28 @@
     .rewrite-teaser-cta:hover { opacity: 0.88; }
     .lead-magnet-card {
       display: none;
-      background: linear-gradient(135deg, rgba(108,99,255,0.12) 0%, rgba(17,19,24,0.98) 100%);
+      background: var(--surface);
       border: 1px solid rgba(108,99,255,0.24);
       border-radius: var(--radius);
       padding: 22px 24px;
       margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
     }
     .lead-magnet-card.active { display: block; }
+    .lead-magnet-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top left, rgba(108,99,255,0.22), transparent 42%),
+        linear-gradient(135deg, rgba(108,99,255,0.08) 0%, rgba(108,99,255,0.02) 55%, transparent 100%);
+      pointer-events: none;
+    }
+    .lead-magnet-card > * {
+      position: relative;
+      z-index: 1;
+    }
     .lead-magnet-eyebrow {
       display: inline-flex;
       font-size: 10px;
