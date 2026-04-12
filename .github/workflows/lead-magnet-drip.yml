@@ -1,0 +1,14 @@
+name: Lead Magnet Drip
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+jobs:
+  drip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger drip dispatcher
+        run: |
+          curl --fail --silent --show-error -X POST https://atscore.ai/lead-magnet-drip
