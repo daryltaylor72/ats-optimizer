@@ -82,7 +82,8 @@
       --radius: 12px;
     }
 
-    [data-theme="light"] {
+    [data-theme="light"],
+    @media (prefers-color-scheme: light) { :root {
       --bg: #ffffff;
       --surface: #f5f6fa;
       --surface2: #ecedf3;
@@ -100,7 +101,7 @@
       --yellow2: rgba(245,158,11,0.08);
       --red: #dc2626;
       --red2: rgba(220,38,38,0.08);
-    }
+    }}
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -954,6 +955,18 @@
     .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
 
     /* ── Light Mode Overrides ── */
+    @media (prefers-color-scheme: light) {
+      .header { border-bottom-color: rgba(0,0,0,0.08); }
+      .lock-overlay {
+        background: linear-gradient(to bottom, transparent 20%, rgba(245,246,250,0.88) 48%, rgba(245,246,250,0.97) 63%);
+      }
+      .paywall-overlay { background: rgba(0,0,0,0.4); }
+      .lead-magnet-card { background: #ffffff; border-color: rgba(91,84,224,0.18); box-shadow: 0 10px 30px rgba(26,27,46,0.06); }
+      .lead-magnet-eyebrow { color: #4c46c7; }
+      .lead-magnet-card h3 { color: #1a1b2e; }
+      .lead-magnet-card p, .lead-magnet-meta, .lead-magnet-note { color: #49506a; }
+      .lead-magnet-msg { color: #66708d; }
+    }
     [data-theme="light"] .header { border-bottom-color: rgba(0,0,0,0.08); }
     [data-theme="light"] .lock-overlay {
       background: linear-gradient(

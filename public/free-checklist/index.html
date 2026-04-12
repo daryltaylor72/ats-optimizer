@@ -53,7 +53,8 @@
       --radius-sm:   10px;
     }
 
-    [data-theme="light"] {
+    [data-theme="light"],
+    @media (prefers-color-scheme: light) { :root {
       --bg: #ffffff;
       --surface: #f5f6fa;
       --surface2: #ecedf3;
@@ -71,7 +72,7 @@
       --amber: #d97706;
       --green: #16a34a;
       --green-dim: rgba(22,163,74,0.08);
-    }
+    }}
 
     html { scroll-behavior: smooth; }
 
@@ -141,13 +142,17 @@
     .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
     .nav-links { display: flex; align-items: center; gap: 8px; }
 
-    /* Light theme overrides */
+    /* Light theme component overrides */
+    @media (prefers-color-scheme: light) {
+      body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
+      body::after { opacity: 0.02; }
+      nav { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
+      .hero-glow, .hero-glow-2, .bottom-cta-glow { opacity: 0.3; }
+    }
     [data-theme="light"] body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
     [data-theme="light"] body::after { opacity: 0.02; }
     [data-theme="light"] nav { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
-    [data-theme="light"] .hero-glow { opacity: 0.3; }
-    [data-theme="light"] .hero-glow-2 { opacity: 0.3; }
-    [data-theme="light"] .bottom-cta-glow { opacity: 0.3; }
+    [data-theme="light"] .hero-glow, [data-theme="light"] .hero-glow-2, [data-theme="light"] .bottom-cta-glow { opacity: 0.3; }
 
     /* ── HERO ── */
     .hero {

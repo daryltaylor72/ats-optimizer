@@ -61,7 +61,8 @@
       --radius-sm:   10px;
     }
 
-    [data-theme="light"] {
+    [data-theme="light"],
+    @media (prefers-color-scheme: light) { :root {
       --bg: #ffffff;
       --surface: #f5f6fa;
       --surface2: #ecedf3;
@@ -79,7 +80,7 @@
       --amber: #d97706;
       --green: #16a34a;
       --green-dim: rgba(22,163,74,0.08);
-    }
+    }}
 
     html { scroll-behavior: smooth; }
 
@@ -580,6 +581,14 @@
     /* ── Theme Toggle ── */
 
     /* ── Light Mode Overrides ── */
+    @media (prefers-color-scheme: light) {
+      body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
+      body::after { opacity: 0.02; }
+      nav { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
+      .hero-glow, .cta-glow { opacity: 0.3; }
+      .btn-ghost:hover { border-color: rgba(0,0,0,0.25); }
+      .nav-dropdown-menu { box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    }
     [data-theme="light"] body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
     [data-theme="light"] body::after { opacity: 0.02; }
     [data-theme="light"] nav { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
