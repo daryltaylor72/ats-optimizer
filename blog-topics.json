@@ -17,6 +17,38 @@
       "published_date": "2026-04-03"
     },
     {
+      "slug": "most-jobs-never-posted-online",
+      "title": "The Uncomfortable Truth: Most Jobs Are Never Posted Online",
+      "description": "70-80% of jobs are filled before they're ever posted publicly. Here's why the job board approach is a low-odds numbers game, what the hidden job market actually looks like, and what a smarter job search strategy does instead.",
+      "tag": "Strategy",
+      "published": true,
+      "published_date": "2026-04-13"
+    },
+    {
+      "slug": "applying-online-screaming-into-void",
+      "title": "Why Applying Online Feels Like Screaming Into a Void",
+      "description": "A mid-level role can receive 500+ applications in 24 hours. A recruiter has 9 seconds per resume. Here's the real math behind online applications, how ATS filtering makes it worse, and why referrals structurally bypass most of it.",
+      "tag": "Strategy",
+      "published": true,
+      "published_date": "2026-04-13"
+    },
+    {
+      "slug": "networking-for-jobs-without-being-annoying",
+      "title": "How to Use Your Network to Find a Job (Without Being Annoying About It)",
+      "description": "Networking feels transactional because most people do it wrong. Here's how to reconnect with people you've lost touch with, run informational interviews that actually lead somewhere, and ask for a referral without making it weird.",
+      "tag": "Strategy",
+      "published": true,
+      "published_date": "2026-04-13"
+    },
+    {
+      "slug": "network-got-you-in-resume-closes",
+      "title": "Your Network Got You In the Door. Don't Let Your Resume Close It.",
+      "description": "Referrals get you seen — they don't get you hired. Here's what happens when your resume arrives with an endorsement attached, the mistakes that kill referrals, and why your resume needs to meet two standards: ATS and the human who makes the call.",
+      "tag": "Strategy",
+      "published": true,
+      "published_date": "2026-04-13"
+    },
+    {
       "slug": "entry-level-ats-resume",
       "title": "ATS Resume Guide for Entry-Level Job Seekers",
       "description": "How to build an ATS-friendly resume when you have little to no experience \u2014 what sections to include, how to frame internships and projects, and which keywords matter most.",
