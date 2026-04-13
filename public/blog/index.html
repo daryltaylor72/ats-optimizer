@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <script>(function(){var mq=window.matchMedia("(prefers-color-scheme: light)");var theme=mq.matches?"light":"dark";document.documentElement.setAttribute("data-theme",theme);document.documentElement.style.colorScheme=theme;})();</script>
   <title>ATS Resume Tips & Guides — ATScore Blog</title>
   <meta name="description" content="Expert guides on beating ATS systems, optimizing your resume format, finding the right keywords, and improving your ATS score. Free tips from ATScore.">
@@ -83,9 +85,8 @@
     }
     .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo-mark {
-      width: 32px; height: 32px; background: var(--accent); border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-family: monospace; font-size: 14px; font-weight: 700; color: #fff;
+      width: 32px; height: 32px; border-radius: 8px;
+      object-fit: contain;
     }
     .nav-logo-text { font-family: var(--serif); font-size: 20px; color: var(--text); }
     .nav-links { display: flex; gap: 8px; }
@@ -172,7 +173,7 @@
 
   <nav>
     <a href="/" class="nav-logo">
-      <div class="nav-logo-mark">A</div>
+      <img src="/logo-128.png" alt="ATScore logo" class="nav-logo-mark">
       <span class="nav-logo-text">ATScore</span>
     </a>
     <div class="nav-links">
