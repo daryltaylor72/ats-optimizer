@@ -33,6 +33,7 @@ PAGE_TEMPLATE = """\
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){{var mq=window.matchMedia("(prefers-color-scheme: light)");var theme=mq.matches?"light":"dark";document.documentElement.setAttribute("data-theme",theme);document.documentElement.style.colorScheme=theme;}})();</script>
   <title>{page_title} | ATScore Blog</title>
   <meta name="description" content="{meta_description}">
   <link rel="canonical" href="{canonical_url}">
@@ -59,18 +60,12 @@ PAGE_TEMPLATE = """\
   }}
   </script>
   <style>
-    :root{{--bg:#0a0b0f;--surface:#111318;--surface2:#181b22;--border:rgba(255,255,255,0.07);--text:#edeef5;--text2:#8892aa;--accent:#6c63ff;--accent-dim:rgba(108,99,255,0.14);--serif:'DM Serif Display',Georgia,serif;--sans:'Nunito Sans',system-ui,sans-serif}}
-    [data-theme="light"]{{--bg:#ffffff;--surface:#f5f6fa;--surface2:#ecedf3;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);--text:#1a1b2e;--text2:#5a6080;--text3:#8892aa;--accent:#5b54e0;--accent-dim:rgba(108,99,255,0.08)}}
+    :root{{color-scheme:dark;--bg:#0a0b0f;--surface:#111318;--surface2:#181b22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#edeef5;--text2:#8892aa;--text3:#484f68;--accent:#6c63ff;--accent-dim:rgba(108,99,255,0.14);--serif:'DM Serif Display',Georgia,serif;--sans:'Nunito Sans',system-ui,sans-serif}}
+    [data-theme="light"]{{color-scheme:light;--bg:#ffffff;--surface:#f5f6fa;--surface2:#ecedf3;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);--text:#1a1b2e;--text2:#5a6080;--text3:#8892aa;--accent:#5b54e0;--accent-dim:rgba(108,99,255,0.08)}}
     [data-theme="light"] body::before{{background-image:linear-gradient(rgba(108,99,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(108,99,255,0.035) 1px,transparent 1px)}}
     [data-theme="light"] nav{{background:rgba(255,255,255,0.85);border-bottom-color:rgba(0,0,0,0.08)}}
     [data-theme="light"] .btn-ghost{{border-color:rgba(0,0,0,0.15)}}
     [data-theme="light"] .btn-ghost:hover{{border-color:rgba(0,0,0,0.25)}}
-    .theme-toggle{{cursor:pointer;font-size:16px;line-height:1;border:1px solid rgba(255,255,255,0.13);background:transparent;color:var(--text2);border-radius:8px;padding:7px 12px}}
-    .theme-toggle:hover{{color:var(--text)}}
-    [data-theme="light"] .theme-toggle{{border-color:rgba(0,0,0,0.15)}}
-    .theme-icon-light{{display:none}}
-    [data-theme="light"] .theme-icon-dark{{display:none}}
-    [data-theme="light"] .theme-icon-light{{display:inline}}
     html{{scroll-behavior:smooth}}body{{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.7;margin:0}}
     body::before{{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(108,99,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(108,99,255,0.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}}
     nav{{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,11,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between}}
@@ -90,13 +85,13 @@ PAGE_TEMPLATE = """\
 </head>
 <body>
 
-<nav><a href="/" class="nav-logo"><div class="nav-logo-mark">A</div><span class="nav-logo-text">ATScore</span></a><div class="nav-links"><button class="btn-ghost theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="theme-icon-dark">&#9790;</span><span class="theme-icon-light">&#9728;</span></button><a href="/blog" class="btn-ghost">Blog</a><a href="/#pricing" class="btn-ghost">Pricing</a><a href="/tool" class="btn-ghost">Try Free</a></div></nav>
+<nav><a href="/" class="nav-logo"><div class="nav-logo-mark">A</div><span class="nav-logo-text">ATScore</span></a><div class="nav-links"><a href="/blog/" class="btn-ghost">Blog</a><a href="/#pricing" class="btn-ghost">Pricing</a><a href="/tool/" class="btn-ghost">Try Free</a></div></nav>
 
 <div class="container">
   <header class="blog-header">
-    <div class="breadcrumb"><a href="/">Home</a> / <a href="/blog">Blog</a> / {breadcrumb_label}</div>
+    <div class="breadcrumb"><a href="/">Home</a> / <a href="/blog/">Blog</a> / {breadcrumb_label}</div>
     <h1>{h1_title}</h1>
-    <div class="meta">Published {pub_date_display} &middot; {read_time} min read</div>
+    <div class="meta">Published {pub_date_display} &middot; {read_time} min read &middot; By ATScore</div>
   </header>
 
   <article class="blog-content">
@@ -104,11 +99,10 @@ PAGE_TEMPLATE = """\
   </article>
 </div>
 
-<footer><p>&copy; 2026 ATScore. All rights reserved. &middot; <a href="/" style="color:var(--accent);text-decoration:none">atscore.ai</a></p></footer>
+<footer><p>&copy; 2026 ATScore by <a href="https://deeptierlabs.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">DeepTier Labs</a>. All rights reserved. &middot; <a href="/privacy/" style="color:var(--accent);text-decoration:none">Privacy</a> &middot; <a href="/terms/" style="color:var(--accent);text-decoration:none">Terms</a> &middot; <a href="mailto:support@atscore.ai" style="color:var(--accent);text-decoration:none">support@atscore.ai</a></p></footer>
 
 <script>
-function toggleTheme(){{var c=document.documentElement.getAttribute('data-theme');var n=c==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n)}}
-(function(){{var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)}})();
+(function(){{var media=window.matchMedia("(prefers-color-scheme: light)");function applyTheme(event){{var isLight=typeof event==="boolean" ? event : event.matches;var theme=isLight?"light":"dark";document.documentElement.setAttribute("data-theme",theme);document.documentElement.style.colorScheme=theme}}applyTheme(media.matches);if(typeof media.addEventListener==="function"){{media.addEventListener("change",applyTheme)}}else if(typeof media.addListener==="function"){{media.addListener(applyTheme)}}}})();
 </script>
 </body>
 </html>"""
@@ -116,7 +110,10 @@ function toggleTheme(){{var c=document.documentElement.getAttribute('data-theme'
 # ── Blog index card template ────────────────────────────────────────────────
 INDEX_CARD = """\
       <a href="/blog/{slug}/" class="article-card">
-        <div class="tag">{tag}</div>
+        <div class="meta">
+          <div class="tag">{tag}</div>
+          <div class="date">{pub_date_display}</div>
+        </div>
         <h2>{title}</h2>
         <p>{card_description}</p>
         <span class="read-more">Read article &rarr;</span>
@@ -210,4 +207,3 @@ def generate_article_html(topic: dict) -> str:
         }]
     )
     return msg.content[0].text.strip()
-
