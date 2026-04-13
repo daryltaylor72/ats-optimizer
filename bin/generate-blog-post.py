@@ -71,7 +71,7 @@ PAGE_TEMPLATE = """\
     html{{scroll-behavior:smooth}}body{{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.7;margin:0}}
     body::before{{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(108,99,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(108,99,255,0.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}}
     nav{{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,11,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between}}
-    .nav-logo{{display:flex;align-items:center;gap:10px;text-decoration:none}}.nav-logo-mark{{width:90px;height:90px;border-radius:8px;object-fit:contain}}.nav-logo-text{{font-family:var(--serif);font-size:20px;color:var(--text)}}
+    .nav-logo{{display:flex;align-items:center;gap:10px;text-decoration:none}}.nav-logo-mark{{width:75px;height:75px;border-radius:8px;object-fit:contain}}.nav-logo-text{{font-family:var(--serif);font-size:20px;color:var(--text)}}
     .nav-links{{display:flex;gap:8px}}.btn-ghost{{font-size:13px;font-weight:600;color:var(--text2);background:transparent;border:1px solid rgba(255,255,255,0.13);border-radius:8px;padding:8px 16px;text-decoration:none;transition:0.2s}}.btn-ghost:hover{{color:var(--text);border-color:rgba(255,255,255,0.25)}}
     .container{{max-width:760px;margin:0 auto;padding:0 28px;position:relative;z-index:1}}
     .blog-header{{padding:140px 0 40px}}.blog-header .breadcrumb{{font-size:13px;color:var(--text2);margin-bottom:16px}}.blog-header .breadcrumb a{{color:var(--accent);text-decoration:none}}
