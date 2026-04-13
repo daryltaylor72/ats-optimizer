@@ -99,7 +99,7 @@ PAGE_TEMPLATE = """\
   </article>
 </div>
 
-<footer><p>&copy; 2026 ATScore by <a href="https://deeptierlabs.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">DeepTier Labs</a>. All rights reserved. &middot; <a href="/privacy/" style="color:var(--accent);text-decoration:none">Privacy</a> &middot; <a href="/terms/" style="color:var(--accent);text-decoration:none">Terms</a> &middot; <a href="mailto:support@atscore.ai" style="color:var(--accent);text-decoration:none">support@atscore.ai</a></p></footer>
+<footer><p>&copy; 2026 ATScore by <a href="https://deeptierlabs.app" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">DeepTier Labs</a>. All rights reserved. &middot; <a href="/privacy/" style="color:var(--accent);text-decoration:none">Privacy</a> &middot; <a href="/terms/" style="color:var(--accent);text-decoration:none">Terms</a> &middot; <a href="mailto:support@atscore.ai" style="color:var(--accent);text-decoration:none">support@atscore.ai</a></p></footer>
 
 <script>
 (function(){{var media=window.matchMedia("(prefers-color-scheme: light)");function applyTheme(event){{var isLight=typeof event==="boolean" ? event : event.matches;var theme=isLight?"light":"dark";document.documentElement.setAttribute("data-theme",theme);document.documentElement.style.colorScheme=theme}}applyTheme(media.matches);if(typeof media.addEventListener==="function"){{media.addEventListener("change",applyTheme)}}else if(typeof media.addListener==="function"){{media.addListener(applyTheme)}}}})();
