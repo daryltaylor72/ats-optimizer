@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){var mq=window.matchMedia("(prefers-color-scheme: light)");var theme=mq.matches?"light":"dark";document.documentElement.setAttribute("data-theme",theme);document.documentElement.style.colorScheme=theme;})();</script>
   <title>ATS Resume Tips & Guides — ATScore Blog</title>
   <meta name="description" content="Expert guides on beating ATS systems, optimizing your resume format, finding the right keywords, and improving your ATS score. Free tips from ATScore.">
 
@@ -41,6 +42,7 @@
 
   <style>
     :root {
+      color-scheme: dark;
       --bg: #0a0b0f; --surface: #111318; --surface2: #181b22;
       --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
       --text: #edeef5; --text2: #8892aa; --text3: #484f68;
@@ -49,6 +51,7 @@
       --sans: 'Nunito Sans', system-ui, sans-serif;
     }
     [data-theme="light"] {
+      color-scheme: light;
       --bg: #ffffff;
       --surface: #f5f6fa;
       --surface2: #ecedf3;
@@ -63,12 +66,6 @@
     [data-theme="light"] body::before { background-image: linear-gradient(rgba(108,99,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(108,99,255,0.035) 1px, transparent 1px); }
     [data-theme="light"] nav { background: rgba(255,255,255,0.85); border-bottom-color: rgba(0,0,0,0.08); }
     [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.25); }
-    .theme-toggle { cursor:pointer; font-size:16px; line-height:1; border:1px solid var(--border2); background:transparent; color:var(--text2); border-radius:8px; padding:7px 12px; }
-    .theme-toggle:hover { color:var(--text); }
-    [data-theme="light"] .theme-toggle:hover { border-color:rgba(0,0,0,0.25); }
-    .theme-icon-light { display:none; }
-    [data-theme="light"] .theme-icon-dark { display:none; }
-    [data-theme="light"] .theme-icon-light { display:inline; }
     html { scroll-behavior: smooth; }
     body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.6; margin: 0; }
     body::before {
@@ -177,7 +174,6 @@
       <span class="nav-logo-text">ATScore</span>
     </a>
     <div class="nav-links">
-      <button class="btn-ghost theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="theme-icon-dark">&#9790;</span><span class="theme-icon-light">&#9728;</span></button>
       <a href="/blog/" class="btn-ghost">Blog</a>
       <a href="/#pricing" class="btn-ghost">Pricing</a>
       <a href="/tool/" class="btn-ghost">Try Free</a>
@@ -344,8 +340,7 @@
   <footer><p>&copy; 2026 ATScore by <a href="https://deeptierlabs.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">DeepTier Labs</a>. All rights reserved. &middot; <a href="/privacy/" style="color:var(--accent);text-decoration:none">Privacy</a> &middot; <a href="/terms/" style="color:var(--accent);text-decoration:none">Terms</a> &middot; <a href="mailto:support@atscore.ai" style="color:var(--accent);text-decoration:none">support@atscore.ai</a></p></footer>
 
 <script>
-function toggleTheme(){var c=document.documentElement.getAttribute('data-theme');var n=c==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('theme',n)}
-(function(){var s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s)})();
+(function(){var media=window.matchMedia("(prefers-color-scheme: light)");function applyTheme(event){var isLight=typeof event==="boolean" ? event : event.matches;var theme=isLight?"light":"dark";document.documentElement.setAttribute("data-theme",theme);document.documentElement.style.colorScheme=theme}applyTheme(media.matches);if(typeof media.addEventListener==="function"){media.addEventListener("change",applyTheme)}else if(typeof media.addListener==="function"){media.addListener(applyTheme)}})();
 function loadMore(){document.querySelector('.articles').classList.add('show-all');document.getElementById('loadMoreWrap').classList.add('hidden')}
 </script>
 </body>
