@@ -131,6 +131,7 @@
       color: var(--text);
       min-height: 100vh;
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
     /* ── Header ── */
@@ -193,13 +194,12 @@
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
     }
     .drop-icon { font-size: 40px; margin-bottom: 12px; }
-    .drop-text { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .drop-text { font-size: 15px; font-weight: 500; margin-bottom: 4px; word-break: break-word; overflow-wrap: anywhere; }
     .drop-sub { font-size: 13px; color: var(--text2); }
     .file-selected {
       background: var(--green2);
       border-color: var(--green);
     }
-    .file-selected .drop-icon::after { content: '✓'; }
 
     .jd-section { margin-top: 16px; }
     .jd-section label {
@@ -1435,7 +1435,7 @@
             <p class="vr-desc" style="margin:0 0 16px;">Get a personalized 60–90 second coaching video delivered to your inbox in ~5 minutes. Our AI career coach speaks directly to your score, your specific gaps, and your next steps.</p>
             <div style="margin:0 0 16px;border-radius:10px;overflow:hidden;border:1px solid var(--border2);max-width:280px;">
               <p style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:0;padding:8px 12px;background:var(--surface2);">▶ See a sample</p>
-              <video src="https://pub-2e3072163b4d4011920642018e4e5acf.r2.dev/tahlia-demo.mp4" controls preload="metadata" style="width:100%;display:block;" poster=""></video>
+              <video src="https://pub-2e3072163b4d4011920642018e4e5acf.r2.dev/tahlia-demo.mp4#t=0.5" controls preload="metadata" style="width:100%;display:block;aspect-ratio:16/9;background:#000;object-fit:cover;"></video>
             </div>
             <button class="vr-btn" onclick="checkout('video');return false;">Get AI Video Coaching — $19</button>
             <p style="font-size:11px;color:var(--text3);margin:8px 0 0;">Emailed when ready · Powered by Hedra lip-sync AI · 7-day guarantee</p>
