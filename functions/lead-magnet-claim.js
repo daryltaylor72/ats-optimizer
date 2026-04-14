@@ -96,6 +96,18 @@ export async function onRequestPost({ request, env }) {
     console.error('[lead-magnet-claim] Failed to send unlock email:', err);
   }
 
+  // Discord notification — non-blocking
+  if (env.DISCORD_WEBHOOK_URL) {
+    sendClaimDiscordNotification(env.DISCORD_WEBHOOK_URL, { email, score, activelyApplying, variant, expiresAt })
+      .catch(err => console.error('[lead-magnet-claim] Discord webhook failed:', err));
+  }
+
+  // Airtable — update existing lead or create new record with unlock code flag
+  if (env.AIRTABLE_ATS_SECRET_KEY) {
+    captureLeadMagnetClaim(env.AIRTABLE_ATS_SECRET_KEY, { email, score, activelyApplying, variant })
+      .catch(err => console.error('[lead-magnet-claim] Airtable capture failed:', err));
+  }
+
   return json({ ok: true, status: 'issued', expires_at: expiresAt });
 }
 
@@ -142,6 +154,51 @@ function randomChunk(length) {
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function sendClaimDiscordNotification(webhookUrl, { email, score, activelyApplying, variant, expiresAt }) {
+  const timestamp = new Date().toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+  const embed = {
+    title: '🔓 Unlock Code Claimed',
+    color: 0x8b5cf6,
+    fields: [
+      { name: 'Email',     value: email,                                     inline: true },
+      { name: 'ATS Score',  value: score != null ? String(score) : 'n/a',    inline: true },
+      { name: 'Applying?', value: activelyApplying || 'not specified',       inline: true },
+      { name: 'Variant',   value: variant,                                   inline: true },
+      { name: 'Expires',   value: new Date(expiresAt).toLocaleDateString('en-US', { timeZone: 'America/New_York' }), inline: true },
+      { name: 'Time (ET)', value: timestamp,                                 inline: true },
+    ],
+  };
+  const res = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ embeds: [embed] }),
+  });
+  if (!res.ok) throw new Error(`Discord webhook ${res.status}: ${await res.text()}`);
+}
+
+async function captureLeadMagnetClaim(apiKey, { email, score, activelyApplying, variant }) {
+  const res = await fetch('https://api.airtable.com/v0/appJkfL4EoaSxq8GC/tblxDbnavxmdWozc5', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fields: {
+        'Email': email,
+        'ATS Score': score || 0,
+        'Source': 'lead_magnet_claim',
+        'Date': new Date().toISOString(),
+      }
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Airtable ${res.status}: ${err}`);
+  }
 }
 
 function json(data, status = 200) {
