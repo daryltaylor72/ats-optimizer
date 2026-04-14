@@ -1383,6 +1383,20 @@
       </div>
     </div>
 
+    <!-- Score-band coaching video (click-to-play) -->
+    <div id="scoreBandVideo" style="display:none;max-width:520px;margin:24px auto;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface);">
+      <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);">
+        <p style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:0;">▶ A quick note on your score</p>
+      </div>
+      <div id="scoreBandPoster" style="position:relative;cursor:pointer;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;">
+        <img id="scoreBandThumb" alt="Play video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.85;" />
+        <div style="position:relative;z-index:2;width:68px;height:68px;border-radius:50%;background:rgba(108,99,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,0.35);">
+          <div style="width:0;height:0;border-left:22px solid #fff;border-top:14px solid transparent;border-bottom:14px solid transparent;margin-left:6px;"></div>
+        </div>
+      </div>
+      <video id="scoreBandPlayer" controls preload="none" style="display:none;width:100%;"></video>
+    </div>
+
     <div class="lead-magnet-card" id="leadMagnetCard" aria-live="polite"></div>
 
     <!-- Category Scores + Issues -->
@@ -1782,6 +1796,9 @@
     // Personalise and show video upsell section
     initVideoSection(score);
 
+    // Score-band coaching video (click-to-play)
+    initScoreBandVideo(score);
+
     // Gate detailed sections if no token or no scans remaining
     const token = localStorage.getItem('ats_token');
     const scans = localStorage.getItem('ats_scans');
@@ -1865,6 +1882,55 @@
 
     upsell.style.display = 'block';
     genSection.style.display = 'none';
+  }
+
+  function initScoreBandVideo(score) {
+    const container = document.getElementById('scoreBandVideo');
+    const poster = document.getElementById('scoreBandPoster');
+    const thumb = document.getElementById('scoreBandThumb');
+    const player = document.getElementById('scoreBandPlayer');
+    if (!container || !poster || !player) return;
+
+    const R2 = 'https://pub-2e3072163b4d4011920642018e4e5acf.r2.dev';
+    let band, src;
+    if (score <= 50) { band = 'critical'; src = `${R2}/score-critical.mp4`; }
+    else if (score <= 75) { band = 'needs-work'; src = `${R2}/score-needs-work.mp4`; }
+    else { band = 'strong'; src = `${R2}/score-strong.mp4`; }
+
+    player.src = src;
+    if (thumb) thumb.src = `${src}#t=0.5`;
+    container.style.display = 'block';
+
+    if (window.posthog) {
+      posthog.capture('score_video_shown', { score, band });
+    }
+
+    let playFired = false;
+    let completeFired = false;
+
+    const startPlay = () => {
+      poster.style.display = 'none';
+      player.style.display = 'block';
+      player.play().catch(() => {});
+      if (!playFired && window.posthog) {
+        playFired = true;
+        posthog.capture('score_video_played', { score, band });
+      }
+    };
+
+    poster.addEventListener('click', startPlay);
+    player.addEventListener('play', () => {
+      if (!playFired && window.posthog) {
+        playFired = true;
+        posthog.capture('score_video_played', { score, band });
+      }
+    });
+    player.addEventListener('ended', () => {
+      if (!completeFired && window.posthog) {
+        completeFired = true;
+        posthog.capture('score_video_completed', { score, band });
+      }
+    });
   }
 
   function showRewriteTeaser(data) {
