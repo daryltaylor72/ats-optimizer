@@ -2339,6 +2339,18 @@
     }
   }
 
+  function showInlineNotice(message, tone = 'var(--red)') {
+    const errorBox = document.getElementById('errorBox');
+    if (!errorBox) return;
+    errorBox.textContent = message;
+    errorBox.style.color = tone;
+    errorBox.classList.add('active');
+    setTimeout(() => {
+      errorBox.classList.remove('active');
+      errorBox.style.color = '';
+    }, 3600);
+  }
+
   async function getRewrite() {
     const token = localStorage.getItem('ats_token');
     const scans = localStorage.getItem('ats_scans');
@@ -2346,7 +2358,10 @@
     if (!hasAccess) { showPaywall(); return; }
     if (!selectedFile) {
       if (restoredAnalysisMode && latestAnalysis) {
-        alert('Your results were restored from this device. Re-upload the same resume to generate the downloadable rewrite.');
+        showInlineNotice('Re-upload your resume to continue.', 'var(--text2)');
+        document.getElementById('uploadCard').style.display = 'block';
+        dropZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => fileInput.click(), 120);
       }
       return;
     }
