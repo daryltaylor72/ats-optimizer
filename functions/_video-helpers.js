@@ -100,8 +100,9 @@ export async function heygenUploadAudio(buffer, apiKey) {
 }
 
 /**
- * Start a HeyGen avatar video generation job.
- * @param {string} avatarId   HeyGen avatar ID (from HEYGEN_AVATAR_ID secret)
+ * Start a HeyGen avatar video generation job via the V3 flat schema.
+ * V3 accepts a HeyGen avatar_id or talking_photo_id (both resolve via the same avatar ID).
+ * @param {string} avatarId   HeyGen avatar/talking-photo ID (from HEYGEN_AVATAR_ID secret)
  * @param {string} script     The coaching script text to speak
  * @param {string} voiceId    HeyGen voice ID (from HEYGEN_VOICE_ID secret)
  * @param {string} apiKey
@@ -110,30 +111,17 @@ export async function heygenUploadAudio(buffer, apiKey) {
  */
 export async function heygenStartJob(avatarId, script, voiceId, apiKey) {
   const body = {
-    video_inputs: [
-      {
-        character: {
-          type: 'avatar',
-          avatar_id: avatarId,
-          avatar_style: 'normal',
-        },
-        voice: {
-          type: 'text',
-          input_text: script,
-          voice_id: voiceId,
-        },
-        background: {
-          type: 'image',
-          url: 'https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=1280&h=720&fit=crop',
-        },
-      },
-    ],
-    dimension: { width: 1280, height: 720 },
+    type: 'avatar',
+    avatar_id: avatarId,
+    script: script,
+    voice_id: voiceId,
+    resolution: '720p',
+    aspect_ratio: '16:9',
   };
 
   let response;
   try {
-    response = await fetch(`${HEYGEN_API_BASE}/v2/video/generate`, {
+    response = await fetch(`${HEYGEN_API_BASE}/v3/videos`, {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
