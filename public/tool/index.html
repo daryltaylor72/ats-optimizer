@@ -2246,11 +2246,7 @@
       msg.className = 'lead-magnet-msg success';
       msg.textContent = data.message || 'Your premium report is unlocked.';
       btn.textContent = 'Applied ✓';
-      posthog.capture('lead_magnet_code_redeemed', {
-        variant,
-        source_page: 'tool_results',
-      });
-      posthog.capture('lead_magnet_unlock_applied', {
+      posthog.capture('lead_magnet_redeemed', {
         variant,
         source_page: 'tool_results',
       });

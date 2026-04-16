@@ -166,7 +166,11 @@ async function handleCheckoutCompleted(session, kv, env) {
   }
 
   console.log('[stripe-webhook] Token issued via webhook:', tokenData.token, 'plan:', planKey);
-  await postHogCapture(env, 'payment_completed', { plan: planKey, amount_cents: session.amount_total || 0 });
+  await postHogCapture(env, 'payment_completed', {
+    plan: planKey,
+    amount_cents: session.amount_total || 0,
+    $set: customerEmail ? { email: customerEmail, plan: planKey } : undefined,
+  }, customerEmail);
   return json({ received: true, token_issued: tokenData.token, plan: planKey }, 200);
 }
 
@@ -264,7 +268,7 @@ async function handleSubscriptionDeleted(subscription, kv, env) {
   await kv.put(`token:${tokenRef}`, JSON.stringify(tokenData), { expirationTtl: auditTtl });
 
   console.log('[stripe-webhook] Pro token cancelled:', tokenRef, 'subscription:', subscription.id);
-  await postHogCapture(env, 'subscription_cancelled', {});
+  await postHogCapture(env, 'subscription_cancelled', {}, customerEmail);
   return json({ received: true, cancelled: true, token: tokenRef }, 200);
 }
 
@@ -415,7 +419,7 @@ function getProcessedEventKey(eventId) {
   return `stripe:event:${eventId}`;
 }
 
-async function postHogCapture(env, event, properties = {}) {
+async function postHogCapture(env, event, properties = {}, distinctId = null) {
   const apiKey = env.POSTHOG_PROJECT_TOKEN;
   const host   = env.POSTHOG_HOST;
   if (!apiKey || !host) return;
@@ -426,7 +430,9 @@ async function postHogCapture(env, event, properties = {}) {
       body: JSON.stringify({
         api_key: apiKey,
         event,
-        distinct_id: 'server',
+        // Use the customer email when available so server-side events attach
+        // to the same person record the client created via posthog.identify().
+        distinct_id: distinctId || 'server',
         properties: { ...properties, $lib: 'cloudflare-function' },
         timestamp: new Date().toISOString(),
       }),
