@@ -1865,6 +1865,16 @@
       heading.textContent = `Your score is ${score}/100. Want an AI coach to walk through your ${gaps} on video?`;
     }
 
+    // If a video job was kicked off in a prior session and is still within the
+    // polling window, resume it — otherwise the user lands on the $19 upsell
+    // while their paid-for render is still processing in the background.
+    const resumed = _resumeVideoJobIfActive();
+    if (resumed) {
+      upsell.style.display = 'none';
+      genSection.style.display = 'block';
+      return;
+    }
+
     // Check if they have video credits
     const token = localStorage.getItem('ats_token');
     if (token) {
@@ -1883,6 +1893,29 @@
 
     upsell.style.display = 'block';
     genSection.style.display = 'none';
+  }
+
+  function _resumeVideoJobIfActive() {
+    let saved;
+    try {
+      const raw = localStorage.getItem('ats_vr_job');
+      if (!raw) return false;
+      saved = JSON.parse(raw);
+    } catch {
+      localStorage.removeItem('ats_vr_job');
+      return false;
+    }
+    if (!saved || !saved.jobId || !saved.token || !saved.startedAt) {
+      localStorage.removeItem('ats_vr_job');
+      return false;
+    }
+    if (Date.now() - saved.startedAt > VR_MAX_WAIT_MS) {
+      localStorage.removeItem('ats_vr_job');
+      return false;
+    }
+    document.getElementById('videoReviewResult').classList.add('active');
+    _startVideoPolling(saved.jobId, saved.token, saved.startedAt);
+    return true;
   }
 
   function initScoreBandVideo(score) {
@@ -3174,7 +3207,7 @@
 
   let _vrTimerInterval = null;
 
-  function _startVideoPolling(jobId, token) {
+  function _startVideoPolling(jobId, token, resumedStartMs) {
     const progress    = document.getElementById('vrProgress');
     const fill        = document.getElementById('vrProgressFill');
     const label       = document.getElementById('vrProgressLabel');
@@ -3187,7 +3220,12 @@
     player.style.display   = 'none';
     errorEl.style.display  = 'none';
 
-    _vrPollStartTime = Date.now();
+    _vrPollStartTime = resumedStartMs || Date.now();
+    try {
+      localStorage.setItem('ats_vr_job', JSON.stringify({
+        jobId, token, startedAt: _vrPollStartTime,
+      }));
+    } catch {}
     let messageIndex = 0;
     label.textContent = VR_STATUS_MESSAGES[0];
     fill.style.width  = '10%';
@@ -3226,6 +3264,7 @@
       if (elapsed > VR_MAX_WAIT_MS) {
         clearInterval(_vrPollInterval);
         clearInterval(_vrTimerInterval);
+        localStorage.removeItem('ats_vr_job');
 
         progress.style.display = 'none';
         errorEl.style.display  = 'block';
@@ -3245,6 +3284,7 @@
       if (statusData.status === 'complete' && statusData.videoUrl) {
         clearInterval(_vrPollInterval);
         clearInterval(_vrTimerInterval);
+        localStorage.removeItem('ats_vr_job');
 
         // Mark stage 4 done, stage 5 active briefly then done
         _setVideoStage(4, 'done');
@@ -3266,6 +3306,7 @@
       } else if (statusData.status === 'failed') {
         clearInterval(_vrPollInterval);
         clearInterval(_vrTimerInterval);
+        localStorage.removeItem('ats_vr_job');
 
         progress.style.display = 'none';
         errorEl.style.display  = 'block';
