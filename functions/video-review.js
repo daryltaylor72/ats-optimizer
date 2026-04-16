@@ -66,6 +66,7 @@ export async function onRequestPost(context) {
 
   // Re-read token under the lock — state may have changed while we were acquiring.
   let tokenData;
+  let creditDecremented = false;
   try {
     const lockedRaw = await kv.get(`token:${token}`);
     if (!lockedRaw) return json({ detail: 'Invalid or expired token.', code: 'invalid_token' }, 401);
@@ -85,9 +86,42 @@ export async function onRequestPost(context) {
       Math.floor((new Date(tokenData.expires_at) - Date.now()) / 1000), 1
     );
     await kv.put(`token:${token}`, JSON.stringify(tokenData), { expirationTtl: ttlSeconds });
+    creditDecremented = true;
   } finally {
     await releaseScanMutex(kv, token);
   }
+
+  // Anything that fails past this point leaves the user without a video — refund the credit.
+  let videoDelivered = false;
+  try {
+    return await runVideoReviewPipeline({
+      kv, token, tokenData, resumeFile, jobDesc, formData, env,
+      markDelivered: () => { videoDelivered = true; },
+    });
+  } finally {
+    if (creditDecremented && !videoDelivered) {
+      try { await refundVideoReviewCredit(kv, token); } catch (_) { /* best-effort */ }
+    }
+  }
+}
+
+async function refundVideoReviewCredit(kv, token) {
+  const { acquired } = await acquireScanMutex(kv, token);
+  if (!acquired) return;
+  try {
+    const raw = await kv.get(`token:${token}`);
+    if (!raw) return;
+    const td = JSON.parse(raw);
+    td.video_reviews_remaining = (td.video_reviews_remaining || 0) + 1;
+    td.last_refund_at = new Date().toISOString();
+    const ttl = Math.max(Math.floor((new Date(td.expires_at) - Date.now()) / 1000), 1);
+    await kv.put(`token:${token}`, JSON.stringify(td), { expirationTtl: ttl });
+  } finally {
+    await releaseScanMutex(kv, token);
+  }
+}
+
+async function runVideoReviewPipeline({ kv, token, tokenData, resumeFile, jobDesc, formData, env, markDelivered }) {
 
   // Parse resume
   if (!resumeFile || typeof resumeFile === 'string') {
@@ -211,14 +245,19 @@ export async function onRequestPost(context) {
         email: email || null,
         name: result.name_extracted || null,
       }), { expirationTtl: 86400 });
+      // HeyGen job started successfully — credit is consumed.
+      markDelivered();
     } catch (_e) {
-      // Video pipeline failed — degrade gracefully, return script only
+      // Video pipeline failed — degrade gracefully, return script only (credit will be refunded).
       jobId = null;
       _pipelineError = _e.message || String(_e);
     }
+  } else {
+    // No HeyGen configured — can't deliver a video, so refund and just return the script.
+    _pipelineError = 'video pipeline not configured';
   }
 
-  return json({ ...result, video_reviews_remaining: tokenData.video_reviews_remaining, job_id: jobId });
+  return json({ ...result, video_reviews_remaining: tokenData.video_reviews_remaining, job_id: jobId, pipeline_error: _pipelineError });
 }
 
 function buildVideoReviewSystemPrompt() {

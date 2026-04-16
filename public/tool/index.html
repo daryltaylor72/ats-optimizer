@@ -1465,6 +1465,7 @@
           </p>
         </div>
         <button class="vr-btn" id="videoReviewBtn" onclick="generateVideoReview()">Generate Video Review</button>
+        <p id="vrInlineStatus" style="display:none;font-size:13px;margin:10px 0 0;line-height:1.4;"></p>
       </div>
       <div id="videoReviewResult">
         <h4>Coaching Script</h4>
@@ -3067,12 +3068,43 @@
     'Almost done — finalizing your video…',
   ];
 
+  function showVrStatus(text, color) {
+    const el = document.getElementById('vrInlineStatus');
+    if (!el) return;
+    el.textContent = text || '';
+    el.style.color = color || 'var(--text3)';
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  function rehydrateVrUpsell(message) {
+    const upsell = document.getElementById('vrUpsell');
+    const genSec = document.getElementById('vrGenerateSection');
+    if (upsell) upsell.style.display = 'block';
+    if (genSec) genSec.style.display = 'none';
+    const body = document.getElementById('vrCouponBody');
+    if (body) body.style.display = 'block';
+    if (message) {
+      const msg = document.getElementById('vrCouponMsg');
+      if (msg) { msg.textContent = message; msg.style.color = 'var(--text2)'; }
+    }
+    upsell?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   async function generateVideoReview() {
-    if (!currentToken) { alert('No token found. Please reload the page.'); return; }
+    if (!currentToken) {
+      rehydrateVrUpsell('Your session was cleared. Paste your promo code again or use "Recover my access" with your email.');
+      return;
+    }
+    if (!fileInput.files || !fileInput.files[0]) {
+      showVrStatus('Re-upload your resume at the top of the page, then click Generate again.', 'var(--red)');
+      document.getElementById('dropZone')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
     const btn = document.getElementById('videoReviewBtn');
     btn.disabled = true;
     btn.textContent = 'Generating…';
+    showVrStatus('');
 
     const fd = new FormData();
     fd.append('token', currentToken);
@@ -3099,7 +3131,7 @@
     } catch (e) {
       btn.disabled = false;
       btn.textContent = 'Generate Video Review';
-      alert(e.message || 'An error occurred. Please try again.');
+      showVrStatus((e.message || 'An error occurred.') + ' Your credit has not been used — please try again.', 'var(--red)');
       return;
     }
 
@@ -3123,6 +3155,8 @@
     // Start video polling if a job_id was returned
     if (data.job_id) {
       _startVideoPolling(data.job_id, currentToken);
+    } else {
+      showVrStatus('We generated your written coaching above but couldn\'t kick off the video render. Your video credit was refunded — try again in a moment.', 'var(--yellow, #d4a017)');
     }
   }
 
