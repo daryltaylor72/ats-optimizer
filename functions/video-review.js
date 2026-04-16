@@ -248,13 +248,23 @@ async function runVideoReviewPipeline({ kv, token, tokenData, resumeFile, jobDes
       // HeyGen job started successfully — credit is consumed.
       markDelivered();
     } catch (_e) {
-      // Video pipeline failed — degrade gracefully, return script only (credit will be refunded).
       jobId = null;
       _pipelineError = _e.message || String(_e);
+      console.error('[video-review] HeyGen pipeline failed', {
+        error: _pipelineError,
+        hasApiKey: !!heygenKey,
+        apiKeyLen: heygenKey ? heygenKey.length : 0,
+        avatarId: avatarId || null,
+        voiceId: voiceId || null,
+      });
     }
   } else {
-    // No HeyGen configured — can't deliver a video, so refund and just return the script.
     _pipelineError = 'video pipeline not configured';
+    console.error('[video-review] HeyGen env vars missing', {
+      hasApiKey: !!heygenKey,
+      hasAvatarId: !!avatarId,
+      hasVoiceId: !!voiceId,
+    });
   }
 
   return json({ ...result, video_reviews_remaining: tokenData.video_reviews_remaining, job_id: jobId, pipeline_error: _pipelineError });
