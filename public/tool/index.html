@@ -1898,7 +1898,7 @@
     else { band = 'strong'; src = `${R2}/score-strong.mp4`; }
 
     player.src = src;
-    if (thumb) thumb.src = `${src}#t=0.5`;
+    if (thumb) thumb.src = src.replace(/\.mp4$/, '.jpg');
     container.style.display = 'block';
 
     if (window.posthog) {
