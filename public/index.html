@@ -793,9 +793,9 @@
         <div class="hero-content">
           <div class="hero-eyebrow">AI Resume Coach — Free to Start</div>
           <h1 class="hero-headline">
-            Find out why you're<br>
-            not getting callbacks.<br>
-            <em>Then fix everything.</em>
+            Find out why your resume<br>
+            isn't getting callbacks —<br>
+            <em>then get personalized AI coaching to fix it.</em>
           </h1>
           <p class="hero-sub">
             <strong>75% of resumes are filtered before a human sees them.</strong> Get your free ATS scan in 30 seconds — then unlock AI resume rewrite, cover letter, interview prep, and a personalized video coach who walks you through exactly what to fix.
@@ -805,6 +805,31 @@
             <a href="#how-it-works" class="btn-hero btn-hero-secondary">See How It Works</a>
           </div>
           <p class="hero-note">No account needed. Free ATS score instantly — full coaching suite from $12.</p>
+
+          <div id="heroSampleVideo" style="max-width:420px;margin-top:28px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface);">
+            <div style="padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);">
+              <p style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin:0;">&#9654; 60-second sample: see what your coach sounds like</p>
+            </div>
+            <div id="heroSamplePoster" style="position:relative;cursor:pointer;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;" onclick="playHeroSample()">
+              <div style="position:relative;z-index:2;width:64px;height:64px;border-radius:50%;background:rgba(108,99,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,0.35);">
+                <div style="width:0;height:0;border-left:20px solid #fff;border-top:13px solid transparent;border-bottom:13px solid transparent;margin-left:5px;"></div>
+              </div>
+            </div>
+            <video id="heroSamplePlayer" controls preload="none" playsinline style="display:none;width:100%;" src="https://pub-2e3072163b4d4011920642018e4e5acf.r2.dev/score-needs-work.mp4"></video>
+          </div>
+          <script>
+            function playHeroSample() {
+              var poster = document.getElementById('heroSamplePoster');
+              var player = document.getElementById('heroSamplePlayer');
+              if (!poster || !player) return;
+              poster.style.display = 'none';
+              player.style.display = 'block';
+              player.play().catch(function(){});
+              if (typeof posthog !== 'undefined' && posthog.capture) {
+                posthog.capture('hero_sample_video_played', { location: 'homepage_hero' });
+              }
+            }
+          </script>
         </div>
 
         <!-- Score Widget Demo -->
@@ -1104,7 +1129,7 @@
       <div class="trust-bar reveal">
         <span>&#x1f512; Secure checkout powered by Stripe</span>
         <span>&#x2713; 7-day money-back guarantee</span>
-        <span>&#x1f4ca; 200+ resumes scanned this month</span>
+        <span>&#x1f4ac; Personalized AI coaching on every scan</span>
       </div>
       <div style="text-align:center;margin-top:32px;padding:20px 28px;background:var(--accent-dim);border:1px solid rgba(108,99,255,0.25);border-radius:var(--radius);max-width:600px;margin-left:auto;margin-right:auto;">
         <p style="font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:8px;">🎬 AI Video Coaching — $19</p>
