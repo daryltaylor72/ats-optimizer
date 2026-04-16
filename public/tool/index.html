@@ -1389,7 +1389,7 @@
         <p style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:0;">▶ A quick note on your score</p>
       </div>
       <div id="scoreBandPoster" style="position:relative;cursor:pointer;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;">
-        <img id="scoreBandThumb" alt="Play video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.85;" />
+        <img id="scoreBandThumb" alt="Play video" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.85;" />
         <div style="position:relative;z-index:2;width:68px;height:68px;border-radius:50%;background:rgba(108,99,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,0.35);">
           <div style="width:0;height:0;border-left:22px solid #fff;border-top:14px solid transparent;border-bottom:14px solid transparent;margin-left:6px;"></div>
         </div>
@@ -1898,7 +1898,12 @@
     else { band = 'strong'; src = `${R2}/score-strong.mp4`; }
 
     player.src = src;
-    if (thumb) thumb.src = src.replace(/\.mp4$/, '.jpg');
+    if (thumb) {
+      // Use a real image thumbnail (not MP4#t) to avoid broken-image artifacts on some browsers.
+      thumb.src = `${R2}/score-${band}.jpg`;
+      thumb.onerror = () => { thumb.style.display = 'none'; };
+      thumb.onload = () => { thumb.style.display = 'block'; };
+    }
     container.style.display = 'block';
 
     if (window.posthog) {
@@ -2565,6 +2570,20 @@
       if (restored && unlockCode) {
         setTimeout(() => redeemLeadMagnetCode(unlockCode), 250);
       }
+    } else {
+      // Auto-restore last scan on plain page refresh (within 7 days) so a
+      // refresh doesn't wipe the results card.
+      try {
+        const raw = localStorage.getItem('ats_last_analysis');
+        if (raw) {
+          const snap = JSON.parse(raw);
+          const savedAt = snap?.saved_at ? new Date(snap.saved_at).getTime() : 0;
+          const freshMs = 7 * 24 * 60 * 60 * 1000;
+          if (savedAt && (Date.now() - savedAt) < freshMs) {
+            restoreLastAnalysis();
+          }
+        }
+      } catch {}
     }
 
     if (urlToken || signedIn || signInState || unlockCode || shouldRestore) {
