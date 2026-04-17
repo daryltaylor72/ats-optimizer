@@ -1280,6 +1280,7 @@
       <button id="analyzeBtn" onclick="analyze()" disabled aria-label="Analyze resume for ATS compatibility">Analyze Resume</button>
       <span class="mode-badge" id="modeBadge" aria-label="Current analysis mode">ATS Compatibility Scan</span>
     </div>
+    <p id="analyzeDisabledHint" style="font-size:12px;color:var(--text3);margin-top:8px;">Upload your resume to enable Analyze Resume.</p>
 
     <!-- Live token status — populated by fetchTokenStatus() on load / after rewrite -->
     <div id="tokenStatus">
@@ -1575,14 +1576,34 @@
   let latestAnalysis = null;
   let lastLeadMagnetViewKey = null;
   let restoredAnalysisMode = false;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const CLEAR_INVALID_PERSISTED_EMAIL = true;
 
   // Restore saved email
   const savedEmail = localStorage.getItem('ats_email');
-  if (savedEmail) emailInput.value = savedEmail;
-  if (savedEmail && authEmail) authEmail.value = savedEmail;
+  if (savedEmail) {
+    if (EMAIL_RE.test(savedEmail)) {
+      emailInput.value = savedEmail;
+      if (authEmail) authEmail.value = savedEmail;
+    } else if (CLEAR_INVALID_PERSISTED_EMAIL) {
+      localStorage.removeItem('ats_email');
+      emailInput.value = '';
+      if (authEmail) authEmail.value = '';
+      const hint = document.getElementById('emailHint');
+      if (hint) hint.textContent = 'We cleared an invalid saved email. Please enter a valid one to continue.';
+    }
+  }
 
   function updateAnalyzeBtn() {
-    analyzeBtn.disabled = !selectedFile;
+    const hint = document.getElementById('analyzeDisabledHint');
+    if (!selectedFile) {
+      analyzeBtn.disabled = true;
+      if (hint) hint.textContent = 'Upload your resume (PDF or DOCX) to enable Analyze Resume.';
+      return;
+    }
+
+    analyzeBtn.disabled = false;
+    if (hint) hint.textContent = 'Ready — click “Analyze Resume.”';
   }
 
   emailInput.addEventListener('input', () => {
@@ -1637,7 +1658,7 @@
   async function analyze() {
     if (!selectedFile) return;
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+    if (!EMAIL_RE.test(emailInput.value.trim())) {
       emailInput.style.borderColor = 'var(--red)';
       emailInput.focus();
       const hint = document.getElementById('emailHint');
@@ -2172,7 +2193,7 @@
     if (!emailField || !btn || !msg) return;
 
     const email = emailField.value.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!EMAIL_RE.test(email)) {
       msg.className = 'lead-magnet-msg error';
       msg.textContent = 'Enter a valid email to get your free unlock.';
       emailField.focus();
@@ -2664,7 +2685,7 @@
 
   async function sendSignInLink() {
     const email = authEmail.value.trim() || emailInput.value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!EMAIL_RE.test(email)) {
       document.getElementById('authMsg').textContent = 'Please enter a valid email.';
       document.getElementById('authMsg').style.color = 'var(--red)';
       return;
@@ -2778,7 +2799,7 @@
   }
   async function sendRecovery() {
     const email = document.getElementById('recoveryEmail').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!EMAIL_RE.test(email)) {
       document.getElementById('recoveryMsg').textContent = 'Please enter a valid email.';
       document.getElementById('recoveryMsg').style.color = 'var(--red)';
       return;

@@ -498,6 +498,7 @@
     <!-- Submit -->
     <div class="submit-row">
       <button id="submitBtn" onclick="generate()" disabled>Generate Cover Letter</button>
+      <p id="submitDisabledHint" style="font-size:12px;color:var(--text3);margin-top:8px;">Upload your resume and add an access key to continue.</p>
     </div>
   </div>
 
@@ -566,15 +567,40 @@
 
   let selectedFile = null;
   let hasTokenSession = false;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const CLEAR_INVALID_PERSISTED_EMAIL = true;
 
   // ── Restore saved values ──
   const savedEmail = localStorage.getItem('ats_email');
-  if (savedEmail) emailInput.value = savedEmail;
+  if (savedEmail) {
+    if (EMAIL_RE.test(savedEmail)) {
+      emailInput.value = savedEmail;
+    } else if (CLEAR_INVALID_PERSISTED_EMAIL) {
+      localStorage.removeItem('ats_email');
+      emailInput.value = '';
+      const emailHint = document.getElementById('emailHint');
+      if (emailHint) emailHint.textContent = 'We cleared an invalid saved email. Please enter a valid one to continue.';
+    }
+  }
   fetchTokenStatus();
 
   // ── Submit button gating ──
   function updateSubmitBtn() {
-    submitBtn.disabled = !selectedFile || !(tokenInput.value.trim() || hasTokenSession);
+    const hint = document.getElementById('submitDisabledHint');
+    if (!selectedFile) {
+      submitBtn.disabled = true;
+      if (hint) hint.textContent = 'Upload your resume (PDF or DOCX) to enable generation.';
+      return;
+    }
+
+    if (!(tokenInput.value.trim() || hasTokenSession)) {
+      submitBtn.disabled = true;
+      if (hint) hint.textContent = 'Paste a valid access key (or redeem a promo code) to continue.';
+      return;
+    }
+
+    submitBtn.disabled = false;
+    if (hint) hint.textContent = 'Ready — click “Generate Cover Letter.”';
   }
 
   emailInput.addEventListener('input', () => {
@@ -693,7 +719,7 @@
     if (!selectedFile) return;
 
     const email = emailInput.value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!EMAIL_RE.test(email)) {
       emailInput.style.borderColor = 'var(--red)';
       emailInput.focus();
       const hint = document.getElementById('emailHint');
