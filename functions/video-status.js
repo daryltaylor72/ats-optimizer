@@ -78,7 +78,9 @@ export async function onRequestGet(context) {
   // HeyGen completed — download video, upload to R2
   let videoUrl = heygenResult.videoUrl; // fallback: HeyGen CDN URL (7-day expiry)
   try {
-    const videoResp = await fetch(hedraResult.videoUrl);
+    const sourceUrl = heygenResult.videoUrl;
+    if (!sourceUrl) throw new Error('HeyGen completed without video URL');
+    const videoResp = await fetch(sourceUrl);
     if (videoResp.ok) {
       const videoBuffer = await videoResp.arrayBuffer();
       const r2Key = `${jobId}.mp4`;

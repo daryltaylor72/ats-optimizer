@@ -3312,11 +3312,16 @@
 
         setTimeout(() => {
           progress.style.display = 'none';
-          videoEl.src = statusData.videoUrl;
+          const videoUrl = statusData.videoUrl;
+          videoEl.src = videoUrl;
           videoEl.load();
-          document.getElementById('vrVideoLink').href = statusData.videoUrl;
+          document.getElementById('vrVideoLink').href = videoUrl;
+          videoEl.onerror = null;
+          videoEl.addEventListener('error', () => {
+            showVrStatus('Video is ready, but this embed failed to load. Use “Open video in new tab”.', 'var(--text2)');
+          }, { once: true });
           player.style.display = 'block';
-          console.log('[VR] player shown, src=', statusData.videoUrl);
+          console.log('[VR] player shown, src=', videoUrl);
         }, 1400);
       } else if (statusData.status === 'failed') {
         clearInterval(_vrPollInterval);
