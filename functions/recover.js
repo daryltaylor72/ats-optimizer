@@ -1,3 +1,5 @@
+import { buildAccessGrantUrl, createAccessGrant } from './_access-links.js';
+
 /**
  * POST /recover
  * Body: { email }
@@ -45,7 +47,8 @@ export async function onRequestPost(context) {
   }
 
   try {
-    await sendRecoveryEmail(env.RESEND_API_KEY, email, token, tokenData);
+    const grant = await createAccessGrant(kv, token, { redirectPath: '/tool/' });
+    await sendRecoveryEmail(env.RESEND_API_KEY, email, buildAccessGrantUrl(env, grant), tokenData);
   } catch (e) {
     console.error('[recover] Failed to send recovery email:', e);
   }
@@ -53,7 +56,7 @@ export async function onRequestPost(context) {
   return json(genericResponse);
 }
 
-async function sendRecoveryEmail(apiKey, to, token, tokenData) {
+async function sendRecoveryEmail(apiKey, to, accessUrl, tokenData) {
   const scansText = tokenData.scans_remaining >= 9000
     ? 'Unlimited scans'
     : `${tokenData.scans_remaining} scan${tokenData.scans_remaining !== 1 ? 's' : ''} remaining`;
@@ -85,10 +88,10 @@ async function sendRecoveryEmail(apiKey, to, token, tokenData) {
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://atscore.ai/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="${accessUrl}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Restore My Scans →
       </a>
-      <p style="color:#5a6080;font-size:12px;margin-top:12px;">Bookmark this link to avoid needing to recover access again.</p>
+      <p style="color:#5a6080;font-size:12px;margin-top:12px;">This one-click access link is time-limited for your security.</p>
     </div>
 
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">

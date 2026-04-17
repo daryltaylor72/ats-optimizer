@@ -4,6 +4,7 @@
  * Returns: { ok, plan, scans_remaining }
  */
 
+import { buildAccessGrantUrl, createAccessGrant } from './_access-links.js';
 import { PLAN_SCANS, PLAN_LABELS, issueToken } from './_shared.js';
 import { createTokenSessionCookie, getSessionSecret } from './_auth.js';
 
@@ -67,7 +68,8 @@ export async function onRequestGet(context) {
   // Send receipt email
   if (customerEmail && env.RESEND_API_KEY && tokenData) {
     try {
-      await sendReceiptEmail(env.RESEND_API_KEY, customerEmail, planKey, tokenData.scans_remaining, tokenData.token);
+      const grant = await createAccessGrant(kv, tokenData.token, { redirectPath: '/tool/' });
+      await sendReceiptEmail(env.RESEND_API_KEY, customerEmail, planKey, tokenData.scans_remaining, buildAccessGrantUrl(env, grant));
     } catch (e) {
       console.error('[verify-payment] Receipt email failed:', e);
     }
@@ -142,7 +144,7 @@ function inferPlanFromAmount(session) {
   return amountMap[currency]?.[mode]?.[amountTotal] || null;
 }
 
-async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
+async function sendReceiptEmail(apiKey, to, planKey, scans, accessUrl) {
   const plan = PLAN_LABELS[planKey] || { name: planKey, desc: '', price: '' };
   const scansText = scans >= 9000 ? 'Unlimited (30 days)' : `${scans} scan${scans !== 1 ? 's' : ''}`;
 
@@ -175,10 +177,10 @@ async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://atscore.ai/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="${accessUrl}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Start Optimizing Your Resume →
       </a>
-      <p style="color:#5a6080;font-size:12px;margin-top:12px;">Bookmark this link or save this email — it restores your scans on any device.</p>
+      <p style="color:#5a6080;font-size:12px;margin-top:12px;">Save this email if you need to restore access again later.</p>
     </div>
 
     <div style="background:#111318;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;margin-bottom:32px;">

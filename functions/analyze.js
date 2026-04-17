@@ -5,6 +5,7 @@
  */
 
 import mammoth from 'mammoth';
+import { buildAccessGrantUrl, createAccessGrant } from './_access-links.js';
 import { readTokenSession } from './_auth.js';
 import {
   applyRateLimit,
@@ -259,7 +260,12 @@ export async function onRequestPost(context) {
   if (email) {
     const isJobMatch = !!(jobDescription?.trim());
     if (env.RESEND_API_KEY) {
-      try { await sendAnalysisEmail(env.RESEND_API_KEY, email, result, isPaidUser, token); }
+      try {
+        const accessUrl = isPaidUser && token && kv
+          ? buildAccessGrantUrl(env, await createAccessGrant(kv, token, { redirectPath: '/tool/' }))
+          : '';
+        await sendAnalysisEmail(env.RESEND_API_KEY, email, result, isPaidUser, accessUrl);
+      }
       catch (e) { console.error('[analyze] Failed to send analysis email:', e); }
     } else {
       console.error('[analyze] RESEND_API_KEY not set');
@@ -292,7 +298,7 @@ export async function onRequestPost(context) {
   return json(result, 200);
 }
 
-async function sendAnalysisEmail(apiKey, to, result, isPaidUser = false, token = '') {
+async function sendAnalysisEmail(apiKey, to, result, isPaidUser = false, accessUrl = '') {
   const score = result.score || 0;
   const grade = result.grade || '?';
   const summary = result.summary || '';
@@ -331,7 +337,7 @@ async function sendAnalysisEmail(apiKey, to, result, isPaidUser = false, token =
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://atscore.ai/tool${token ? '?token=' + token : ''}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="${accessUrl || 'https://atscore.ai/tool/'}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Run Another Scan \u2192
       </a>
     </div>` : `

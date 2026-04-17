@@ -17,6 +17,7 @@
  *  - STRIPE_WEBHOOK_SECRET must be set as a Cloudflare Pages secret
  */
 
+import { buildAccessGrantUrl, createAccessGrant } from './_access-links.js';
 import { verifyStripeSignature, issueToken, PLAN_SCANS, PLAN_LABELS } from './_shared.js';
 
 export async function onRequestPost(context) {
@@ -150,7 +151,8 @@ async function handleCheckoutCompleted(session, kv, env) {
   // Send receipt email to customer (best-effort)
   if (customerEmail && env.RESEND_API_KEY) {
     try {
-      await sendReceiptEmail(env.RESEND_API_KEY, customerEmail, planKey, tokenData.scans_remaining, tokenData.token);
+      const grant = await createAccessGrant(kv, tokenData.token, { redirectPath: '/tool/' });
+      await sendReceiptEmail(env.RESEND_API_KEY, customerEmail, planKey, tokenData.scans_remaining, buildAccessGrantUrl(env, grant));
     } catch (e) {
       console.warn('[stripe-webhook] Receipt email failed:', e.message);
     }
@@ -339,7 +341,7 @@ async function sendInternalNotification(apiKey, planKey, customerEmail, sessionI
   if (!r.ok) throw new Error(await r.text());
 }
 
-async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
+async function sendReceiptEmail(apiKey, to, planKey, scans, accessUrl) {
   const plan      = PLAN_LABELS[planKey] || { name: planKey, desc: '', price: '' };
   const scansText = scans >= 9000 ? 'Unlimited (30 days)' : `${scans} scan${scans !== 1 ? 's' : ''}`;
 
@@ -369,10 +371,10 @@ async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
       </div>
     </div>
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://atscore.ai/tool?token=${token}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
+      <a href="${accessUrl}" style="display:inline-block;background:#6c63ff;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
         Start Optimizing Your Resume →
       </a>
-      <p style="color:#5a6080;font-size:12px;margin-top:12px;">Bookmark this link — it restores your scans on any device.</p>
+      <p style="color:#5a6080;font-size:12px;margin-top:12px;">Save this email if you need to restore access again later.</p>
     </div>
     <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;text-align:center;">
       <p style="color:#5a6080;font-size:12px;margin:0;">Questions? <a href="mailto:support@atscore.ai" style="color:#6c63ff;text-decoration:none;">support@atscore.ai</a></p>

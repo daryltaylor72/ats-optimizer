@@ -2581,12 +2581,13 @@
     // Restore token from URL param (magic link from receipt/recovery email)
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
+    const accessState = urlParams.get('access');
     const signedIn = urlParams.get('signed_in');
     const signInState = urlParams.get('signin');
     const unlockCode = (urlParams.get('unlock_code') || '').trim().toUpperCase();
     const shouldRestore = urlParams.get('restore') === '1';
     const bootstrapToken = urlToken;
-    if (urlToken || signedIn || signInState || unlockCode || shouldRestore) {
+    if (urlToken || accessState || signedIn || signInState || unlockCode || shouldRestore) {
       window.history.replaceState({}, '', `${window.location.pathname}${window.location.hash}`);
     }
 
@@ -2599,6 +2600,7 @@
 
   window.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
+    const accessState = urlParams.get('access');
     const signedIn = urlParams.get('signed_in');
     const signInState = urlParams.get('signin');
     const unlockCode = (urlParams.get('unlock_code') || '').trim().toUpperCase();
@@ -2608,7 +2610,15 @@
       showRecovery();
     }
 
-    if (signedIn === '1') {
+    if (accessState === 'expired') {
+      document.getElementById('authMsg').textContent = 'That access link expired. Request a fresh recovery link below.';
+      document.getElementById('authMsg').style.color = 'var(--red)';
+      showRecovery();
+    } else if (accessState === 'invalid' || accessState === 'unavailable') {
+      document.getElementById('authMsg').textContent = 'That access link is no longer valid. Request a fresh recovery link below.';
+      document.getElementById('authMsg').style.color = 'var(--red)';
+      showRecovery();
+    } else if (signedIn === '1') {
       document.getElementById('authMsg').textContent = 'Signed in. Any scans tied to this email will appear below automatically.';
       document.getElementById('authMsg').style.color = 'var(--green)';
     } else if (signInState === 'expired') {
