@@ -2,7 +2,7 @@
  * Cloudflare Pages Function — POST /redeem-coupon
  * Redeems a coupon code and issues a 1-scan trial token.
  * Body: { code: string, email?: string }
- * Returns: { token, scans_remaining, expires_at, message }
+ * Returns: { scans_remaining, expires_at, message }
  */
 
 import { createTokenSessionCookie, getSessionSecret } from './_auth.js';
@@ -116,7 +116,6 @@ export async function onRequestPost(context) {
   }
 
   return json({
-    token: tokenData.token,
     scans_remaining: tokenData.scans_remaining,
     video_reviews_remaining: tokenData.video_reviews_remaining || 0,
     expires_at: tokenData.expires_at,

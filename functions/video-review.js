@@ -5,6 +5,11 @@
  */
 
 import mammoth from 'mammoth';
+import {
+  createTokenSessionCookie,
+  getSessionSecret,
+  readTokenSession,
+} from './_auth.js';
 import { heygenStartJob } from './_video-helpers.js';
 import { acquireScanMutex, releaseScanMutex } from './_shared.js';
 import {
@@ -38,7 +43,9 @@ export async function onRequestPost(context) {
   try { formData = await request.formData(); }
   catch { return json({ detail: 'Invalid form data' }, 400); }
 
-  const token       = formData.get('token') || '';
+  const submittedToken = (formData.get('token') || '').trim();
+  const tokenSession = await readTokenSession(request, env);
+  const token       = submittedToken || tokenSession?.token || '';
   const resumeFile  = formData.get('resume');
   const jobDesc     = formData.get('job_description') || '';
 
@@ -267,7 +274,13 @@ async function runVideoReviewPipeline({ kv, token, tokenData, resumeFile, jobDes
     });
   }
 
-  return json({ ...result, video_reviews_remaining: tokenData.video_reviews_remaining, job_id: jobId, pipeline_error: _pipelineError });
+  const headers = {};
+  const secret = getSessionSecret(env);
+  if (secret && token) {
+    headers['Set-Cookie'] = await createTokenSessionCookie(token, secret);
+  }
+
+  return json({ ...result, video_reviews_remaining: tokenData.video_reviews_remaining, job_id: jobId, pipeline_error: _pipelineError }, 200, headers);
 }
 
 function buildVideoReviewSystemPrompt() {
@@ -340,7 +353,7 @@ export async function onRequestOptions() {
   });
 }
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -348,6 +361,7 @@ function json(data, status = 200) {
       'Access-Control-Allow-Origin': 'https://ats-optimizer.pages.dev',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
+      ...extraHeaders,
     },
   });
 }

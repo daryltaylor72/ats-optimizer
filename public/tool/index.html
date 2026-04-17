@@ -1570,7 +1570,7 @@
 
   let selectedFile = null;
   let lastResumeText = null;  // stored after successful rewrite for Word/plain-text download
-  let currentToken = localStorage.getItem('ats_token');
+  let hasTokenSession = false;
   let signedInEmail = null;
   let latestAnalysis = null;
   let lastLeadMagnetViewKey = null;
@@ -1669,13 +1669,11 @@
       fd.append('resume', selectedFile);
       fd.append('job_description', jdInput.value);
       fd.append('email', emailInput.value.trim());
-      const storedToken = localStorage.getItem('ats_token');
-      if (storedToken) fd.append('token', storedToken);
 
       posthog.capture('scan_submitted', {
         has_job_description: !!jdInput.value.trim(),
         file_type: selectedFile ? selectedFile.name.split('.').pop().toLowerCase() : 'unknown',
-        plan: localStorage.getItem('ats_token') ? 'paid' : 'free',
+        plan: hasTokenSession ? 'paid' : 'free',
       });
       const res = await fetch('/analyze', { method: 'POST', body: fd });
       const data = await res.json();
@@ -1816,9 +1814,8 @@
     initScoreBandVideo(score);
 
     // Gate detailed sections if no token or no scans remaining
-    const token = localStorage.getItem('ats_token');
     const scans = localStorage.getItem('ats_scans');
-    const hasAccess = token && (scans === null || parseInt(scans) > 0);
+    const hasAccess = hasTokenSession && (scans === null || parseInt(scans) > 0);
     renderLeadMagnet(data, !!hasAccess);
     if (!hasAccess) {
       document.getElementById('downloadBtn').textContent = '🔓 Unlock optimized resume';
@@ -1891,10 +1888,9 @@
     }
 
     // Check if they have video credits
-    const token = localStorage.getItem('ats_token');
-    if (token) {
+    if (hasTokenSession) {
       try {
-        const res = await fetch(`/token-status?token=${encodeURIComponent(token)}`);
+        const res = await fetch('/token-status');
         if (res.ok) {
           const status = await res.json();
           if ((status.video_reviews_remaining || 0) > 0) {
@@ -1920,7 +1916,7 @@
       localStorage.removeItem('ats_vr_job');
       return false;
     }
-    if (!saved || !saved.jobId || !saved.token || !saved.startedAt) {
+    if (!saved || !saved.jobId || !saved.startedAt) {
       localStorage.removeItem('ats_vr_job');
       return false;
     }
@@ -1929,7 +1925,7 @@
       return false;
     }
     document.getElementById('videoReviewResult').classList.add('active');
-    _startVideoPolling(saved.jobId, saved.token, saved.startedAt);
+    _startVideoPolling(saved.jobId, saved.startedAt);
     return true;
   }
 
@@ -2287,11 +2283,9 @@
         return;
       }
 
-      currentToken = data.token;
-      localStorage.setItem('ats_token', data.token);
       localStorage.setItem('ats_scans', data.scans_remaining);
       localStorage.setItem('ats_lead_redeemed_email', (emailInput.value.trim() || localStorage.getItem('ats_email') || '').toLowerCase());
-      fetchTokenStatus(data.token);
+      fetchTokenStatus();
       msg.className = 'lead-magnet-msg success';
       msg.textContent = data.message || 'Your premium report is unlocked.';
       btn.textContent = 'Applied ✓';
@@ -2367,9 +2361,8 @@
   }
 
   async function getRewrite() {
-    const token = localStorage.getItem('ats_token');
     const scans = localStorage.getItem('ats_scans');
-    const hasAccess = token && (scans === null || parseInt(scans) > 0);
+    const hasAccess = hasTokenSession && (scans === null || parseInt(scans) > 0);
     if (!hasAccess) { showPaywall(); return; }
     if (!selectedFile) {
       if (restoredAnalysisMode && latestAnalysis) {
@@ -2389,17 +2382,16 @@
       const fd = new FormData();
       fd.append('resume', selectedFile);
       fd.append('job_description', jdInput.value);
-      fd.append('token', token);
       fd.append('email', emailInput.value.trim() || localStorage.getItem('ats_email') || '');
       const res = await fetch('/rewrite', { method: 'POST', body: fd });
       const data = await res.json();
 
       if (res.status === 401 || res.status === 402) {
-        localStorage.removeItem('ats_token');
         localStorage.removeItem('ats_plan');
         localStorage.removeItem('ats_scans');
         btn.textContent = '⬇ Download Optimized Resume';
         btn.disabled = false;
+        hasTokenSession = false;
         showPaywall();
         return;
       }
@@ -2409,7 +2401,7 @@
       if (data.scans_remaining !== undefined) {
         localStorage.setItem('ats_scans', data.scans_remaining);
         updateScansDisplay(data.scans_remaining);
-        fetchTokenStatus(token);
+        fetchTokenStatus();
       }
 
       // Store text for plain-text fallback, then download as Word
@@ -2500,9 +2492,11 @@
         btn.disabled = false;
         return;
       }
-      localStorage.setItem('ats_token', data.token);
+      hasTokenSession = true;
+      if (data.scans_remaining !== undefined) localStorage.setItem('ats_scans', data.scans_remaining);
       msg.textContent = '✓ ' + (data.message || 'Code redeemed!');
       msg.style.color = 'var(--green)';
+      fetchTokenStatus();
       setTimeout(() => { closePaywall(); getRewrite(); }, 1200);
     } catch {
       msg.textContent = 'Network error. Try again.';
@@ -2538,10 +2532,11 @@
         btn.disabled = false;
         return;
       }
-      localStorage.setItem('ats_token', data.token);
-      currentToken = data.token;
+      hasTokenSession = true;
+      if (data.scans_remaining !== undefined) localStorage.setItem('ats_scans', data.scans_remaining);
       msg.textContent = '✓ ' + (data.message || 'Code redeemed! Loading your video review…');
       msg.style.color = 'var(--green)';
+      fetchTokenStatus();
       setTimeout(() => {
         const upsell = document.getElementById('vrUpsell');
         const genSec = document.getElementById('vrGenerateSection');
@@ -2590,21 +2585,25 @@
     const signInState = urlParams.get('signin');
     const unlockCode = (urlParams.get('unlock_code') || '').trim().toUpperCase();
     const shouldRestore = urlParams.get('restore') === '1';
-    if (urlToken) {
-      localStorage.setItem('ats_token', urlToken);
+    const bootstrapToken = urlToken;
+    if (urlToken || signedIn || signInState || unlockCode || shouldRestore) {
+      window.history.replaceState({}, '', `${window.location.pathname}${window.location.hash}`);
     }
 
     updateAnalyzeBtn();
     fetchAccountSession().finally(() => {
-      const storedToken = localStorage.getItem('ats_token');
-      if (storedToken) fetchTokenStatus(storedToken);
-      else {
-        const scans = localStorage.getItem('ats_scans');
-        if (scans !== null) updateScansDisplay(parseInt(scans));
-      }
+      if (bootstrapToken) fetchTokenStatus(bootstrapToken);
+      else fetchTokenStatus();
     });
+  });
 
-    // Auto-open recovery panel if linked from "Restore Access"
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const signedIn = urlParams.get('signed_in');
+    const signInState = urlParams.get('signin');
+    const unlockCode = (urlParams.get('unlock_code') || '').trim().toUpperCase();
+    const shouldRestore = urlParams.get('restore') === '1';
+
     if (window.location.hash === '#recover') {
       showRecovery();
     }
@@ -2631,8 +2630,6 @@
         setTimeout(() => redeemLeadMagnetCode(unlockCode), 250);
       }
     } else {
-      // Auto-restore last scan on plain page refresh (within 7 days) so a
-      // refresh doesn't wipe the results card.
       try {
         const raw = localStorage.getItem('ats_last_analysis');
         if (raw) {
@@ -2644,10 +2641,6 @@
           }
         }
       } catch {}
-    }
-
-    if (urlToken || signedIn || signInState || unlockCode || shouldRestore) {
-      window.history.replaceState({}, '', `${window.location.pathname}${window.location.hash}`);
     }
   });
 
@@ -2705,19 +2698,14 @@
       emailInput.value = data.email;
       authEmail.value = data.email;
 
-      if (data.token) {
-        currentToken = data.token;
-        localStorage.setItem('ats_token', data.token);
-        localStorage.setItem('ats_scans', data.scans_remaining);
-      } else {
-        currentToken = null;
-        localStorage.removeItem('ats_token');
-        localStorage.removeItem('ats_scans');
-      }
+      hasTokenSession = !!data.has_token;
+      if (data.has_token) localStorage.setItem('ats_scans', data.scans_remaining);
+      else localStorage.removeItem('ats_scans');
 
       renderSignedInAccount(data);
       return data;
     } catch {
+      hasTokenSession = false;
       renderSignedOutAccount();
       return null;
     }
@@ -2759,9 +2747,8 @@
 
   async function signOutAccount() {
     try { await fetch('/auth-logout', { method: 'POST' }); } catch {}
-    localStorage.removeItem('ats_token');
     localStorage.removeItem('ats_scans');
-    currentToken = null;
+    hasTokenSession = false;
     renderSignedOutAccount();
     const toolAccountLink = document.getElementById('toolAccountLink');
     if (toolAccountLink) toolAccountLink.textContent = 'Account';
@@ -2804,40 +2791,42 @@
   }
 
   // ── Token Status Strip ──────────────────────────────────────────────────────
-  async function fetchTokenStatus(token) {
+  async function fetchTokenStatus(token = '') {
     const strip  = document.getElementById('tokenStatus');
     const dot    = strip.querySelector('.ts-dot');
     const text   = document.getElementById('tsText');
     const link   = document.getElementById('tsLink');
 
-    if (!token) { strip.classList.remove('show'); return; }
-
     // Show a brief loading state
     strip.className = 'show loading';
     dot.className   = 'ts-dot';
-    text.textContent = 'Checking token…';
+    text.textContent = token ? 'Checking token…' : 'Checking access…';
     link.style.display = 'none';
 
     try {
-      const res  = await fetch(`/token-status?token=${encodeURIComponent(token)}`);
+      const url = token ? `/token-status?token=${encodeURIComponent(token)}` : '/token-status';
+      const res  = await fetch(url);
       const data = await res.json();
 
       strip.classList.remove('loading');
 
       if (!res.ok) {
-        // Token not found or expired
+        hasTokenSession = false;
+        if (!token && res.status === 400) {
+          strip.classList.remove('show');
+          return;
+        }
         dot.className  = 'ts-dot red';
-        setTextWithStrong(text, 'Token invalid or expired.', ' Purchase a new plan to continue.');
+        setTextWithStrong(text, token ? 'Token invalid or expired.' : 'No active access found.', ' Purchase a new plan to continue.');
         link.textContent   = 'View plans →';
         link.href          = '/';
         link.style.display = 'inline';
-        localStorage.removeItem('ats_token');
         localStorage.removeItem('ats_scans');
         strip.classList.add('show');
         return;
       }
 
-      // Persist live values back to localStorage so getRewrite() stays in sync
+      hasTokenSession = true;
       localStorage.setItem('ats_scans', data.scans_remaining);
 
       const expiresDate = new Date(data.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -2864,11 +2853,10 @@
       }
 
       strip.classList.add('show');
-      // Also refresh the results-section badge if visible
       updateScansDisplay(data.scans_remaining);
 
     } catch {
-      // Network error — degrade gracefully, don't block the user
+      hasTokenSession = false;
       strip.classList.remove('show');
     }
   }
@@ -2977,9 +2965,10 @@
         return;
       }
 
-      // Success — store token and refresh status
-      localStorage.setItem('ats_token', data.token);
-      fetchTokenStatus(data.token);
+      // Success — rely on the HttpOnly token session cookie and refresh status
+      hasTokenSession = true;
+      if (data.scans_remaining !== undefined) localStorage.setItem('ats_scans', data.scans_remaining);
+      fetchTokenStatus();
       posthog.capture('coupon_redeemed', { location: 'tool_page' });
 
       msgEl.className = 'coupon-msg success';
@@ -3154,7 +3143,7 @@
   }
 
   async function generateVideoReview() {
-    if (!currentToken) {
+    if (!hasTokenSession) {
       rehydrateVrUpsell('Your session was cleared. Paste your promo code again or use "Recover my access" with your email.');
       return;
     }
@@ -3170,7 +3159,6 @@
     showVrStatus('');
 
     const fd = new FormData();
-    fd.append('token', currentToken);
     fd.append('resume', fileInput.files[0]);
     if (jdInput && jdInput.value.trim()) fd.append('job_description', jdInput.value);
     const emailVal = (document.getElementById('vrEmailInput')?.value || '').trim();
@@ -3217,7 +3205,7 @@
 
     // Start video polling if a job_id was returned
     if (data.job_id) {
-      _startVideoPolling(data.job_id, currentToken);
+      _startVideoPolling(data.job_id);
     } else {
       showVrStatus('We generated your written coaching above but couldn\'t kick off the video render. Your video credit was refunded — try again in a moment.', 'var(--yellow, #d4a017)');
     }
@@ -3237,7 +3225,7 @@
 
   let _vrTimerInterval = null;
 
-  function _startVideoPolling(jobId, token, resumedStartMs) {
+  function _startVideoPolling(jobId, resumedStartMs) {
     const progress    = document.getElementById('vrProgress');
     const fill        = document.getElementById('vrProgressFill');
     const label       = document.getElementById('vrProgressLabel');
@@ -3253,7 +3241,7 @@
     _vrPollStartTime = resumedStartMs || Date.now();
     try {
       localStorage.setItem('ats_vr_job', JSON.stringify({
-        jobId, token, startedAt: _vrPollStartTime,
+        jobId, startedAt: _vrPollStartTime,
       }));
     } catch {}
     let messageIndex = 0;
@@ -3304,7 +3292,7 @@
       // Poll server
       let statusData;
       try {
-        const res = await fetch(`/video-status?jobId=${encodeURIComponent(jobId)}&token=${encodeURIComponent(token)}`);
+        const res = await fetch(`/video-status?jobId=${encodeURIComponent(jobId)}`);
         statusData = await res.json();
       } catch (_e) {
         return; // network error — retry next interval

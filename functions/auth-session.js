@@ -1,4 +1,4 @@
-import { readSession } from './_auth.js';
+import { createTokenSessionCookie, getSessionSecret, readSession } from './_auth.js';
 import { PLAN_LABELS } from './_shared.js';
 
 /**
@@ -36,11 +36,16 @@ export async function onRequestGet({ request, env }) {
 
   const planMeta = PLAN_LABELS[tokenData.plan] || { name: tokenData.plan, price: '' };
 
+  const headers = {};
+  const secret = getSessionSecret(env);
+  if (secret) {
+    headers['Set-Cookie'] = await createTokenSessionCookie(tokenRef, secret);
+  }
+
   return json({
     authenticated: true,
     email: session.email,
     has_token: true,
-    token: tokenRef,
     plan: tokenData.plan,
     plan_label: planMeta.name,
     plan_price: planMeta.price,
@@ -49,15 +54,16 @@ export async function onRequestGet({ request, env }) {
     is_unlimited: tokenData.scans_remaining >= 9000,
     expires_at: tokenData.expires_at,
     created_at: tokenData.created_at,
-  });
+  }, 200, headers);
 }
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-store',
+      ...extraHeaders,
     },
   });
 }

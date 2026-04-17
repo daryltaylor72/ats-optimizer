@@ -5,6 +5,7 @@
  */
 
 import mammoth from 'mammoth';
+import { readTokenSession } from './_auth.js';
 import {
   applyRateLimit,
   sanitizeAnalysisResult,
@@ -53,7 +54,9 @@ export async function onRequestPost(context) {
   const jobDescription = formData.get('job_description') || '';
   const includeRewrite = formData.get('include_rewrite') === 'true';
   const email = (formData.get('email') || '').trim();
-  const token = (formData.get('token') || '').trim();
+  const submittedToken = (formData.get('token') || '').trim();
+  const tokenSession = await readTokenSession(request, env);
+  const token = submittedToken || tokenSession?.token || '';
 
   // Look up plan from token if provided (so paid users are logged correctly)
   let userPlan = 'free';

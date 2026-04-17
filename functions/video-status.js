@@ -10,6 +10,7 @@
  *   { status: 'failed' }
  */
 
+import { readTokenSession } from './_auth.js';
 import { heygenGetStatus } from './_video-helpers.js';
 
 const TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes — mark as failed if exceeded
@@ -18,7 +19,9 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const url    = new URL(request.url);
   const jobId  = url.searchParams.get('jobId')  || '';
-  const token  = url.searchParams.get('token')  || '';
+  const requestedToken = url.searchParams.get('token') || '';
+  const tokenSession = await readTokenSession(request, env);
+  const token  = requestedToken || tokenSession?.token || '';
 
   if (!jobId || !token) return json({ detail: 'Missing jobId or token' }, 400);
 

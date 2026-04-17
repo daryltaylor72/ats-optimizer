@@ -1,3 +1,4 @@
+import { createTokenSessionCookie, getSessionSecret } from './_auth.js';
 import { acquireScanMutex, grantToken, releaseScanMutex } from './_shared.js';
 
 export async function onRequestPost({ request, env }) {
@@ -53,23 +54,31 @@ export async function onRequestPost({ request, env }) {
 
     return json({
       ok: true,
-      token: tokenData.token,
       scans_remaining: tokenData.scans_remaining,
       video_reviews_remaining: tokenData.video_reviews_remaining || 0,
       expires_at: tokenData.expires_at,
       message: 'Your premium report is unlocked.',
-    });
+    }, 200, await sessionHeaders(env, tokenData.token));
   } finally {
     await releaseScanMutex(kv, mutexKey);
   }
 }
 
-function json(data, status = 200) {
+async function sessionHeaders(env, token) {
+  const secret = getSessionSecret(env);
+  if (!secret || !token) return {};
+  return {
+    'Set-Cookie': await createTokenSessionCookie(token, secret),
+  };
+}
+
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-store',
+      ...extraHeaders,
     },
   });
 }

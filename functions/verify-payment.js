@@ -5,6 +5,7 @@
  */
 
 import { PLAN_SCANS, PLAN_LABELS, issueToken } from './_shared.js';
+import { createTokenSessionCookie, getSessionSecret } from './_auth.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -41,7 +42,11 @@ export async function onRequestGet(context) {
   const existing = await kv.get(`session:${sessionId}`);
   if (existing) {
     const tokenData = JSON.parse(existing);
-    return json({ ok: true, plan: tokenData.plan, scans_remaining: tokenData.scans_remaining });
+    return json(
+      { ok: true, plan: tokenData.plan, scans_remaining: tokenData.scans_remaining },
+      200,
+      await sessionHeaders(env, tokenData.token)
+    );
   }
 
   const planKey = await derivePlanFromSession(session, stripeKey);
@@ -68,7 +73,19 @@ export async function onRequestGet(context) {
     }
   }
 
-  return json({ ok: true, plan: planKey, scans_remaining: tokenData.scans_remaining });
+  return json(
+    { ok: true, plan: planKey, scans_remaining: tokenData.scans_remaining },
+    200,
+    await sessionHeaders(env, tokenData.token)
+  );
+}
+
+async function sessionHeaders(env, token) {
+  const secret = getSessionSecret(env);
+  if (!secret || !token) return {};
+  return {
+    'Set-Cookie': await createTokenSessionCookie(token, secret),
+  };
 }
 
 async function derivePlanFromSession(session, stripeKey) {
@@ -192,9 +209,9 @@ async function sendReceiptEmail(apiKey, to, planKey, scans, token) {
   if (!r.ok) throw new Error(await r.text());
 }
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', ...extraHeaders },
   });
 }

@@ -98,11 +98,8 @@
       try {
         const res  = await fetch(`/verify-payment?session_id=${sessionId}&plan=${plan}`);
         const data = await res.json();
-        if (!res.ok || !data.token) throw new Error(data.error || 'Verification failed');
+        if (!res.ok) throw new Error(data.error || 'Verification failed');
 
-        // Store token in localStorage
-        localStorage.setItem('ats_token', data.token);
-        localStorage.setItem('ats_plan', data.plan);
         localStorage.setItem('ats_scans', data.scans_remaining);
 
         showSuccess(data);
