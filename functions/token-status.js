@@ -1,3 +1,9 @@
+import {
+  createTokenSessionCookie,
+  readTokenSession,
+  getSessionSecret,
+} from './_auth.js';
+
 /**
  * GET /token-status?token=<hex>
  *
@@ -8,7 +14,7 @@
  *   { plan, plan_label, scans_remaining, expires_at, created_at, is_unlimited }
  *
  * Errors:
- *   400 – missing or obviously invalid token param
+ *   400 – missing or obviously invalid token parameter and no token session
  *   404 – token not found in KV (expired or never issued)
  *   500 – KV not bound
  */
@@ -17,7 +23,9 @@ export async function onRequestGet({ env, request }) {
   if (!kv) return json({ error: 'KV not configured' }, 500);
 
   const url   = new URL(request.url);
-  const token = (url.searchParams.get('token') || '').trim();
+  const requestedToken = (url.searchParams.get('token') || '').trim();
+  const tokenSession = await readTokenSession(request, env);
+  const token = requestedToken || tokenSession?.token || '';
 
   if (!token || token.length < 10) {
     return json({ error: 'Missing or invalid token parameter' }, 400);
@@ -44,6 +52,17 @@ export async function onRequestGet({ env, request }) {
 
   const planMeta    = PLAN_LABELS[data.plan] || { name: data.plan, price: '' };
   const isUnlimited = data.scans_remaining >= 9000;
+  const headers = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+  };
+
+  if (requestedToken && requestedToken === token) {
+    const secret = getSessionSecret(env);
+    if (secret) {
+      headers['Set-Cookie'] = await createTokenSessionCookie(token, secret);
+    }
+  }
 
   return json({
     plan:                   data.plan,
@@ -54,15 +73,16 @@ export async function onRequestGet({ env, request }) {
     video_reviews_remaining: data.video_reviews_remaining || 0,
     expires_at:             data.expires_at,
     created_at:             data.created_at,
-  });
+  }, 200, headers);
 }
 
-function json(body, status = 200) {
+function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',          // always fresh — never cache scan counts
+      'Cache-Control': 'no-store',
+      ...headers,
     },
   });
 }

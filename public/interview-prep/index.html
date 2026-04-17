@@ -545,24 +545,41 @@
 
   let selectedFile  = null;
   let rawPrepText   = '';
+  let hasTokenSession = false;
 
   // Restore saved values
   const savedEmail = localStorage.getItem('ats_email');
   if (savedEmail) emailInput.value = savedEmail;
-  const savedToken = localStorage.getItem('ats_token');
-  if (savedToken) tokenInput.value = savedToken;
+  fetchTokenStatus();
 
   function updateSubmitBtn() {
-    submitBtn.disabled = !selectedFile || !tokenInput.value.trim();
+    submitBtn.disabled = !selectedFile || !(tokenInput.value.trim() || hasTokenSession);
   }
 
   emailInput.addEventListener('input', () => {
     localStorage.setItem('ats_email', emailInput.value.trim());
   });
   tokenInput.addEventListener('input', () => {
-    localStorage.setItem('ats_token', tokenInput.value.trim());
+    const token = tokenInput.value.trim();
+    if (token) {
+      fetchTokenStatus(token);
+    } else {
+      fetchTokenStatus();
+    }
     updateSubmitBtn();
   });
+
+  async function fetchTokenStatus(token = '') {
+    try {
+      const url = token ? `/token-status?token=${encodeURIComponent(token)}` : '/token-status';
+      const res = await fetch(url);
+      const data = await res.json();
+      hasTokenSession = res.ok && !data.code && !data.error;
+    } catch {
+      hasTokenSession = false;
+    }
+    updateSubmitBtn();
+  }
 
   // ── Drag & Drop ──
   fileInput.addEventListener('change', e => {
@@ -611,7 +628,7 @@
       emailInput.focus();
       return;
     }
-    if (!token) {
+    if (!token && !hasTokenSession) {
       tokenInput.style.borderColor = 'var(--red)';
       setTimeout(() => { tokenInput.style.borderColor = ''; }, 3000);
       tokenInput.focus();
@@ -880,9 +897,9 @@
         return;
       }
 
-      // Success — store token, auto-fill token input, refresh submit button
-      localStorage.setItem('ats_token', data.token);
-      tokenInput.value = data.token;
+      // Success — rely on the HttpOnly token session cookie and refresh state
+      tokenInput.value = '';
+      await fetchTokenStatus();
       updateSubmitBtn();
 
       msgEl.className = 'coupon-msg success';

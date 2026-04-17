@@ -5,11 +5,12 @@
  * Returns: { token, scans_remaining, expires_at, message }
  */
 
+import { createTokenSessionCookie, getSessionSecret } from './_auth.js';
 import { acquireScanMutex, grantToken, releaseScanMutex } from './_shared.js';
 
 const CORS_ORIGIN = 'https://ats-optimizer.pages.dev';
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -17,6 +18,7 @@ function json(data, status = 200) {
       'Access-Control-Allow-Origin': CORS_ORIGIN,
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
+      ...extraHeaders,
     }
   });
 }
@@ -119,5 +121,13 @@ export async function onRequestPost(context) {
     video_reviews_remaining: tokenData.video_reviews_remaining || 0,
     expires_at: tokenData.expires_at,
     message: 'Your free trial is ready!',
-  });
+  }, 200, await sessionHeaders(env, tokenData.token));
+}
+
+async function sessionHeaders(env, token) {
+  const secret = getSessionSecret(env);
+  if (!secret) return {};
+  return {
+    'Set-Cookie': await createTokenSessionCookie(token, secret),
+  };
 }

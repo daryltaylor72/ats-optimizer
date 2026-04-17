@@ -5,6 +5,11 @@
  */
 
 import mammoth from 'mammoth';
+import {
+  createTokenSessionCookie,
+  getSessionSecret,
+  readTokenSession,
+} from './_auth.js';
 import { acquireScanMutex, releaseScanMutex } from './_shared.js';
 import { applyRateLimit, sanitizePlainText, validateMultipartSize, validateResumeUpload } from './_upload-security.js';
 
@@ -32,7 +37,9 @@ export async function onRequestPost(context) {
   try { formData = await request.formData(); }
   catch { return json({ detail: 'Invalid form data' }, 400); }
 
-  const token         = formData.get('token') || '';
+  const submittedToken = (formData.get('token') || '').trim();
+  const tokenSession = await readTokenSession(request, env);
+  const token         = submittedToken || tokenSession?.token || '';
   const resumeFile    = formData.get('resume');
   const jobDesc       = formData.get('job_description') || '';
   const email         = (formData.get('email') || '').trim();
@@ -158,7 +165,13 @@ export async function onRequestPost(context) {
     console.error('[interview-prep] No email address available for delivery');
   }
 
-  return json({ interview_prep: interviewPrep, scans_remaining: tokenData.scans_remaining });
+  const headers = {};
+  const secret = getSessionSecret(env);
+  if (secret && token) {
+    headers['Set-Cookie'] = await createTokenSessionCookie(token, secret);
+  }
+
+  return json({ interview_prep: interviewPrep, scans_remaining: tokenData.scans_remaining }, 200, headers);
 }
 
 /**
@@ -339,7 +352,7 @@ export async function onRequestOptions() {
   });
 }
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -347,6 +360,7 @@ function json(data, status = 200) {
       'Access-Control-Allow-Origin': 'https://ats-optimizer.pages.dev',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
+      ...extraHeaders,
     },
   });
 }

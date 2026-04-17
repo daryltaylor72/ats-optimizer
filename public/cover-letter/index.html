@@ -565,19 +565,16 @@
   const roleInput    = document.getElementById('roleInput');
 
   let selectedFile = null;
+  let hasTokenSession = false;
 
   // ── Restore saved values ──
   const savedEmail = localStorage.getItem('ats_email');
   if (savedEmail) emailInput.value = savedEmail;
-  const savedToken = localStorage.getItem('ats_token');
-  if (savedToken) {
-    tokenInput.value = savedToken;
-    fetchTokenStatus(savedToken);
-  }
+  fetchTokenStatus();
 
   // ── Submit button gating ──
   function updateSubmitBtn() {
-    submitBtn.disabled = !selectedFile || !tokenInput.value.trim();
+    submitBtn.disabled = !selectedFile || !(tokenInput.value.trim() || hasTokenSession);
   }
 
   emailInput.addEventListener('input', () => {
@@ -587,10 +584,9 @@
   tokenInput.addEventListener('input', () => {
     const t = tokenInput.value.trim();
     if (t) {
-      localStorage.setItem('ats_token', t);
       fetchTokenStatus(t);
     } else {
-      document.getElementById('tokenStatus').classList.remove('show');
+      fetchTokenStatus();
     }
     updateSubmitBtn();
   });
@@ -620,7 +616,7 @@
   }
 
   // ── Token status ──
-  async function fetchTokenStatus(token) {
+  async function fetchTokenStatus(token = '') {
     const statusEl = document.getElementById('tokenStatus');
     const dotEl    = document.getElementById('tsDot');
     const textEl   = document.getElementById('tsText');
@@ -632,18 +628,22 @@
     linkEl.style.display = 'none';
 
     try {
-      const res = await fetch(`/token-status?token=${encodeURIComponent(token)}`);
+      const url = token ? `/token-status?token=${encodeURIComponent(token)}` : '/token-status';
+      const res = await fetch(url);
       const data = await res.json();
 
-      if (!res.ok || data.code) {
+      if (!res.ok || data.code || data.error) {
+        hasTokenSession = false;
         dotEl.classList.add('red');
-        textEl.textContent = data.detail || 'Invalid access key.';
+        textEl.textContent = token ? (data.detail || data.error || 'Invalid access key.') : 'Paste an access key to continue.';
         linkEl.style.display = 'inline';
         linkEl.href = '/#pricing';
         linkEl.textContent = 'Get a key →';
+        updateSubmitBtn();
         return;
       }
 
+      hasTokenSession = true;
       const scans = data.scans_remaining;
       if (scans >= 9000) {
         dotEl.classList.add('green');
@@ -658,9 +658,12 @@
         linkEl.href = '/#pricing';
         linkEl.textContent = 'Get more scans →';
       }
+      updateSubmitBtn();
     } catch {
+      hasTokenSession = false;
       dotEl.classList.add('yellow');
       textEl.textContent = 'Could not verify token.';
+      updateSubmitBtn();
     }
   }
 
@@ -705,7 +708,7 @@
     }
 
     const token = tokenInput.value.trim();
-    if (!token) {
+    if (!token && !hasTokenSession) {
       tokenInput.style.borderColor = 'var(--red)';
       tokenInput.focus();
       setTimeout(() => { tokenInput.style.borderColor = ''; }, 3000);
@@ -858,10 +861,9 @@
         return;
       }
 
-      // Success — store token, auto-fill token input, refresh status
-      localStorage.setItem('ats_token', data.token);
-      tokenInput.value = data.token;
-      fetchTokenStatus(data.token);
+      // Success — rely on the HttpOnly token session cookie and refresh status
+      tokenInput.value = '';
+      await fetchTokenStatus();
 
       msgEl.className = 'coupon-msg success';
       msgEl.textContent = data.message || 'Your free trial is ready!';

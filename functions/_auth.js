@@ -5,6 +5,7 @@
  */
 
 const SESSION_COOKIE = 'ats_session';
+const TOKEN_COOKIE = 'ats_token_session';
 const SESSION_TTL_SECS = 30 * 24 * 60 * 60;
 
 export function getSessionSecret(env) {
@@ -57,8 +58,44 @@ export async function readSession(request, env) {
   }
 }
 
+export async function createTokenSessionCookie(token, secret, ttlSecs = SESSION_TTL_SECS) {
+  const payload = {
+    token,
+    exp: Math.floor(Date.now() / 1000) + ttlSecs,
+  };
+  const encoded = base64urlEncode(JSON.stringify(payload));
+  const sig = await sign(encoded, secret);
+  return serializeCookie(TOKEN_COOKIE, `${encoded}.${sig}`, ttlSecs);
+}
+
+export async function readTokenSession(request, env) {
+  const secret = getSessionSecret(env);
+  if (!secret) return null;
+
+  const cookies = parseCookies(request);
+  const raw = cookies[TOKEN_COOKIE];
+  if (!raw || !raw.includes('.')) return null;
+
+  const [encoded, sig] = raw.split('.');
+  const expected = await sign(encoded, secret);
+  if (!constantTimeEqual(sig, expected)) return null;
+
+  try {
+    const payload = JSON.parse(base64urlDecode(encoded));
+    if (!payload?.token || !payload?.exp) return null;
+    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 export function clearSessionCookie() {
-  return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+  return serializeCookie(SESSION_COOKIE, '', 0);
+}
+
+export function clearTokenSessionCookie() {
+  return serializeCookie(TOKEN_COOKIE, '', 0);
 }
 
 export function redirect(url, headers = {}) {
@@ -72,7 +109,11 @@ export function redirect(url, headers = {}) {
 }
 
 function serializeSessionCookie(value, maxAge) {
-  return `${SESSION_COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+  return serializeCookie(SESSION_COOKIE, value, maxAge);
+}
+
+function serializeCookie(name, value, maxAge) {
+  return `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
 
 async function sign(input, secret) {
