@@ -69,8 +69,8 @@
       "title": "LinkedIn Profile Optimization: What ATS Recruiters Actually See",
       "description": "How recruiters use ATS-style tools to search LinkedIn, which profile fields matter most, and how to optimize your headline, summary, and experience for discoverability.",
       "tag": "Strategy",
-      "published": false,
-      "published_date": null
+      "published": true,
+      "published_date": "2026-04-17"
     },
     {
       "slug": "resume-objective-vs-summary-ats",
