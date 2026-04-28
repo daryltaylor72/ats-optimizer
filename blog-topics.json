@@ -43,7 +43,7 @@
     {
       "slug": "network-got-you-in-resume-closes",
       "title": "Your Network Got You In the Door. Don't Let Your Resume Close It.",
-      "description": "Referrals get you seen — they don't get you hired. Here's what happens when your resume arrives with an endorsement attached, the mistakes that kill referrals, and why your resume needs to meet two standards: ATS and the human who makes the call.",
+      "description": "Referrals get you seen \u2014 they don't get you hired. Here's what happens when your resume arrives with an endorsement attached, the mistakes that kill referrals, and why your resume needs to meet two standards: ATS and the human who makes the call.",
       "tag": "Strategy",
       "published": true,
       "published_date": "2026-04-13"
@@ -77,8 +77,8 @@
       "title": "Resume Objective vs Summary: Which Is Better for ATS?",
       "description": "The difference between a resume objective and a professional summary, which one ATS systems rank higher, and how to write the version that fits your situation.",
       "tag": "Writing",
-      "published": false,
-      "published_date": null
+      "published": true,
+      "published_date": "2026-04-28"
     },
     {
       "slug": "ats-resume-quantify-achievements",
