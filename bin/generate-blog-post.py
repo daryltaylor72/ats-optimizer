@@ -18,7 +18,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
+import argparse
 
 # ── Paths ─────────────────────────────────────────────────────────────────
 REPO_DIR    = Path(__file__).parent.parent.resolve()
@@ -181,21 +181,50 @@ def derive_primary_keyword(slug: str, title: str) -> str:
     return slug.replace("-", " ")
 
 
+def get_next_topic(data: dict):
+    """Return the next unpublished topic whose slug is not already on disk."""
+    return next(
+        (
+            t for t in data["topics"]
+            if not t.get("published") and not (BLOG_DIR / t["slug"]).exists()
+        ),
+        None,
+    )
+
+
 def generate_article_html(topic: dict) -> str:
-    """Call Claude Sonnet to generate the article body HTML."""
+    """Call Claude Sonnet to generate the article body HTML.
+
+    The Anthropic SDK is imported lazily so tests and model-free publishing paths
+    can run on machines where the package is not installed.
+    """
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY not set in environment")
+
+    try:
+        import anthropic
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "Python package 'anthropic' is not installed. Install with: "
+            "python3 -m pip install -r requirements-blog.txt"
+        ) from exc
+
     base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    if base_url and base_url.endswith("/v1"):
+        # Anthropic SDK expects the base URL without the /v1 suffix.
+        base_url = base_url[:-3]
+
     if base_url:
-        # Anthropic SDK expects the base URL without the /v1 suffix (it adds it)
-        if base_url.endswith("/v1"):
-            base_url = base_url[:-3]
-        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], base_url=base_url)
+        client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
     else:
-        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        client = anthropic.Anthropic(api_key=api_key)
 
     primary_kw = derive_primary_keyword(topic["slug"], topic["title"])
+    model = os.environ.get("ATSCORE_BLOG_MODEL", "claude-sonnet-4-6")
 
     msg = client.messages.create(
-        model="anthropic/claude-sonnet-4.6",
+        model=model,
         max_tokens=4096,
         system=ARTICLE_SYSTEM,
         messages=[{
@@ -209,3 +238,169 @@ def generate_article_html(topic: dict) -> str:
         }]
     )
     return msg.content[0].text.strip()
+
+
+def load_article_body_from_file(path):
+    if not path:
+        return None
+    body = Path(path).read_text(encoding="utf-8").strip()
+    if not body:
+        raise RuntimeError(f"Article body file is empty: {path}")
+    return body
+
+
+def validate_article_body(article_body: str) -> None:
+    """Lightweight guardrails before publishing generated HTML."""
+    forbidden = ["<html", "<head", "<body", "<script", "```"]
+    lowered = article_body.lower()
+    bad = [token for token in forbidden if token in lowered]
+    if bad:
+        raise RuntimeError(f"Article body contains forbidden wrapper/unsafe tokens: {', '.join(bad)}")
+    if '<a href="/tool" class="cta-btn">' not in article_body:
+        raise RuntimeError("Article body is missing the required /tool CTA button")
+    if "<h2" not in lowered or "<p" not in lowered:
+        raise RuntimeError("Article body must include at least one <h2> and <p>")
+
+
+def build_page(topic: dict, article_body: str, pub_date_iso: str, pub_date_display: str) -> str:
+    """Assemble the full HTML page from the template."""
+    slug        = topic["slug"]
+    title       = topic["title"]
+    description = topic["description"]
+    canonical   = f"{SITE_DOMAIN}/blog/{slug}/"
+    read_time   = estimate_read_time(article_body)
+    breadcrumb_label = title if len(title) <= 40 else title[:37] + "..."
+
+    return PAGE_TEMPLATE.format(
+        page_title=title,
+        meta_description=description[:155],
+        canonical_url=canonical,
+        site_domain=SITE_DOMAIN,
+        pub_date_iso=pub_date_iso,
+        pub_date_display=pub_date_display,
+        breadcrumb_label=breadcrumb_label,
+        h1_title=title,
+        read_time=read_time,
+        article_body=article_body,
+    )
+
+
+def update_blog_index(topic: dict, pub_date_display: str) -> None:
+    """Prepend the new article card to the articles section in blog/index.html."""
+    index_path = BLOG_DIR / "index.html"
+    content    = index_path.read_text(encoding="utf-8")
+
+    card_desc = topic["description"].split("--")[0].strip()
+    if len(card_desc) > 170:
+        card_desc = card_desc[:167] + "..."
+
+    new_card = INDEX_CARD.format(
+        slug=topic["slug"],
+        tag=topic["tag"],
+        pub_date_display=pub_date_display,
+        title=topic["title"],
+        card_description=card_desc,
+    )
+
+    if f'href="/blog/{topic["slug"]}/"' in content:
+        print(f"  Blog index already contains card for {topic['slug']}; skipping duplicate")
+        return
+
+    marker = '<section class="articles">\n'
+    if marker not in content:
+        raise RuntimeError("Could not find articles section marker in public/blog/index.html")
+
+    updated = content.replace(marker, marker + "\n" + new_card, 1)
+    index_path.write_text(updated, encoding="utf-8")
+    print(f"  Updated blog/index.html with card for '{topic['title']}'")
+
+
+def git_commit_and_push(slug: str, title: str) -> None:
+    """Stage the new blog post files and push to GitHub."""
+    def run(cmd):
+        return subprocess.run(cmd, cwd=str(REPO_DIR), check=True, text=True)
+
+    run(["git", "add", f"public/blog/{slug}/", "public/blog/index.html", "blog-topics.json"])
+    commit_msg = f"content: add blog post -- {title}"
+    run(["git", "commit", "-m", commit_msg])
+    run(["git", "push", "origin", "main"])
+    print(f"  Committed and pushed: {commit_msg}")
+
+
+def deploy_site(message: str) -> None:
+    deploy_script = REPO_DIR / "deploy.sh"
+    if not deploy_script.exists():
+        print("  deploy.sh not found; skipping deploy")
+        return
+    subprocess.run([str(deploy_script), message], cwd=str(REPO_DIR), check=True, text=True)
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Generate and publish the next ATScore blog post")
+    parser.add_argument("--article-body-file", help="Use pre-generated article body HTML instead of calling Anthropic")
+    parser.add_argument("--date", help="Publication date YYYY-MM-DD (defaults to today)")
+    parser.add_argument("--no-git", action="store_true", help="Write files but do not commit/push/deploy")
+    parser.add_argument("--deploy", action="store_true", help="Run ./deploy.sh after committing/pushing")
+    return parser.parse_args(argv)
+
+
+def main(argv=None) -> int:
+    args = parse_args(argv)
+
+    with open(TOPICS_FILE, encoding="utf-8") as f:
+        data = json.load(f)
+
+    topic = get_next_topic(data)
+    if not topic:
+        print("No unpublished topics remaining (or all pending slugs already exist on disk). Add more to blog-topics.json.")
+        return 0
+
+    slug  = topic["slug"]
+    title = topic["title"]
+    print(f"Generating: {title}")
+
+    if args.date:
+        now = datetime.strptime(args.date, "%Y-%m-%d")
+    else:
+        now = datetime.now()
+    pub_date_iso     = now.strftime("%Y-%m-%d")
+    pub_date_display = now.strftime("%b %-d, %Y")
+
+    article_body = load_article_body_from_file(args.article_body_file)
+    if article_body is None:
+        print("  Calling Claude Sonnet...")
+        article_body = generate_article_html(topic)
+    validate_article_body(article_body)
+    print(f"  Article body ready ({len(article_body)} characters)")
+
+    page_html = build_page(topic, article_body, pub_date_iso, pub_date_display)
+
+    post_dir = BLOG_DIR / slug
+    post_dir.mkdir(parents=True, exist_ok=True)
+    (post_dir / "index.html").write_text(page_html, encoding="utf-8")
+    print(f"  Wrote public/blog/{slug}/index.html")
+
+    update_blog_index(topic, pub_date_display)
+
+    topic["published"]      = True
+    topic["published_date"] = pub_date_iso
+    with open(TOPICS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    print("  Marked topic as published in blog-topics.json")
+
+    if args.no_git:
+        print("  --no-git set; skipping commit/push/deploy")
+        return 0
+
+    print("  Committing and pushing...")
+    git_commit_and_push(slug, title)
+    if args.deploy:
+        deploy_site(f"publish blog post: {title}")
+
+    print(f"\nDone. Live at: {SITE_DOMAIN}/blog/{slug}/")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
