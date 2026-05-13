@@ -208,9 +208,37 @@
       "published": false
     },
     {
+      "slug": "customer-success-resume-ats",
+      "title": "Customer Success Resume: ATS-Friendly Keywords and Examples",
+      "description": "How to write a customer success resume that ATS platforms can parse and rank — including retention, renewals, onboarding, and account-growth language.",
+      "tag": "Industry",
+      "published": false
+    },
+    {
+      "slug": "business-analyst-resume-ats",
+      "title": "Business Analyst Resume: ATS Keywords and Resume Format",
+      "description": "The business analyst skills, tools, and requirements-gathering language ATS systems prioritize — plus formatting tips that keep your resume scannable.",
+      "tag": "Industry",
+      "published": false
+    },
+    {
+      "slug": "hr-resume-ats",
+      "title": "HR Resume ATS Guide: Keywords, Certifications, and Format",
+      "description": "How to optimize an HR resume for ATS with the right recruiting, employee-relations, compliance, and HRIS keywords — without sounding generic.",
+      "tag": "Industry",
+      "published": false
+    },
+    {
       "slug": "finance-resume-ats",
       "title": "Finance and Accounting Resume: How to Beat ATS",
       "description": "The CPA, CFA, and financial modeling keywords that rank highest in ATS for finance roles, how to present Excel and ERP experience for maximum match scores, and a section-by-section finance resume template.",
+      "tag": "Industry",
+      "published": false
+    },
+    {
+      "slug": "operations-manager-resume-ats",
+      "title": "Operations Manager Resume: ATS Keywords and Format Guide",
+      "description": "How to present process improvement, cross-functional leadership, KPI ownership, and operational scale on an ATS-friendly operations resume.",
       "tag": "Industry",
       "published": false
     },
@@ -219,6 +247,125 @@
       "title": "Teacher Resume ATS Guide: Keywords, Certifications, and Format",
       "description": "How K-12 and higher education resumes get filtered by ATS in school districts and universities, which teaching certifications and curriculum keywords score highest, and how to structure an educator resume for both machines and hiring committees.",
       "tag": "Industry",
+      "published": false
+    },
+    {
+      "slug": "ux-designer-resume-ats",
+      "title": "UX Designer Resume: ATS Keywords, Portfolio Links, and Layout Tips",
+      "description": "How to make a UX designer resume readable by ATS while still showcasing research, product thinking, design tools, and portfolio work effectively.",
+      "tag": "Industry",
+      "published": false
+    },
+    {
+      "slug": "employment-gap-resume-ats",
+      "title": "How to Handle Employment Gaps on an ATS Resume",
+      "description": "How to explain an employment gap without hurting ATS match quality — including summary wording, date formatting, and when to address the gap directly.",
+      "tag": "Troubleshooting",
+      "published": false
+    },
+    {
+      "slug": "tailor-resume-for-each-job-ats",
+      "title": "How to Tailor Your Resume for Each Job Without Starting Over",
+      "description": "A fast system for adjusting keywords, summary language, and achievement bullets for each role while keeping your resume ATS-friendly and efficient to update.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "career-change-resume-ats",
+      "title": "How to Write an ATS-Friendly Resume for a Career Change",
+      "description": "How career changers can reposition past experience with transferable skills, title translation, and keyword mapping so ATS systems still rank the resume well.",
+      "tag": "Career Change",
+      "published": false
+    },
+    {
+      "slug": "list-promotions-on-resume-ats",
+      "title": "How to List Promotions on a Resume for ATS",
+      "description": "The best way to show internal promotions, title progression, and growing responsibility on a resume without confusing ATS parsers or recruiters.",
+      "tag": "Formatting",
+      "published": false
+    },
+    {
+      "slug": "short-job-stints-resume-ats",
+      "title": "How to Handle Short Job Stints on an ATS Resume",
+      "description": "How to present short roles, contract stops, and quick transitions on your resume so ATS systems parse them cleanly and recruiters don’t assume the worst.",
+      "tag": "Troubleshooting",
+      "published": false
+    },
+    {
+      "slug": "internship-resume-ats",
+      "title": "How to Write an ATS Resume for Internship Applications",
+      "description": "How students can build an ATS-friendly internship resume using coursework, projects, campus leadership, and early experience that actually counts.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "returning-to-work-resume-ats",
+      "title": "How to Update Your Resume When Returning to Work After a Break",
+      "description": "How to refresh your resume after time away from the workforce, close keyword gaps, and frame your recent experience for ATS and recruiters alike.",
+      "tag": "Career Change",
+      "published": false
+    },
+    {
+      "slug": "resume-skills-section-ats",
+      "title": "How to Write the Skills Section for ATS",
+      "description": "How to structure your resume skills section for ATS, which hard skills belong there, and how to avoid turning it into an unreadable keyword dump.",
+      "tag": "Skills",
+      "published": false
+    },
+    {
+      "slug": "best-resume-file-format-ats",
+      "title": "Best Resume File Format for ATS: PDF or DOCX?",
+      "description": "When to use PDF versus DOCX for ATS applications, which file types break parsing most often, and how to choose the safest format for each employer.",
+      "tag": "Formatting",
+      "published": false
+    },
+    {
+      "slug": "how-to-name-resume-file",
+      "title": "How to Name Your Resume File for Job Applications",
+      "description": "The cleanest file naming format for resumes, why it matters for recruiters and ATS systems, and the naming mistakes that make you look disorganized.",
+      "tag": "Formatting",
+      "published": false
+    },
+    {
+      "slug": "ats-resume-summary-examples",
+      "title": "ATS-Friendly Resume Summary Examples by Role",
+      "description": "Resume summary examples for different job types that balance clear keywords, human readability, and ATS-friendly structure without sounding robotic.",
+      "tag": "Writing",
+      "published": false
+    },
+    {
+      "slug": "resume-action-verbs-ats",
+      "title": "Resume Action Verbs That Help You Pass ATS",
+      "description": "Which action verbs strengthen ATS keyword coverage, how to match them to job descriptions, and which vague verbs weaken your resume impact.",
+      "tag": "Writing",
+      "published": false
+    },
+    {
+      "slug": "why-resume-rejected-by-ats",
+      "title": "Why Your Resume Gets Rejected by ATS",
+      "description": "The most common reasons ATS systems filter out resumes — from formatting errors to missing keywords — and how to diagnose the real problem quickly.",
+      "tag": "Troubleshooting",
+      "published": false
+    },
+    {
+      "slug": "what-is-good-ats-score",
+      "title": "What Is a Good ATS Score?",
+      "description": "What an ATS score actually means, what range is worth trusting, and why the score alone matters less than the specific fixes behind it.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "how-ats-parses-resume-formatting",
+      "title": "How ATS Parses Tables, Columns, Headers, and Graphics on a Resume",
+      "description": "What applicant tracking systems do with complex formatting, why tables and columns can break parsing, and how to keep your resume readable to both ATS and humans.",
+      "tag": "Formatting",
+      "published": false
+    },
+    {
+      "slug": "icims-resume-tips",
+      "title": "iCIMS Resume Tips: How to Format Your Resume for Better ATS Parsing",
+      "description": "How to optimize your resume for iCIMS with cleaner formatting, stronger keyword placement, and the parsing choices that matter most on this platform.",
+      "tag": "Guide",
       "published": false
     }
   ]
