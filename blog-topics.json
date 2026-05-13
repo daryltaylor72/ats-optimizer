@@ -250,9 +250,30 @@
       "published": false
     },
     {
+      "slug": "resume-summary-vs-headline-ats",
+      "title": "Resume Headline vs Summary: Which Helps More With ATS?",
+      "description": "When to use a headline, when to use a summary, and how each choice affects keyword coverage, recruiter clarity, and ATS-friendly positioning.",
+      "tag": "Writing",
+      "published": false
+    },
+    {
       "slug": "ats-resume-summary-examples",
       "title": "ATS-Friendly Resume Summary Examples by Role",
       "description": "Resume summary examples for different job types that balance clear keywords, human readability, and ATS-friendly structure without sounding robotic.",
+      "tag": "Writing",
+      "published": false
+    },
+    {
+      "slug": "resume-headline-ats",
+      "title": "How to Write a Resume Headline for ATS",
+      "description": "What a resume headline should include, how to use keywords without sounding spammy, and when a headline helps more than it hurts ATS performance.",
+      "tag": "Writing",
+      "published": false
+    },
+    {
+      "slug": "resume-bullet-points-ats",
+      "title": "How to Write Resume Bullet Points That Help You Pass ATS",
+      "description": "How to write stronger resume bullets using keywords, metrics, and action verbs that support both ATS ranking and recruiter readability.",
       "tag": "Writing",
       "published": false
     },
@@ -261,6 +282,20 @@
       "title": "Resume Action Verbs That Help You Pass ATS",
       "description": "Which action verbs strengthen ATS keyword coverage, how to match them to job descriptions, and which vague verbs weaken your resume impact.",
       "tag": "Writing",
+      "published": false
+    },
+    {
+      "slug": "resume-education-section-ats",
+      "title": "How to Format the Education Section for ATS",
+      "description": "How to structure your education section so ATS systems can read degrees, schools, graduation dates, coursework, and honors without parsing errors.",
+      "tag": "Formatting",
+      "published": false
+    },
+    {
+      "slug": "resume-projects-section-ats",
+      "title": "How to Write a Projects Section for ATS",
+      "description": "How to turn academic, freelance, and side projects into ATS-friendly resume content that adds real keywords and proof of skill.",
+      "tag": "Guide",
       "published": false
     },
     {
@@ -278,10 +313,24 @@
       "published": false
     },
     {
+      "slug": "resume-for-career-returners-ats",
+      "title": "How Career Returners Can Rebuild a Resume for ATS",
+      "description": "How returners can refresh an older resume, close keyword gaps, and position prior experience for modern ATS systems and current job descriptions.",
+      "tag": "Career Change",
+      "published": false
+    },
+    {
       "slug": "returning-to-work-resume-ats",
       "title": "How to Update Your Resume When Returning to Work After a Break",
       "description": "How to refresh your resume after time away from the workforce, close keyword gaps, and frame your recent experience for ATS and recruiters alike.",
       "tag": "Career Change",
+      "published": false
+    },
+    {
+      "slug": "resume-without-degree-ats",
+      "title": "How to Write an ATS Resume Without a College Degree",
+      "description": "How to present experience, certifications, projects, and skills effectively when you do not have a college degree but still need to pass ATS filters.",
+      "tag": "Guide",
       "published": false
     },
     {
@@ -292,6 +341,13 @@
       "published": false
     },
     {
+      "slug": "contract-work-resume-ats",
+      "title": "How to List Contract Work on a Resume for ATS",
+      "description": "How to present contract roles, consulting work, and temporary assignments on a resume so ATS systems count the experience instead of treating it like instability.",
+      "tag": "Career Change",
+      "published": false
+    },
+    {
       "slug": "list-promotions-on-resume-ats",
       "title": "How to List Promotions on a Resume for ATS",
       "description": "The best way to show internal promotions, title progression, and growing responsibility on a resume without confusing ATS parsers or recruiters.",
@@ -299,9 +355,107 @@
       "published": false
     },
     {
+      "slug": "multiple-roles-one-company-resume-ats",
+      "title": "How to Show Multiple Roles at One Company on an ATS Resume",
+      "description": "The cleanest way to list promotions and role changes at one company so ATS systems parse them correctly and recruiters can follow the progression.",
+      "tag": "Formatting",
+      "published": false
+    },
+    {
       "slug": "internship-resume-ats",
       "title": "How to Write an ATS Resume for Internship Applications",
       "description": "How students can build an ATS-friendly internship resume using coursework, projects, campus leadership, and early experience that actually counts.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "recent-grad-resume-ats",
+      "title": "Recent Graduate Resume: ATS Tips for Landing Your First Full-Time Role",
+      "description": "How recent grads can build an ATS-friendly resume using internships, coursework, campus leadership, and early wins that employers actually search for.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "internal-job-application-resume-ats",
+      "title": "How to Update Your Resume for an Internal Job Application",
+      "description": "How to tailor a resume for an internal move, highlight measurable wins at your current company, and align with ATS filters without sounding repetitive.",
+      "tag": "Career Change",
+      "published": false
+    },
+    {
+      "slug": "resume-for-career-fair-ats",
+      "title": "How to Prepare a Resume for Career Fairs and ATS Follow-Up",
+      "description": "How to build a resume that works in person at a career fair and still performs well when recruiters upload it into an ATS later.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "resume-for-referral-ats",
+      "title": "How to Tailor Your Resume After Getting a Referral",
+      "description": "Why a referral does not replace ATS optimization, plus how to tighten your keywords and positioning before your resume hits the recruiter workflow.",
+      "tag": "Strategy",
+      "published": false
+    },
+    {
+      "slug": "resume-for-recruiter-screen-ats",
+      "title": "How to Optimize Your Resume for Recruiter Screens and ATS",
+      "description": "How to write a resume that gets through ATS filters and still gives recruiters the fast context they need during the first screen.",
+      "tag": "Strategy",
+      "published": false
+    },
+    {
+      "slug": "workday-resume-tips",
+      "title": "Workday Resume Tips: How to Format Your Resume for Better ATS Results",
+      "description": "How Workday parses resumes, which formatting choices reduce errors, and what job seekers can do to improve keyword matching before they hit submit.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "greenhouse-resume-tips",
+      "title": "Greenhouse Resume Tips: How to Improve ATS Parsing and Keyword Match",
+      "description": "How to optimize your resume for Greenhouse with cleaner structure, stronger keyword placement, and fewer formatting choices that confuse ATS parsing.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "lever-resume-tips",
+      "title": "Lever Resume Tips: How to Submit a Resume That Parses Cleanly",
+      "description": "What helps a resume perform better in Lever, from file format and section structure to keyword alignment with the job description.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "taleo-resume-tips",
+      "title": "Taleo Resume Tips: How to Avoid Common ATS Formatting Problems",
+      "description": "How to format your resume for Taleo, avoid parsing mistakes, and improve your odds of matching the right keywords on older ATS workflows.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "smartrecruiters-resume-tips",
+      "title": "SmartRecruiters Resume Tips: How to Optimize Your Resume for ATS",
+      "description": "How SmartRecruiters handles resume parsing, what structure works best, and how to improve the clarity of your keywords and experience sections.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "bamboohr-resume-tips",
+      "title": "BambooHR Resume Tips: How to Make Your Resume Easier to Parse",
+      "description": "How to submit a resume that BambooHR can read cleanly, including file choice, formatting rules, and keyword placement that supports better ATS matching.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "icims-resume-tips",
+      "title": "iCIMS Resume Tips: How to Format Your Resume for Better ATS Parsing",
+      "description": "How to optimize your resume for iCIMS with cleaner formatting, stronger keyword placement, and the parsing choices that matter most on this platform.",
+      "tag": "Guide",
+      "published": false
+    },
+    {
+      "slug": "federal-resume-ats",
+      "title": "Federal Resume vs Private-Sector Resume: ATS Rules That Change",
+      "description": "How federal resumes differ from private-sector resumes, which ATS assumptions break down, and how to adapt your experience for government applications.",
       "tag": "Guide",
       "published": false
     },
@@ -348,6 +502,27 @@
       "published": false
     },
     {
+      "slug": "manager-resume-ats",
+      "title": "Manager Resume: ATS Keywords and Leadership Format Guide",
+      "description": "How managers should present team leadership, delivery ownership, hiring, and performance results so ATS systems and recruiters both understand the impact.",
+      "tag": "Industry",
+      "published": false
+    },
+    {
+      "slug": "director-resume-ats",
+      "title": "Director Resume: ATS Strategy for Senior Leadership Roles",
+      "description": "How directors can structure a resume for ATS without losing strategic depth, including cross-functional scope, budget ownership, and people leadership keywords.",
+      "tag": "Industry",
+      "published": false
+    },
+    {
+      "slug": "vp-resume-ats",
+      "title": "VP Resume: ATS Keywords and Executive Resume Positioning",
+      "description": "How VP-level candidates can balance executive presence with ATS readability, using the right leadership, growth, and transformation language.",
+      "tag": "Industry",
+      "published": false
+    },
+    {
       "slug": "teacher-resume-ats",
       "title": "Teacher Resume ATS Guide: Keywords, Certifications, and Format",
       "description": "How K-12 and higher education resumes get filtered by ATS in school districts and universities, which teaching certifications and curriculum keywords score highest, and how to structure an educator resume for both machines and hiring committees.",
@@ -362,9 +537,9 @@
       "published": false
     },
     {
-      "slug": "icims-resume-tips",
-      "title": "iCIMS Resume Tips: How to Format Your Resume for Better ATS Parsing",
-      "description": "How to optimize your resume for iCIMS with cleaner formatting, stronger keyword placement, and the parsing choices that matter most on this platform.",
+      "slug": "portfolio-resume-ats",
+      "title": "How to Build a Portfolio Resume That Still Works With ATS",
+      "description": "How designers, marketers, writers, and product candidates can include portfolio links and project proof without breaking ATS readability.",
       "tag": "Guide",
       "published": false
     }
