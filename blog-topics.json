@@ -234,7 +234,8 @@
       "title": "Best Resume File Format for ATS: PDF or DOCX?",
       "description": "When to use PDF versus DOCX for ATS applications, which file types break parsing most often, and how to choose the safest format for each employer.",
       "tag": "Formatting",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-14"
     },
     {
       "slug": "how-to-name-resume-file",
