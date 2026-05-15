@@ -205,7 +205,8 @@
       "title": "Why Your Resume Gets Rejected by ATS",
       "description": "The most common reasons ATS systems filter out resumes \u2014 from formatting errors to missing keywords \u2014 and how to diagnose the real problem quickly.",
       "tag": "Troubleshooting",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-15"
     },
     {
       "slug": "what-is-good-ats-score",
