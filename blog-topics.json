@@ -213,7 +213,8 @@
       "title": "What Is a Good ATS Score?",
       "description": "What an ATS score actually means, what range is worth trusting, and why the score alone matters less than the specific fixes behind it.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-19"
     },
     {
       "slug": "tailor-resume-for-each-job-ats",
