@@ -244,7 +244,8 @@
       "title": "How to Name Your Resume File for Job Applications",
       "description": "The cleanest file naming format for resumes, why it matters for recruiters and ATS systems, and the naming mistakes that make you look disorganized.",
       "tag": "Formatting",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-20"
     },
     {
       "slug": "how-ats-parses-resume-formatting",
