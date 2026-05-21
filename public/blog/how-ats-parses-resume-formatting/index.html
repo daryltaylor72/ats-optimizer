@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <script>(function(){var mq=window.matchMedia("(prefers-color-scheme: light)");var theme=mq.matches?"light":"dark";document.documentElement.setAttribute("data-theme",theme);document.documentElement.style.colorScheme=theme;})();</script>
+  <title>How ATS Parses Tables, Columns, Headers, and Graphics on a Resume | ATScore Blog</title>
+  <meta name="description" content="What applicant tracking systems do with complex formatting, why tables and columns can break parsing, and how to keep your resume readable to both ATS and ">
+  <link rel="canonical" href="https://atscore.ai/blog/how-ats-parses-resume-formatting/">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://atscore.ai/blog/how-ats-parses-resume-formatting/">
+  <meta property="og:title" content="How ATS Parses Tables, Columns, Headers, and Graphics on a Resume">
+  <meta property="og:description" content="What applicant tracking systems do with complex formatting, why tables and columns can break parsing, and how to keep your resume readable to both ATS and ">
+  <meta property="og:site_name" content="ATScore">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:image" content="https://atscore.ai/og-image.png">
+  <meta name="twitter:image" content="https://atscore.ai/og-image.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org", "@type": "Article",
+    "headline": "How ATS Parses Tables, Columns, Headers, and Graphics on a Resume",
+    "description": "What applicant tracking systems do with complex formatting, why tables and columns can break parsing, and how to keep your resume readable to both ATS and ",
+    "author": {"@type": "Organization", "name": "ATScore"},
+    "publisher": {"@type": "Organization", "name": "ATScore", "url": "https://atscore.ai"},
+    "datePublished": "2026-05-21",
+    "url": "https://atscore.ai/blog/how-ats-parses-resume-formatting/"
+  }
+  </script>
+  <style>
+    :root{color-scheme:dark;--bg:#0a0b0f;--surface:#111318;--surface2:#181b22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#edeef5;--text2:#8892aa;--text3:#484f68;--accent:#6c63ff;--accent-dim:rgba(108,99,255,0.14);--serif:'DM Serif Display',Georgia,serif;--sans:'Nunito Sans',system-ui,sans-serif}
+    [data-theme="light"]{color-scheme:light;--bg:#ffffff;--surface:#f5f6fa;--surface2:#ecedf3;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);--text:#1a1b2e;--text2:#5a6080;--text3:#8892aa;--accent:#5b54e0;--accent-dim:rgba(108,99,255,0.08)}
+    [data-theme="light"] body::before{background-image:linear-gradient(rgba(108,99,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(108,99,255,0.035) 1px,transparent 1px)}
+    [data-theme="light"] nav{background:rgba(255,255,255,0.85);border-bottom-color:rgba(0,0,0,0.08)}
+    [data-theme="light"] .btn-ghost{border-color:rgba(0,0,0,0.15)}
+    [data-theme="light"] .btn-ghost:hover{border-color:rgba(0,0,0,0.25)}
+    html{scroll-behavior:smooth}body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.7;margin:0}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(108,99,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(108,99,255,0.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,11,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}.nav-logo-mark{width:40px;height:40px;border-radius:8px;object-fit:contain}.nav-logo-text{font-family:var(--serif);font-size:20px;color:var(--text)}
+    .nav-links{display:flex;gap:8px}.btn-ghost{font-size:13px;font-weight:600;color:var(--text2);background:transparent;border:1px solid rgba(255,255,255,0.13);border-radius:8px;padding:8px 16px;text-decoration:none;transition:0.2s}.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
+    .container{max-width:760px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+    .blog-header{padding:140px 0 40px}.blog-header .breadcrumb{font-size:13px;color:var(--text2);margin-bottom:16px}.blog-header .breadcrumb a{color:var(--accent);text-decoration:none}
+    .blog-header h1{font-family:var(--serif);font-size:clamp(32px,4vw,48px);line-height:1.15;margin-bottom:16px}.blog-header .meta{font-size:14px;color:var(--text2)}
+    .blog-content h2{font-family:var(--serif);font-size:28px;margin:48px 0 16px;color:var(--text)}.blog-content h3{font-size:20px;font-weight:700;margin:32px 0 12px}
+    .blog-content p{color:var(--text2);margin-bottom:20px;font-size:16px}.blog-content ul,.blog-content ol{color:var(--text2);margin-bottom:20px;padding-left:24px}.blog-content li{margin-bottom:8px}.blog-content strong{color:var(--text)}.blog-content a{color:var(--accent);text-decoration:none}.blog-content a:hover{text-decoration:underline}
+    .cta-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:48px 0}.cta-box h3{font-family:var(--serif);font-size:24px;margin-bottom:12px;color:var(--text)}.cta-box p{color:var(--text2);margin-bottom:20px}
+    .cta-btn{display:inline-block;background:var(--accent);color:#fff;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px}.cta-btn:hover{filter:brightness(1.1)}
+    .blog-content .cta-btn{color:#fff}
+    .checklist-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 32px;margin:24px 0}.checklist-box h4{font-size:17px;font-weight:700;color:var(--text);margin:0 0 14px}.checklist-box ul{list-style:none;padding:0;margin:0}.checklist-box li{padding:6px 0;color:var(--text2);font-size:15px}.checklist-box li::before{content:'\2713';color:var(--accent);font-weight:700;margin-right:10px}
+    footer{border-top:1px solid var(--border);padding:32px 28px;text-align:center;color:var(--text2);font-size:13px;margin-top:80px}
+  </style>
+</head>
+<body>
+
+<nav><a href="/" class="nav-logo"><img src="/logo-128.png" alt="ATScore logo" class="nav-logo-mark"><span class="nav-logo-text">ATScore</span></a><div class="nav-links"><a href="/blog/" class="btn-ghost">Blog</a><a href="/#pricing" class="btn-ghost">Pricing</a><a href="/tool/" class="btn-ghost">Try Free</a></div></nav>
+
+<div class="container">
+  <header class="blog-header">
+    <div class="breadcrumb"><a href="/">Home</a> / <a href="/blog/">Blog</a> / How ATS Parses Tables, Columns, Heade...</div>
+    <h1>How ATS Parses Tables, Columns, Headers, and Graphics on a Resume</h1>
+    <div class="meta">Published May 21, 2026 &middot; 6 min read &middot; By ATScore</div>
+  </header>
+
+  <article class="blog-content">
+<p>Resume formatting is where a lot of strong applicants quietly lose ground. The problem is not that applicant tracking systems hate design. The problem is that many ATS platforms still rely on plain text extraction, section recognition, and predictable reading order. When your resume uses tables, multiple columns, decorative headers, icons, or graphics, the software may not interpret the page the same way a human does. A recruiter might see a polished document, while the ATS sees scrambled experience, missing skills, or dates in the wrong place.</p>
+
+<p>If you want a resume that performs well, think of formatting as a translation issue. Your resume has to communicate clearly to two audiences at once: software first, people second. That means keeping the structure simple enough for parsing while still looking professional. You do not need an ugly resume. You need a readable one.</p>
+
+<h2>What ATS parsing actually does</h2>
+
+<p>Most applicant tracking systems convert your file into machine-readable text before recruiters search, sort, or score it. During that process, the system tries to identify your name, contact information, job titles, employers, dates, education, certifications, and keywords from the job description. If the text extraction is clean, your qualifications stay intact. If the extraction is messy, the ATS may separate information that belongs together or ignore content entirely.</p>
+
+<p>That is why formatting decisions matter so much. ATS software is not admiring your layout. It is trying to answer basic questions: What section is this? What comes first? Which skill belongs to which role? A resume that looks modern but breaks those signals can underperform compared with a simpler document that preserves a clear reading order.</p>
+
+<div class="checklist-box">
+  <p><strong>ATS-friendly formatting usually means:</strong></p>
+  <ul>
+    <li>Single-column layout</li>
+    <li>Standard headings like Experience, Skills, and Education</li>
+    <li>Plain text bullets instead of visual elements</li>
+    <li>Minimal reliance on graphics or sidebars</li>
+    <li>Consistent date and title formatting from section to section</li>
+  </ul>
+</div>
+
+<h2>How ATS handles tables</h2>
+
+<p>Tables are one of the most misunderstood resume tools. They can look tidy to a human because they align information neatly across rows and columns. But in many ATS environments, table content is read left to right, top to bottom, without preserving the visual relationship between cells. That can split job titles from employers, move dates into the wrong place, or stack unrelated skills together.</p>
+
+<p>Simple tables sometimes survive, especially in modern systems, but relying on them is still a risk when you do not know which ATS the employer uses. A common failure point is contact information in a two-cell header table, where your phone, email, LinkedIn, and city may be extracted out of order. Another is a skills matrix that turns clean categories into a confusing block of text.</p>
+
+<p>The safer move is to write information in plain lines and standard bullets. If a table is doing work that basic text can do, remove the table. You are not losing meaning. You are lowering the chance that the ATS breaks it.</p>
+
+<div class="cta-box">
+  <h3>Not sure whether your format is helping or hurting?</h3>
+  <p>Upload your resume to ATScore and check whether your structure, keywords, and layout are working before you apply.</p>
+  <a href="/tool" class="cta-btn">Scan Your Resume Free</a>
+</div>
+
+<h2>What happens with columns and sidebars</h2>
+
+<p>Two-column resumes are popular because they save space and create a sleek look. The problem is that many ATS platforms flatten the page into a single stream of text. When that happens, the software may read down the left column first and then jump to the top of the right column, or it may merge both columns in an unpredictable order. That can make your summary interrupt your work history, put certifications inside your contact block, or bury keywords away from the experience they are supposed to support.</p>
+
+<p>Sidebars create similar problems. A narrow sidebar for skills, tools, or certifications may look organized to a recruiter, but the ATS may treat it as disconnected text with weak context. If the system cannot tell whether a keyword belongs to your summary, a skills section, or a specific job, it may not weight that term properly.</p>
+
+<p>For most job seekers, a single-column resume is the safest choice. It creates an obvious reading path, keeps section hierarchy intact, and makes it easier for both ATS software and humans to follow your story quickly.</p>
+
+<h2>Headers, footers, and section titles</h2>
+
+<p>Headers and footers can also create avoidable parsing problems. Some ATS platforms read them normally, but others skip them or treat them as lower-priority metadata. That means critical contact information, page numbers, or links placed there may be missed. If your phone number or email lives only in the header, you are taking an unnecessary risk.</p>
+
+<p>Section titles matter too. Recruiters understand creative labels like Career Highlights, Impact Snapshot, or Where I’ve Added Value. ATS software is usually better with direct labels like Professional Summary, Work Experience, Skills, Education, and Certifications. Standard headings reduce ambiguity and help the parser map your content into expected fields.</p>
+
+<h3>Safer alternatives to fancy structure</h3>
+
+<ul>
+  <li><strong>Put contact details in the main body:</strong> keep them at the top of page one, not only in the header or footer.</li>
+  <li><strong>Use conventional section names:</strong> standard labels improve parsing and recruiter scanning speed.</li>
+  <li><strong>Keep hierarchy obvious:</strong> job title, employer, location, and dates should follow the same pattern every time.</li>
+</ul>
+
+<h2>Do graphics, icons, and charts help?</h2>
+
+<p>Usually, no. Graphics are useful only if the reader can interpret them, and ATS software typically cannot. Icons next to phone numbers, email addresses, or LinkedIn URLs may be harmless visually, but they add noise without adding searchable information. Charts that rate your communication, leadership, or Excel skills are worse because they look informative while contributing almost nothing to parsing or keyword relevance.</p>
+
+<p>Photos should also stay off a standard ATS resume unless a specific market or role explicitly expects them. They do not help with parsing, they can introduce file complexity, and in many hiring workflows they are unnecessary. The same goes for logos, colored skill bars, and decorative shapes. If an element is not contributing searchable text, it is rarely helping your ATS performance.</p>
+
+<h2>Formatting choices ranked by ATS risk</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Formatting choice</th>
+      <th>ATS risk</th>
+      <th>Safer alternative</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Single-column text layout</td>
+      <td>Low</td>
+      <td>Keep this as your default structure</td>
+    </tr>
+    <tr>
+      <td>Standard headings and plain bullets</td>
+      <td>Low</td>
+      <td>Use predictable section labels</td>
+    </tr>
+    <tr>
+      <td>Simple table for alignment</td>
+      <td>Medium</td>
+      <td>Replace with plain lines if possible</td>
+    </tr>
+    <tr>
+      <td>Two-column layout or sidebar</td>
+      <td>High</td>
+      <td>Move all content into one reading path</td>
+    </tr>
+    <tr>
+      <td>Icons, charts, graphics, or text boxes</td>
+      <td>High</td>
+      <td>Use searchable text instead</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>How to test whether your resume will parse cleanly</h2>
+
+<p>You do not have to guess. Save the resume in the file format the employer prefers, then copy all text into a plain-text editor. If the reading order becomes confusing, if dates drift away from jobs, or if headings disappear, the ATS may struggle too. You can also upload the file into portals that show a parsed preview and review what the system extracted.</p>
+
+<p>When you test, focus on the basics: Are section headings intact? Are employers paired with titles and dates? Are certifications, tools, and keywords still visible? If those checks pass, your resume is in much better shape.</p>
+
+<h2>Final Thoughts</h2>
+
+<p>ATS parsing is not about pleasing a robot with magic formatting tricks. It is about removing friction. Tables, columns, headers, and graphics can all create ambiguity, and ambiguity is what causes missed keywords, broken sections, and weaker search visibility. The safest resume is clear, structured, and easy to read in plain text as well as on the page.</p>
+
+<p>Simplify the layout before you start rewriting bullets. Great content still matters most, but content cannot help you if the ATS never reads it correctly.</p>
+
+<div class="cta-box">
+  <h3>Check your resume before it reaches the recruiter</h3>
+  <p>ATScore helps you catch parsing, formatting, and keyword issues before they cost you interviews.</p>
+  <a href="/tool" class="cta-btn">Scan Your Resume Free</a>
+</div>
+  </article>
+</div>
+
+<footer><p>&copy; 2026 ATScore by <a href="https://deeptierlabs.app" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">DeepTier Labs</a>. All rights reserved. &middot; <a href="/privacy/" style="color:var(--accent);text-decoration:none">Privacy</a> &middot; <a href="/terms/" style="color:var(--accent);text-decoration:none">Terms</a> &middot; <a href="mailto:support@atscore.ai" style="color:var(--accent);text-decoration:none">support@atscore.ai</a></p></footer>
+
+<script>
+(function(){var media=window.matchMedia("(prefers-color-scheme: light)");function applyTheme(event){var isLight=typeof event==="boolean" ? event : event.matches;var theme=isLight?"light":"dark";document.documentElement.setAttribute("data-theme",theme);document.documentElement.style.colorScheme=theme}applyTheme(media.matches);if(typeof media.addEventListener==="function"){media.addEventListener("change",applyTheme)}else if(typeof media.addListener==="function"){media.addListener(applyTheme)}})();
+</script>
+</body>
+</html>

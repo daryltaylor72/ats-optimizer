@@ -252,7 +252,8 @@
       "title": "How ATS Parses Tables, Columns, Headers, and Graphics on a Resume",
       "description": "What applicant tracking systems do with complex formatting, why tables and columns can break parsing, and how to keep your resume readable to both ATS and humans.",
       "tag": "Formatting",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-21"
     },
     {
       "slug": "resume-summary-vs-headline-ats",
