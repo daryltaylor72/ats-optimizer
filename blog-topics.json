@@ -261,7 +261,8 @@
       "title": "Resume Headline vs Summary: Which Helps More With ATS?",
       "description": "When to use a headline, when to use a summary, and how each choice affects keyword coverage, recruiter clarity, and ATS-friendly positioning.",
       "tag": "Writing",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-22"
     },
     {
       "slug": "ats-resume-summary-examples",
