@@ -229,7 +229,8 @@
       "title": "How to Write the Skills Section for ATS",
       "description": "How to structure your resume skills section for ATS, which hard skills belong there, and how to avoid turning it into an unreadable keyword dump.",
       "tag": "Skills",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-22"
     },
     {
       "slug": "best-resume-file-format-ats",
