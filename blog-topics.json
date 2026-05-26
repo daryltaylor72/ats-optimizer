@@ -269,7 +269,8 @@
       "title": "ATS-Friendly Resume Summary Examples by Role",
       "description": "Resume summary examples for different job types that balance clear keywords, human readability, and ATS-friendly structure without sounding robotic.",
       "tag": "Writing",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-26"
     },
     {
       "slug": "resume-headline-ats",
