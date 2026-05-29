@@ -277,7 +277,8 @@
       "title": "How to Write a Resume Headline for ATS",
       "description": "What a resume headline should include, how to use keywords without sounding spammy, and when a headline helps more than it hurts ATS performance.",
       "tag": "Writing",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-29"
     },
     {
       "slug": "resume-bullet-points-ats",
