@@ -285,7 +285,8 @@
       "title": "How to Write Resume Bullet Points That Help You Pass ATS",
       "description": "How to write stronger resume bullets using keywords, metrics, and action verbs that support both ATS ranking and recruiter readability.",
       "tag": "Writing",
-      "published": false
+      "published": true,
+      "published_date": "2026-05-31"
     },
     {
       "slug": "resume-action-verbs-ats",
