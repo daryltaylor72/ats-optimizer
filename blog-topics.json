@@ -301,7 +301,8 @@
       "title": "How to Format the Education Section for ATS",
       "description": "How to structure your education section so ATS systems can read degrees, schools, graduation dates, coursework, and honors without parsing errors.",
       "tag": "Formatting",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-02"
     },
     {
       "slug": "resume-projects-section-ats",
