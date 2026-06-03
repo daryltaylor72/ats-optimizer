@@ -309,7 +309,8 @@
       "title": "How to Write a Projects Section for ATS",
       "description": "How to turn academic, freelance, and side projects into ATS-friendly resume content that adds real keywords and proof of skill.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-03"
     },
     {
       "slug": "employment-gap-resume-ats",
