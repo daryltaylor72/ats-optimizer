@@ -324,7 +324,8 @@
       "title": "How to Write an ATS-Friendly Resume for a Career Change",
       "description": "How career changers can reposition past experience with transferable skills, title translation, and keyword mapping so ATS systems still rank the resume well.",
       "tag": "Career Change",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-04"
     },
     {
       "slug": "resume-for-career-returners-ats",
