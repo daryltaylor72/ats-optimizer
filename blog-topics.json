@@ -317,7 +317,8 @@
       "title": "How to Handle Employment Gaps on an ATS Resume",
       "description": "How to explain an employment gap without hurting ATS match quality \u2014 including summary wording, date formatting, and when to address the gap directly.",
       "tag": "Troubleshooting",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-05"
     },
     {
       "slug": "career-change-resume-ats",
