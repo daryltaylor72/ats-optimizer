@@ -333,7 +333,8 @@
       "title": "How Career Returners Can Rebuild a Resume for ATS",
       "description": "How returners can refresh an older resume, close keyword gaps, and position prior experience for modern ATS systems and current job descriptions.",
       "tag": "Career Change",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-05"
     },
     {
       "slug": "returning-to-work-resume-ats",
