@@ -341,7 +341,8 @@
       "title": "How to Update Your Resume When Returning to Work After a Break",
       "description": "How to refresh your resume after time away from the workforce, close keyword gaps, and frame your recent experience for ATS and recruiters alike.",
       "tag": "Career Change",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-06"
     },
     {
       "slug": "resume-without-degree-ats",
