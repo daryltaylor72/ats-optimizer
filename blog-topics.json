@@ -357,7 +357,8 @@
       "title": "How to Handle Short Job Stints on an ATS Resume",
       "description": "How to present short roles, contract stops, and quick transitions on your resume so ATS systems parse them cleanly and recruiters don\u2019t assume the worst.",
       "tag": "Troubleshooting",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-08"
     },
     {
       "slug": "contract-work-resume-ats",
