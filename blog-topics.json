@@ -365,7 +365,8 @@
       "title": "How to List Contract Work on a Resume for ATS",
       "description": "How to present contract roles, consulting work, and temporary assignments on a resume so ATS systems count the experience instead of treating it like instability.",
       "tag": "Career Change",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-09"
     },
     {
       "slug": "list-promotions-on-resume-ats",
