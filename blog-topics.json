@@ -373,7 +373,8 @@
       "title": "How to List Promotions on a Resume for ATS",
       "description": "The best way to show internal promotions, title progression, and growing responsibility on a resume without confusing ATS parsers or recruiters.",
       "tag": "Formatting",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-10"
     },
     {
       "slug": "multiple-roles-one-company-resume-ats",
