@@ -381,7 +381,8 @@
       "title": "How to Show Multiple Roles at One Company on an ATS Resume",
       "description": "The cleanest way to list promotions and role changes at one company so ATS systems parse them correctly and recruiters can follow the progression.",
       "tag": "Formatting",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-11"
     },
     {
       "slug": "internship-resume-ats",
