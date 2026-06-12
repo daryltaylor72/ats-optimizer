@@ -389,7 +389,8 @@
       "title": "How to Write an ATS Resume for Internship Applications",
       "description": "How students can build an ATS-friendly internship resume using coursework, projects, campus leadership, and early experience that actually counts.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-12"
     },
     {
       "slug": "recent-grad-resume-ats",
