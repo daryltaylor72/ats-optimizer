@@ -397,7 +397,8 @@
       "title": "Recent Graduate Resume: ATS Tips for Landing Your First Full-Time Role",
       "description": "How recent grads can build an ATS-friendly resume using internships, coursework, campus leadership, and early wins that employers actually search for.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-16"
     },
     {
       "slug": "internal-job-application-resume-ats",
