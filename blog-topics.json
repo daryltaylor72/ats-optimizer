@@ -405,7 +405,8 @@
       "title": "How to Update Your Resume for an Internal Job Application",
       "description": "How to tailor a resume for an internal move, highlight measurable wins at your current company, and align with ATS filters without sounding repetitive.",
       "tag": "Career Change",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-19"
     },
     {
       "slug": "resume-for-career-fair-ats",
