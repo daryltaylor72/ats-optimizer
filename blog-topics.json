@@ -413,7 +413,8 @@
       "title": "How to Prepare a Resume for Career Fairs and ATS Follow-Up",
       "description": "How to build a resume that works in person at a career fair and still performs well when recruiters upload it into an ATS later.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-23"
     },
     {
       "slug": "resume-for-referral-ats",
