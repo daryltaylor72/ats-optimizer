@@ -429,7 +429,8 @@
       "title": "How to Optimize Your Resume for Recruiter Screens and ATS",
       "description": "How to write a resume that gets through ATS filters and still gives recruiters the fast context they need during the first screen.",
       "tag": "Strategy",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-24"
     },
     {
       "slug": "workday-resume-tips",
