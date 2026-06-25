@@ -437,7 +437,8 @@
       "title": "Workday Resume Tips: How to Format Your Resume for Better ATS Results",
       "description": "How Workday parses resumes, which formatting choices reduce errors, and what job seekers can do to improve keyword matching before they hit submit.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-25"
     },
     {
       "slug": "greenhouse-resume-tips",
