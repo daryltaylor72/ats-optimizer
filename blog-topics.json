@@ -445,7 +445,8 @@
       "title": "Greenhouse Resume Tips: How to Improve ATS Parsing and Keyword Match",
       "description": "How to optimize your resume for Greenhouse with cleaner structure, stronger keyword placement, and fewer formatting choices that confuse ATS parsing.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-26"
     },
     {
       "slug": "lever-resume-tips",
