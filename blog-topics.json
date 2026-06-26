@@ -453,7 +453,8 @@
       "title": "Lever Resume Tips: How to Submit a Resume That Parses Cleanly",
       "description": "What helps a resume perform better in Lever, from file format and section structure to keyword alignment with the job description.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-26"
     },
     {
       "slug": "taleo-resume-tips",
