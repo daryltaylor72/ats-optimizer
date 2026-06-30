@@ -461,7 +461,8 @@
       "title": "Taleo Resume Tips: How to Avoid Common ATS Formatting Problems",
       "description": "How to format your resume for Taleo, avoid parsing mistakes, and improve your odds of matching the right keywords on older ATS workflows.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-06-30"
     },
     {
       "slug": "smartrecruiters-resume-tips",
