@@ -469,7 +469,8 @@
       "title": "SmartRecruiters Resume Tips: How to Optimize Your Resume for ATS",
       "description": "How SmartRecruiters handles resume parsing, what structure works best, and how to improve the clarity of your keywords and experience sections.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-03"
     },
     {
       "slug": "bamboohr-resume-tips",
