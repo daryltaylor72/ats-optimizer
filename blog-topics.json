@@ -477,7 +477,8 @@
       "title": "BambooHR Resume Tips: How to Make Your Resume Easier to Parse",
       "description": "How to submit a resume that BambooHR can read cleanly, including file choice, formatting rules, and keyword placement that supports better ATS matching.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-07"
     },
     {
       "slug": "icims-resume-tips",
