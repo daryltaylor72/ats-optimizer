@@ -485,7 +485,8 @@
       "title": "iCIMS Resume Tips: How to Format Your Resume for Better ATS Parsing",
       "description": "How to optimize your resume for iCIMS with cleaner formatting, stronger keyword placement, and the parsing choices that matter most on this platform.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-10"
     },
     {
       "slug": "federal-resume-ats",
