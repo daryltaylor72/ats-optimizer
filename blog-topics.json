@@ -493,7 +493,8 @@
       "title": "Federal Resume vs Private-Sector Resume: ATS Rules That Change",
       "description": "How federal resumes differ from private-sector resumes, which ATS assumptions break down, and how to adapt your experience for government applications.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-14"
     },
     {
       "slug": "sales-resume-ats",
