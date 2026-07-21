@@ -501,14 +501,16 @@
       "title": "Sales Resume ATS Guide: Keywords, Metrics, and Format",
       "description": "The CRM tools, quota language, and sales methodology keywords that ATS systems score highest -- plus how to quantify pipeline and revenue results so they land in the right parsed fields.",
       "tag": "Industry",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-17"
     },
     {
       "slug": "business-analyst-resume-ats",
       "title": "Business Analyst Resume: ATS Keywords and Resume Format",
       "description": "The business analyst skills, tools, and requirements-gathering language ATS systems prioritize \u2014 plus formatting tips that keep your resume scannable.",
       "tag": "Industry",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-21"
     },
     {
       "slug": "hr-resume-ats",
