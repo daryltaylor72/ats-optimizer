@@ -517,7 +517,8 @@
       "title": "HR Resume ATS Guide: Keywords, Certifications, and Format",
       "description": "How to optimize an HR resume for ATS with the right recruiting, employee-relations, compliance, and HRIS keywords \u2014 without sounding generic.",
       "tag": "Industry",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-24"
     },
     {
       "slug": "customer-success-resume-ats",
