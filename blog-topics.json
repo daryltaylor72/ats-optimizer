@@ -549,7 +549,8 @@
       "title": "Manager Resume: ATS Keywords and Leadership Format Guide",
       "description": "How managers should present team leadership, delivery ownership, hiring, and performance results so ATS systems and recruiters both understand the impact.",
       "tag": "Industry",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-28"
     },
     {
       "slug": "director-resume-ats",
