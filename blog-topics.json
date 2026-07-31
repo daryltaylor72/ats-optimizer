@@ -573,7 +573,8 @@
       "title": "Teacher Resume ATS Guide: Keywords, Certifications, and Format",
       "description": "How K-12 and higher education resumes get filtered by ATS in school districts and universities, which teaching certifications and curriculum keywords score highest, and how to structure an educator resume for both machines and hiring committees.",
       "tag": "Industry",
-      "published": false
+      "published": true,
+      "published_date": "2026-07-31"
     },
     {
       "slug": "ux-designer-resume-ats",
