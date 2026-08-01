@@ -581,7 +581,8 @@
       "title": "UX Designer Resume: ATS Keywords, Portfolio Links, and Layout Tips",
       "description": "How to make a UX designer resume readable by ATS while still showcasing research, product thinking, design tools, and portfolio work effectively.",
       "tag": "Industry",
-      "published": false
+      "published": true,
+      "published_date": "2026-08-01"
     },
     {
       "slug": "portfolio-resume-ats",
