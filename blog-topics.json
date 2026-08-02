@@ -589,7 +589,8 @@
       "title": "How to Build a Portfolio Resume That Still Works With ATS",
       "description": "How designers, marketers, writers, and product candidates can include portfolio links and project proof without breaking ATS readability.",
       "tag": "Guide",
-      "published": false
+      "published": true,
+      "published_date": "2026-08-02"
     }
   ]
 }
